@@ -508,7 +508,12 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                             runExperiment(experiment.id);
                           }}
                           disabled={isRunning}
-                          className={`flex-1 bg-${experiment.statusColor}-500 hover:bg-${experiment.statusColor}-600 text-white`}
+                          className={`flex-1 ${
+                            experiment.id === "noise-analysis" ? "bg-yellow-500 hover:bg-yellow-600" :
+                            experiment.id === "eavesdropping-detection" ? "bg-red-500 hover:bg-red-600" :
+                            experiment.id === "qubit-scaling" ? "bg-purple-500 hover:bg-purple-600" :
+                            "bg-green-500 hover:bg-green-600"
+                          } text-white`}
                         >
                           <Play className="w-4 h-4 mr-2" />
                           Run Experiment
@@ -549,7 +554,12 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
               <div className="text-center">
                 <Button
                   onClick={() => runExperiment(selectedExp.id)}
-                  className={`bg-${selectedExp.color} hover:bg-${selectedExp.color}/80`}
+                  className={
+                    selectedExp.id === "noise-analysis" ? "bg-yellow-500 hover:bg-yellow-600" :
+                    selectedExp.id === "eavesdropping-detection" ? "bg-red-500 hover:bg-red-600" :
+                    selectedExp.id === "qubit-scaling" ? "bg-purple-500 hover:bg-purple-600" :
+                    "bg-green-500 hover:bg-green-600"
+                  }
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Run Experiment
