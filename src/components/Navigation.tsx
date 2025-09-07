@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface NavigationProps {
   activeTab: string;
@@ -21,9 +22,12 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               Quantum Key Distribution E-Laboratory
             </p>
           </div>
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-quantum-blue to-quantum-purple polarization-animation flex items-center justify-center">
-            <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center">
-              <div className="w-4 h-4 bg-quantum-glow rounded-full"></div>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-quantum-blue to-quantum-purple polarization-animation flex items-center justify-center">
+              <div className="w-8 h-8 bg-background rounded-full flex items-center justify-center">
+                <div className="w-4 h-4 bg-quantum-glow rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>
