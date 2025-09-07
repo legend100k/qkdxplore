@@ -292,7 +292,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     }
 
     return {
-      errorRate: matchingBases > 0 ? (errors / matchingBases) * 100 : 0,
+      errorRate: qubits > 0 ? (errors / qubits) * 100 : 0,
       keyRate: (keyBits / qubits) * 100,
       keyLength: keyBits,
       basisMatchRate: (matchingBases / qubits) * 100,

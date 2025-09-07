@@ -358,7 +358,7 @@ export const EnhancedTheorySection = () => {
                 <div className="w-16 h-16 mx-auto mb-3 relative">
                   <div 
                     className="w-full h-full border-2 border-quantum-blue rounded-full flex items-center justify-center text-2xl font-bold text-quantum-blue transition-transform duration-1000"
-                    style={{ transform: `rotate(${state.angle}deg)` }}
+                    style={{ transform: "rotate(0deg)" }}
                   >
                     {state.symbol}
                   </div>
@@ -384,7 +384,11 @@ export const EnhancedTheorySection = () => {
                     <div className="flex gap-4 justify-center">
                       {basis.states.map((state, i) => (
                         <div key={state} className="text-center">
-                          <div className={`w-12 h-12 border border-${basis.color} rounded-full flex items-center justify-center text-${basis.color} font-bold`}>
+                          <div className={`w-12 h-12 border rounded-full flex items-center justify-center font-bold ${
+                            basis.name === "Rectilinear" 
+                              ? "border-quantum-blue text-quantum-blue" 
+                              : "border-quantum-purple text-quantum-purple"
+                          }`}>
                             {polarizationStates[index * 2 + i].symbol}
                           </div>
                           <p className="text-xs mt-1 text-muted-foreground">{state}</p>
