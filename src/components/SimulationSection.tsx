@@ -54,31 +54,32 @@ export const SimulationSection = () => {
       const aliceBasis = Math.random() > 0.5 ? "+" : "×";
       const bobBasis = Math.random() > 0.5 ? "+" : "×";
       
+      const isMatching = aliceBasis === bobBasis;
       let bobMeasurement = null;
-      let isMatching = null;
       let inKey = false;
 
-      if (currentStep >= 4) {
-        isMatching = aliceBasis === bobBasis;
-        if (isMatching) {
-          // Apply eavesdropping and noise effects
-          let correctBit = aliceBit;
-          
-          // Eavesdropping effect
-          if (eavesProbability > 0 && Math.random() < eavesProbability) {
-            correctBit = Math.random() > 0.25 ? 1 - aliceBit : aliceBit;
+      // Bob measures the photon
+      if (isMatching) {
+        // When bases match, Bob should get the same bit as Alice (in ideal conditions)
+        bobMeasurement = aliceBit;
+        inKey = true;
+        
+        // Apply eavesdropping effect
+        if (eavesProbability > 0 && Math.random() < eavesProbability) {
+          // Eve measures the photon and randomly changes the bit with 75% probability
+          if (Math.random() < 0.75) {
+            bobMeasurement = 1 - bobMeasurement;
           }
-          
-          // Noise effect
-          if (noise > 0 && Math.random() < noise) {
-            correctBit = 1 - correctBit;
-          }
-          
-          bobMeasurement = correctBit;
-          inKey = true;
-        } else {
-          bobMeasurement = Math.random() > 0.5 ? 1 : 0;
         }
+        
+        // Apply noise effect
+        if (noise > 0 && Math.random() < noise) {
+          bobMeasurement = 1 - bobMeasurement;
+        }
+      } else {
+        // When bases don't match, Bob gets a random result
+        bobMeasurement = Math.random() > 0.5 ? 1 : 0;
+        inKey = false;
       }
 
       bits.push({
@@ -129,20 +130,26 @@ export const SimulationSection = () => {
         bit.isMatching = isMatching;
         
         if (isMatching) {
+          // When bases match, Bob should get the same bit as Alice (in ideal conditions)
           let correctBit = bit.aliceBit;
+          bit.inKey = true;
           
-          // Apply eavesdropping and noise effects
+          // Apply eavesdropping effect
           if (eavesProbability > 0 && Math.random() < eavesProbability) {
-            correctBit = Math.random() > 0.25 ? 1 - bit.aliceBit : bit.aliceBit;
+            // Eve measures the photon and randomly changes the bit with 75% probability
+            if (Math.random() < 0.75) {
+              correctBit = 1 - correctBit;
+            }
           }
           
+          // Apply noise effect
           if (noise > 0 && Math.random() < noise) {
             correctBit = 1 - correctBit;
           }
           
           bit.bobMeasurement = correctBit;
-          bit.inKey = true;
         } else {
+          // When bases don't match, Bob gets a random result
           bit.bobMeasurement = Math.random() > 0.5 ? 1 : 0;
           bit.inKey = false;
         }

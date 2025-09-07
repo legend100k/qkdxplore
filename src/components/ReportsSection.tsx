@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Plus, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 interface ExperimentResult {
   id: string;
@@ -51,6 +52,42 @@ export const ReportsSection = () => {
         { noise: 20, errorRate: 20.1, keyRate: 38.5 }
       ],
       analysis: "Channel noise significantly affects BB84 performance with linear error rate increase.",
+      completed: true,
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: "eavesdropping-detection",
+      name: "Eavesdropping Detection Analysis",
+      parameters: { eavesdroppingRange: [0, 30], step: 3, qubits: 30 },
+      data: [
+        { eavesdropping: 0, errorRate: 0.3, keyRate: 49.7 },
+        { eavesdropping: 5, errorRate: 3.8, keyRate: 48.1 },
+        { eavesdropping: 10, errorRate: 7.4, keyRate: 46.2 },
+        { eavesdropping: 15, errorRate: 11.2, keyRate: 44.3 },
+        { eavesdropping: 20, errorRate: 15.1, keyRate: 42.1 },
+        { eavesdropping: 25, errorRate: 18.9, keyRate: 39.8 },
+        { eavesdropping: 30, errorRate: 22.7, keyRate: 37.5 }
+      ],
+      analysis: "Eavesdropping introduces detectable errors that increase linearly with interception probability.",
+      completed: true,
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: "qubit-scaling",
+      name: "Qubit Scaling Analysis",
+      parameters: { qubitRange: [10, 50], step: 5, noise: 5 },
+      data: [
+        { qubits: 10, errorRate: 5.2, keyRate: 47.3, keyLength: 5 },
+        { qubits: 15, errorRate: 5.1, keyRate: 47.8, keyLength: 7 },
+        { qubits: 20, errorRate: 5.0, keyRate: 48.1, keyLength: 10 },
+        { qubits: 25, errorRate: 4.9, keyRate: 48.3, keyLength: 12 },
+        { qubits: 30, errorRate: 5.1, keyRate: 47.9, keyLength: 14 },
+        { qubits: 35, errorRate: 5.0, keyRate: 48.2, keyLength: 17 },
+        { qubits: 40, errorRate: 4.8, keyRate: 48.5, keyLength: 19 },
+        { qubits: 45, errorRate: 4.9, keyRate: 48.3, keyLength: 22 },
+        { qubits: 50, errorRate: 4.7, keyRate: 48.7, keyLength: 24 }
+      ],
+      analysis: "Key length scales approximately linearly with qubit count, improving statistical security.",
       completed: true,
       timestamp: new Date().toISOString()
     }
@@ -112,6 +149,80 @@ export const ReportsSection = () => {
   };
 
   const generateReportHTML = (report: Report) => {
+    // Generate chart data as base64 image
+    const chartData = encodeURIComponent(`
+      <div id="chart-container" style="width: 600px; height: 400px;">
+        <canvas id="chart-canvas"></canvas>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const ctx = document.getElementById('chart-canvas').getContext('2d');
+          const chartData = ${JSON.stringify(report.data)};
+          
+          // Determine chart type based on experiment
+          let xAxisKey, series1, series2;
+          if ('${report.experimentId}' === 'noise-analysis') {
+            xAxisKey = 'noise';
+            series1 = 'errorRate';
+            series2 = 'keyRate';
+          } else if ('${report.experimentId}' === 'eavesdropping-detection') {
+            xAxisKey = 'eavesdropping';
+            series1 = 'errorRate';
+            series2 = 'keyRate';
+          } else if ('${report.experimentId}' === 'qubit-scaling') {
+            xAxisKey = 'qubits';
+            series1 = 'errorRate';
+            series2 = 'keyRate';
+          } else {
+            xAxisKey = Object.keys(chartData[0])[0];
+            series1 = Object.keys(chartData[0])[1];
+            series2 = Object.keys(chartData[0])[2];
+          }
+          
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: chartData.map(d => d[xAxisKey]),
+              datasets: [{
+                label: series1,
+                data: chartData.map(d => d[series1]),
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: false,
+                tension: 0.1
+              }, {
+                label: series2,
+                data: chartData.map(d => d[series2]),
+                borderColor: '#fbbf24',
+                backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                fill: false,
+                tension: 0.1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: xAxisKey
+                  }
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: 'Percentage'
+                  }
+                }
+              }
+            }
+          });
+        });
+      </script>
+    `);
+
     return `
 <!DOCTYPE html>
 <html>
@@ -126,6 +237,7 @@ export const ReportsSection = () => {
         .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         .data-table th { background-color: #f2f2f2; }
         .conclusion { background-color: #f0f9ff; padding: 15px; border-left: 4px solid #2563eb; }
+        .chart-container { width: 100%; height: 400px; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -149,7 +261,18 @@ export const ReportsSection = () => {
     </div>
     
     <div class="section">
-        <h2>Results and Data</h2>
+        <h2>Results and Data Visualization</h2>
+        <div class="chart-container">
+          <iframe 
+            src="data:text/html,${chartData}" 
+            style="width: 100%; height: 100%; border: none;"
+            title="Experiment Chart">
+          </iframe>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Numerical Results</h2>
         <table class="data-table">
             <thead>
                 <tr>
@@ -158,7 +281,7 @@ export const ReportsSection = () => {
             </thead>
             <tbody>
                 ${report.data.map(row => 
-                    `<tr>${Object.values(row).map(value => `<td>${value}</td>`).join('')}</tr>`
+                    `<tr>${Object.values(row).map(value => `<td>${typeof value === 'number' ? value.toFixed(2) : value}</td>`).join('')}</tr>`
                 ).join('')}
             </tbody>
         </table>
@@ -193,7 +316,7 @@ export const ReportsSection = () => {
       "noise-analysis": "1. Set up BB84 simulation with varying noise levels from 0% to 20%\n2. Run simulation with 30 qubits for each noise level\n3. Record error rates and key generation rates\n4. Analyze the relationship between noise and protocol performance\n5. Generate graphs and statistical analysis",
       "eavesdropping-detection": "1. Configure BB84 simulation with varying eavesdropping rates\n2. Run experiments with different interception probabilities\n3. Measure error rate changes and detection capabilities\n4. Analyze security implications and detection thresholds",
       "qubit-scaling": "1. Run BB84 simulations with different numbers of qubits (10-50)\n2. Maintain constant noise and eavesdropping parameters\n3. Measure key length and statistical security improvements\n4. Analyze scalability and practical implementation considerations",
-      "basis-mismatch": "1. Run multiple BB84 iterations with random basis selection\n2. Record basis matching rates for statistical analysis\n3. Compare theoretical 50% matching rate with practical results\n4. Analyze statistical variations and confidence intervals"
+      "real-world-comparison": "1. Configure BB84 simulation with various real-world conditions\n2. Run experiments with different combinations of noise and eavesdropping\n3. Compare performance across all conditions\n4. Analyze trade-offs and practical deployment considerations"
     };
     return procedures[experimentId as keyof typeof procedures] || "Detailed experimental procedure to be documented.";
   };
@@ -203,9 +326,84 @@ export const ReportsSection = () => {
       "noise-analysis": "Quantum channels in practical implementations suffer from various noise sources including photon loss, detector dark counts, and environmental interference. The BB84 protocol's security relies on the assumption of a quantum channel, but real-world implementations must account for noise effects. This experiment examines how channel noise affects error rates and key generation efficiency.",
       "eavesdropping-detection": "The fundamental principle of quantum mechanics that measurement disturbs quantum states forms the basis of eavesdropping detection in BB84. When Eve intercepts and measures photons, she inevitably introduces errors that Alice and Bob can detect through basis comparison and error rate analysis. This experiment quantifies the relationship between eavesdropping attempts and detectable errors.",
       "qubit-scaling": "Statistical security in quantum cryptography improves with larger sample sizes. More qubits provide better statistical confidence in detecting anomalies and eavesdropping attempts. This experiment explores how the number of transmitted qubits affects the overall security and practical implementation of the BB84 protocol.",
-      "basis-mismatch": "The BB84 protocol relies on random basis selection by both Alice and Bob. Theoretical analysis predicts that approximately 50% of transmissions will use matching bases, making those bits suitable for the final key. This experiment validates the theoretical predictions through practical simulation and statistical analysis."
+      "real-world-comparison": "Real-world quantum key distribution systems must contend with both environmental noise and potential eavesdropping. This experiment compares protocol performance under various realistic conditions to understand practical limitations and deployment strategies."
     };
     return theories[experimentId as keyof typeof theories] || "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+  };
+
+  const renderExperimentChart = (data: any[], experimentId: string) => {
+    // Determine chart configuration based on experiment type
+    let xAxisKey, series1, series2;
+    if (experimentId === "noise-analysis") {
+      xAxisKey = "noise";
+      series1 = "errorRate";
+      series2 = "keyRate";
+    } else if (experimentId === "eavesdropping-detection") {
+      xAxisKey = "eavesdropping";
+      series1 = "errorRate";
+      series2 = "keyRate";
+    } else if (experimentId === "qubit-scaling") {
+      xAxisKey = "qubits";
+      series1 = "errorRate";
+      series2 = "keyRate";
+    } else {
+      // Default case
+      xAxisKey = Object.keys(data[0] || {})[0];
+      series1 = Object.keys(data[0] || {})[1];
+      series2 = Object.keys(data[0] || {})[2];
+    }
+
+    return (
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+            <XAxis 
+              dataKey={xAxisKey}
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12} 
+            />
+            <YAxis 
+              yAxisId="left" 
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12} 
+            />
+            <YAxis 
+              yAxisId="right" 
+              orientation="right" 
+              stroke="hsl(var(--quantum-glow))" 
+              fontSize={12} 
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '6px'
+              }} 
+            />
+            <Legend />
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey={series1} 
+              stroke="hsl(var(--destructive))" 
+              strokeWidth={2}
+              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
+              activeDot={{ r: 8 }}
+            />
+            <Line 
+              yAxisId="right"
+              type="monotone" 
+              dataKey={series2} 
+              stroke="hsl(var(--quantum-glow))" 
+              strokeWidth={2}
+              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
   };
 
   if (viewingReport) {
@@ -252,7 +450,19 @@ export const ReportsSection = () => {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Results and Data</h2>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    Results and Data Visualization
+                  </h2>
+                  <Card className="bg-secondary/20">
+                    <CardContent className="p-4">
+                      {renderExperimentChart(viewingReport.data, viewingReport.experimentId)}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Numerical Results</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-quantum-blue/30">
                       <thead>
@@ -369,6 +579,23 @@ export const ReportsSection = () => {
                 </div>
               </div>
             </div>
+
+            {currentReport.data && currentReport.data.length > 0 && (
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Experimental Data Visualization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {renderExperimentChart(currentReport.data, currentReport.experimentId || "")}
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    This chart will be included in your final report
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex gap-4 justify-center">
               <Button
