@@ -1,0 +1,506 @@
+import { useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Download, Eye, Trash2, Plus } from "lucide-react";
+import { toast } from "sonner";
+
+interface ExperimentResult {
+  id: string;
+  name: string;
+  parameters: any;
+  data: any[];
+  analysis: string;
+  completed: boolean;
+  timestamp: string;
+}
+
+interface Report {
+  id: string;
+  title: string;
+  experimentId: string;
+  experimentName: string;
+  aim: string;
+  procedure: string;
+  theory: string;
+  conclusion: string;
+  timestamp: string;
+  data: any[];
+}
+
+export const ReportsSection = () => {
+  const [reports, setReports] = useState<Report[]>([]);
+  const [selectedExperiment, setSelectedExperiment] = useState<string>("");
+  const [currentReport, setCurrentReport] = useState<Partial<Report> | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [viewingReport, setViewingReport] = useState<Report | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  // Mock experiment results (would come from ExperimentsSection)
+  const [availableExperiments] = useState<ExperimentResult[]>([
+    {
+      id: "noise-analysis",
+      name: "Channel Noise Impact Analysis",
+      parameters: { noiseRange: [0, 20], step: 2, qubits: 30 },
+      data: [
+        { noise: 0, errorRate: 0.5, keyRate: 49.8 },
+        { noise: 5, errorRate: 5.2, keyRate: 47.3 },
+        { noise: 10, errorRate: 10.8, keyRate: 44.1 },
+        { noise: 15, errorRate: 15.4, keyRate: 41.2 },
+        { noise: 20, errorRate: 20.1, keyRate: 38.5 }
+      ],
+      analysis: "Channel noise significantly affects BB84 performance with linear error rate increase.",
+      completed: true,
+      timestamp: new Date().toISOString()
+    }
+  ]);
+
+  const startNewReport = () => {
+    if (!selectedExperiment) {
+      toast.error("Please select an experiment first");
+      return;
+    }
+
+    const experiment = availableExperiments.find(e => e.id === selectedExperiment);
+    if (!experiment) return;
+
+    setCurrentReport({
+      id: Date.now().toString(),
+      title: `Report: ${experiment.name}`,
+      experimentId: experiment.id,
+      experimentName: experiment.name,
+      aim: "",
+      procedure: "",
+      theory: "",
+      conclusion: "",
+      timestamp: new Date().toISOString(),
+      data: experiment.data
+    });
+    setIsCreating(true);
+  };
+
+  const saveReport = () => {
+    if (!currentReport || !currentReport.aim || !currentReport.conclusion) {
+      toast.error("Please fill in at least the aim and conclusion");
+      return;
+    }
+
+    const report: Report = {
+      ...currentReport,
+      id: currentReport.id || Date.now().toString(),
+      title: currentReport.title || `Report: ${currentReport.experimentName}`,
+      experimentId: currentReport.experimentId || "",
+      experimentName: currentReport.experimentName || "",
+      aim: currentReport.aim,
+      procedure: currentReport.procedure || getDefaultProcedure(currentReport.experimentId || ""),
+      theory: currentReport.theory || getDefaultTheory(currentReport.experimentId || ""),
+      conclusion: currentReport.conclusion,
+      timestamp: currentReport.timestamp || new Date().toISOString(),
+      data: currentReport.data || []
+    };
+
+    setReports(prev => [...prev, report]);
+    setCurrentReport(null);
+    setIsCreating(false);
+    toast.success("Report saved successfully!");
+  };
+
+  const deleteReport = (reportId: string) => {
+    setReports(prev => prev.filter(r => r.id !== reportId));
+    toast.success("Report deleted");
+  };
+
+  const generateReportHTML = (report: Report) => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>${report.title}</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; }
+        h2 { color: #7c3aed; margin-top: 30px; }
+        .section { margin: 20px 0; }
+        .data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .data-table th { background-color: #f2f2f2; }
+        .conclusion { background-color: #f0f9ff; padding: 15px; border-left: 4px solid #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>${report.title}</h1>
+    <p><strong>Date:</strong> ${new Date(report.timestamp).toLocaleDateString()}</p>
+    <p><strong>Experiment:</strong> ${report.experimentName}</p>
+    
+    <div class="section">
+        <h2>Aim</h2>
+        <p>${report.aim}</p>
+    </div>
+    
+    <div class="section">
+        <h2>Theory</h2>
+        <p>${report.theory}</p>
+    </div>
+    
+    <div class="section">
+        <h2>Procedure</h2>
+        <p>${report.procedure}</p>
+    </div>
+    
+    <div class="section">
+        <h2>Results and Data</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    ${Object.keys(report.data[0] || {}).map(key => `<th>${key}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${report.data.map(row => 
+                    `<tr>${Object.values(row).map(value => `<td>${value}</td>`).join('')}</tr>`
+                ).join('')}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h2>Conclusion</h2>
+        <div class="conclusion">
+            <p>${report.conclusion}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  };
+
+  const downloadReport = (report: Report) => {
+    const htmlContent = generateReportHTML(report);
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Report downloaded!");
+  };
+
+  const getDefaultProcedure = (experimentId: string) => {
+    const procedures = {
+      "noise-analysis": "1. Set up BB84 simulation with varying noise levels from 0% to 20%\n2. Run simulation with 30 qubits for each noise level\n3. Record error rates and key generation rates\n4. Analyze the relationship between noise and protocol performance\n5. Generate graphs and statistical analysis",
+      "eavesdropping-detection": "1. Configure BB84 simulation with varying eavesdropping rates\n2. Run experiments with different interception probabilities\n3. Measure error rate changes and detection capabilities\n4. Analyze security implications and detection thresholds",
+      "qubit-scaling": "1. Run BB84 simulations with different numbers of qubits (10-50)\n2. Maintain constant noise and eavesdropping parameters\n3. Measure key length and statistical security improvements\n4. Analyze scalability and practical implementation considerations",
+      "basis-mismatch": "1. Run multiple BB84 iterations with random basis selection\n2. Record basis matching rates for statistical analysis\n3. Compare theoretical 50% matching rate with practical results\n4. Analyze statistical variations and confidence intervals"
+    };
+    return procedures[experimentId as keyof typeof procedures] || "Detailed experimental procedure to be documented.";
+  };
+
+  const getDefaultTheory = (experimentId: string) => {
+    const theories = {
+      "noise-analysis": "Quantum channels in practical implementations suffer from various noise sources including photon loss, detector dark counts, and environmental interference. The BB84 protocol's security relies on the assumption of a quantum channel, but real-world implementations must account for noise effects. This experiment examines how channel noise affects error rates and key generation efficiency.",
+      "eavesdropping-detection": "The fundamental principle of quantum mechanics that measurement disturbs quantum states forms the basis of eavesdropping detection in BB84. When Eve intercepts and measures photons, she inevitably introduces errors that Alice and Bob can detect through basis comparison and error rate analysis. This experiment quantifies the relationship between eavesdropping attempts and detectable errors.",
+      "qubit-scaling": "Statistical security in quantum cryptography improves with larger sample sizes. More qubits provide better statistical confidence in detecting anomalies and eavesdropping attempts. This experiment explores how the number of transmitted qubits affects the overall security and practical implementation of the BB84 protocol.",
+      "basis-mismatch": "The BB84 protocol relies on random basis selection by both Alice and Bob. Theoretical analysis predicts that approximately 50% of transmissions will use matching bases, making those bits suitable for the final key. This experiment validates the theoretical predictions through practical simulation and statistical analysis."
+    };
+    return theories[experimentId as keyof typeof theories] || "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+  };
+
+  if (viewingReport) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-quantum-blue/30">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-quantum-blue flex items-center gap-2">
+                <FileText className="w-6 h-6" />
+                Report Viewer
+              </CardTitle>
+              <Button
+                onClick={() => setViewingReport(null)}
+                variant="outline"
+                className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+              >
+                Back to Reports
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div ref={reportRef} className="space-y-6 p-6 bg-background border rounded-lg">
+              <div className="text-center border-b pb-4">
+                <h1 className="text-2xl font-bold text-quantum-blue">{viewingReport.title}</h1>
+                <p className="text-muted-foreground">Date: {new Date(viewingReport.timestamp).toLocaleDateString()}</p>
+                <p className="text-muted-foreground">Experiment: {viewingReport.experimentName}</p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Aim</h2>
+                  <p className="text-foreground/90">{viewingReport.aim}</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Theory</h2>
+                  <p className="text-foreground/90 whitespace-pre-line">{viewingReport.theory}</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Procedure</h2>
+                  <p className="text-foreground/90 whitespace-pre-line">{viewingReport.procedure}</p>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Results and Data</h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-quantum-blue/30">
+                      <thead>
+                        <tr className="bg-secondary/50">
+                          {Object.keys(viewingReport.data[0] || {}).map(key => (
+                            <th key={key} className="border border-quantum-blue/30 p-2 text-left">{key}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewingReport.data.map((row, index) => (
+                          <tr key={index} className="border-b border-quantum-blue/20">
+                            {Object.values(row).map((value, i) => (
+                              <td key={i} className="border border-quantum-blue/30 p-2">
+                                {typeof value === 'number' ? (value as number).toFixed(2) : String(value)}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Conclusion</h2>
+                  <div className="p-4 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
+                    <p className="text-foreground/90 whitespace-pre-line">{viewingReport.conclusion}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={() => downloadReport(viewingReport)}
+                className="bg-quantum-blue hover:bg-quantum-blue/80"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Report
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isCreating && currentReport) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-quantum-glow/30">
+          <CardHeader>
+            <CardTitle className="text-quantum-glow flex items-center gap-2">
+              <Plus className="w-6 h-6" />
+              Create Experiment Report
+            </CardTitle>
+            <p className="text-muted-foreground">Document your experimental findings and analysis</p>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Report Title</label>
+                  <input
+                    type="text"
+                    value={currentReport.title || ""}
+                    onChange={(e) => setCurrentReport(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full p-3 bg-background border border-quantum-blue/30 rounded focus:border-quantum-blue focus:outline-none"
+                    placeholder="Enter report title"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Aim *</label>
+                  <Textarea
+                    value={currentReport.aim || ""}
+                    onChange={(e) => setCurrentReport(prev => ({ ...prev, aim: e.target.value }))}
+                    placeholder="State the objective and purpose of this experiment..."
+                    className="min-h-[100px] border-quantum-blue/30 focus:border-quantum-blue"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Theory</label>
+                  <Textarea
+                    value={currentReport.theory || ""}
+                    onChange={(e) => setCurrentReport(prev => ({ ...prev, theory: e.target.value }))}
+                    placeholder="Explain the theoretical background and principles..."
+                    className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Procedure</label>
+                  <Textarea
+                    value={currentReport.procedure || ""}
+                    onChange={(e) => setCurrentReport(prev => ({ ...prev, procedure: e.target.value }))}
+                    placeholder="Describe the experimental methodology and steps..."
+                    className="min-h-[120px] border-quantum-glow/30 focus:border-quantum-glow"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Conclusion *</label>
+                  <Textarea
+                    value={currentReport.conclusion || ""}
+                    onChange={(e) => setCurrentReport(prev => ({ ...prev, conclusion: e.target.value }))}
+                    placeholder="Summarize your findings, analysis, and conclusions..."
+                    className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={saveReport}
+                className="bg-quantum-blue hover:bg-quantum-blue/80"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Save Report
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsCreating(false);
+                  setCurrentReport(null);
+                }}
+                variant="outline"
+                className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-quantum-purple/30">
+        <CardHeader>
+          <CardTitle className="text-quantum-purple flex items-center gap-2">
+            <FileText className="w-6 h-6" />
+            Experiment Reports
+          </CardTitle>
+          <p className="text-muted-foreground">
+            Generate comprehensive reports from your experimental data with analysis and conclusions
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Card className="bg-secondary/30">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-2 block">Select Experiment</label>
+                  <Select value={selectedExperiment} onValueChange={setSelectedExperiment}>
+                    <SelectTrigger className="border-quantum-blue/30">
+                      <SelectValue placeholder="Choose an experiment to create a report" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableExperiments.map(exp => (
+                        <SelectItem key={exp.id} value={exp.id}>
+                          {exp.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={startNewReport}
+                  disabled={!selectedExperiment}
+                  className="bg-quantum-glow hover:bg-quantum-glow/80"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Report
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {reports.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-quantum-glow">Saved Reports</h3>
+              <div className="grid gap-4">
+                {reports.map(report => (
+                  <Card key={report.id} className="border-quantum-blue/20">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-quantum-blue">{report.title}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {report.experimentName} • Created: {new Date(report.timestamp).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => setViewingReport(report)}
+                            variant="outline"
+                            size="sm"
+                            className="border-quantum-blue/50 hover:bg-quantum-blue/10"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            onClick={() => downloadReport(report)}
+                            variant="outline"
+                            size="sm"
+                            className="border-quantum-glow/50 hover:bg-quantum-glow/10"
+                          >
+                            <Download className="w-4 h-4 mr-1" />
+                            Download
+                          </Button>
+                          <Button
+                            onClick={() => deleteReport(report.id)}
+                            variant="outline"
+                            size="sm"
+                            className="border-red-500/50 hover:bg-red-500/10 text-red-400"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {reports.length === 0 && (
+            <Card className="bg-muted/20 border-dashed border-2 border-muted-foreground/20">
+              <CardContent className="p-8 text-center">
+                <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Reports Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Select an experiment above and create your first comprehensive report
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
