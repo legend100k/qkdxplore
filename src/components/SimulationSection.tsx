@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Play, Pause, RotateCw, Zap, Eye, Shield, BarChart3, Settings } from "lucide-react";
+import { Play, Pause, RotateCw, Zap, Eye, Shield, BarChart3, Settings, ChevronLeft, ChevronRight, StepForward } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
@@ -29,6 +29,10 @@ export const SimulationSection = () => {
   const [noiseLevel, setNoiseLevel] = useState([0]);
   const [simulationData, setSimulationData] = useState<any[]>([]);
   const [showGraphs, setShowGraphs] = useState(false);
+  const [isStepByStep, setIsStepByStep] = useState(false);
+  const [currentBitIndex, setCurrentBitIndex] = useState(0);
+  const [stepByStepBits, setStepByStepBits] = useState<QuantumBit[]>([]);
+  const [bitStep, setBitStep] = useState(0);
 
   const steps = [
     "Alice generates random bits and bases",
@@ -88,6 +92,104 @@ export const SimulationSection = () => {
       });
     }
     return bits;
+  };
+
+  const generateStepByStepBits = () => {
+    const bits: QuantumBit[] = [];
+    const totalBits = numQubits[0];
+    
+    for (let i = 0; i < totalBits; i++) {
+      const aliceBit = Math.random() > 0.5 ? 1 : 0;
+      const aliceBasis = Math.random() > 0.5 ? "+" : "×";
+      const bobBasis = Math.random() > 0.5 ? "+" : "×";
+      
+      bits.push({
+        id: i,
+        aliceBit,
+        aliceBasis,
+        bobBasis,
+        bobMeasurement: null,
+        isMatching: null,
+        inKey: false
+      });
+    }
+    return bits;
+  };
+
+  const processBitStep = (bitIndex: number, step: number) => {
+    const eavesProbability = eavesdroppingRate[0] / 100;
+    const noise = noiseLevel[0] / 100;
+    
+    setStepByStepBits(prevBits => {
+      const newBits = [...prevBits];
+      const bit = newBits[bitIndex];
+      
+      if (step >= 3) { // Bob measures
+        const isMatching = bit.aliceBasis === bit.bobBasis;
+        bit.isMatching = isMatching;
+        
+        if (isMatching) {
+          let correctBit = bit.aliceBit;
+          
+          // Apply eavesdropping and noise effects
+          if (eavesProbability > 0 && Math.random() < eavesProbability) {
+            correctBit = Math.random() > 0.25 ? 1 - bit.aliceBit : bit.aliceBit;
+          }
+          
+          if (noise > 0 && Math.random() < noise) {
+            correctBit = 1 - correctBit;
+          }
+          
+          bit.bobMeasurement = correctBit;
+          bit.inKey = true;
+        } else {
+          bit.bobMeasurement = Math.random() > 0.5 ? 1 : 0;
+          bit.inKey = false;
+        }
+      }
+      
+      return newBits;
+    });
+  };
+
+  const startStepByStepMode = () => {
+    setIsStepByStep(true);
+    const bits = generateStepByStepBits();
+    setStepByStepBits(bits);
+    setCurrentBitIndex(0);
+    setBitStep(0);
+    setShowGraphs(false);
+    setFinalKey("");
+    toast.success("Step-by-step mode started. Use the controls to step through each bit.");
+  };
+
+  const nextBitStep = () => {
+    if (bitStep < 4) {
+      setBitStep(bitStep + 1);
+      if (bitStep === 3) {
+        processBitStep(currentBitIndex, bitStep + 1);
+      }
+    } else if (currentBitIndex < stepByStepBits.length - 1) {
+      setCurrentBitIndex(currentBitIndex + 1);
+      setBitStep(0);
+    } else {
+      // Finished all bits
+      const finalBits = stepByStepBits.filter(bit => bit.inKey);
+      const key = finalBits.map(bit => bit.aliceBit).join('');
+      setFinalKey(key);
+      generateAnalysisData(stepByStepBits);
+      setShowGraphs(true);
+      toast.success(`Step-by-step simulation complete! Generated ${key.length}-bit key.`);
+    }
+  };
+
+  const previousBitStep = () => {
+    if (bitStep > 0) {
+      setBitStep(bitStep - 1);
+    } else if (currentBitIndex > 0) {
+      setCurrentBitIndex(currentBitIndex - 1);
+      setBitStep(4);
+    }
   };
 
   const runSimulation = async () => {
@@ -154,6 +256,10 @@ export const SimulationSection = () => {
     setIsRunning(false);
     setShowGraphs(false);
     setSimulationData([]);
+    setIsStepByStep(false);
+    setCurrentBitIndex(0);
+    setStepByStepBits([]);
+    setBitStep(0);
   };
 
   return (
@@ -221,15 +327,68 @@ export const SimulationSection = () => {
             </CardContent>
           </Card>
 
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={runSimulation}
-              disabled={isRunning}
-              className="bg-quantum-blue hover:bg-quantum-blue/80"
-            >
-              {isRunning ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-              {isRunning ? "Running..." : "Start Simulation"}
-            </Button>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsStepByStep(!isStepByStep)}
+                variant={isStepByStep ? "default" : "outline"}
+                className={isStepByStep ? "bg-quantum-glow hover:bg-quantum-glow/80" : "border-quantum-glow/50 hover:bg-quantum-glow/10"}
+              >
+                <StepForward className="w-4 h-4 mr-2" />
+                {isStepByStep ? "Step Mode" : "Auto Mode"}
+              </Button>
+            </div>
+
+            {!isStepByStep ? (
+              <>
+                <Button
+                  onClick={runSimulation}
+                  disabled={isRunning}
+                  className="bg-quantum-blue hover:bg-quantum-blue/80"
+                >
+                  {isRunning ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                  {isRunning ? "Running..." : "Start Simulation"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={startStepByStepMode}
+                  disabled={stepByStepBits.length > 0}
+                  className="bg-quantum-blue hover:bg-quantum-blue/80"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Step-by-Step
+                </Button>
+                
+                {stepByStepBits.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={previousBitStep}
+                      disabled={currentBitIndex === 0 && bitStep === 0}
+                      variant="outline"
+                      size="sm"
+                      className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    
+                    <Button
+                      onClick={nextBitStep}
+                      disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 4 && !!finalKey}
+                      className="bg-quantum-glow hover:bg-quantum-glow/80"
+                      size="sm"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                    
+                    <span className="text-sm px-3 py-1 bg-secondary/30 rounded border border-quantum-glow/30">
+                      Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step {bitStep + 1}/5
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
             
             <Button
               onClick={resetSimulation}
@@ -271,7 +430,7 @@ export const SimulationSection = () => {
           </div>
 
           {/* Photon transmission visualization */}
-          {currentStep === 1 && (
+          {currentStep === 1 && !isStepByStep && (
             <Card className="bg-background/50 border-quantum-purple/20">
               <CardContent className="p-6">
                 <div className="relative h-20 bg-gradient-to-r from-quantum-blue/20 to-quantum-purple/20 rounded-lg overflow-hidden">
@@ -295,16 +454,118 @@ export const SimulationSection = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Step-by-step visualization */}
+          {isStepByStep && stepByStepBits.length > 0 && (
+            <Card className="bg-background/50 border-quantum-glow/30">
+              <CardHeader>
+                <CardTitle className="text-quantum-glow text-sm">
+                  Step-by-Step Visualization - Bit {currentBitIndex + 1}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {stepByStepBits[currentBitIndex] && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="bg-quantum-blue/10 border-quantum-blue/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-quantum-blue text-sm">Alice (Sender)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Bit Value:</span>
+                            <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
+                              {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBit : '?'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Basis Choice:</span>
+                            <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
+                              {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBasis : '?'}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-quantum-purple/10 border-quantum-purple/30">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-quantum-purple text-sm">Bob (Receiver)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Basis Choice:</span>
+                            <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
+                              {bitStep >= 1 ? stepByStepBits[currentBitIndex].bobBasis : '?'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Measurement:</span>
+                            <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
+                              {bitStep >= 3 ? stepByStepBits[currentBitIndex].bobMeasurement : '?'}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">Current Step:</h4>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[
+                          "Alice generates bit & basis",
+                          "Bob chooses basis",
+                          "Photon transmitted",
+                          "Bob measures",
+                          "Basis comparison"
+                        ].map((step, index) => (
+                          <div
+                            key={index}
+                            className={`p-2 rounded text-xs text-center transition-all ${
+                              bitStep === index
+                                ? 'bg-quantum-glow/20 border border-quantum-glow/50 text-quantum-glow font-semibold'
+                                : bitStep > index
+                                ? 'bg-green-400/20 border border-green-400/30 text-green-400'
+                                : 'bg-muted/20 border border-muted/30 text-muted-foreground'
+                            }`}
+                          >
+                            {step}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {bitStep >= 4 && (
+                      <Card className={`${stepByStepBits[currentBitIndex].isMatching ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}`}>
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Basis Match:</span>
+                            <span className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? 'text-green-400' : 'text-red-400'}`}>
+                              {stepByStepBits[currentBitIndex].isMatching ? '✓ Yes - Key bit!' : '✗ No - Discarded'}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </CardContent>
       </Card>
 
       {/* Results Display */}
-      {quantumBits.length > 0 && (
+      {(quantumBits.length > 0 || (isStepByStep && stepByStepBits.length > 0)) && (
         <Card className="border-quantum-purple/30">
           <CardHeader>
             <CardTitle className="text-quantum-purple flex items-center gap-2">
               <Shield className="w-6 h-6" />
               Simulation Results
+              {isStepByStep && (
+                <span className="text-sm font-normal ml-2 px-2 py-1 bg-quantum-glow/20 rounded">
+                  Step-by-Step Mode
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -343,11 +604,13 @@ export const SimulationSection = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {quantumBits.map((bit) => (
+                  {(isStepByStep ? stepByStepBits : quantumBits).map((bit, index) => (
                     <tr 
                       key={bit.id} 
                       className={`border-b border-muted/20 ${
                         bit.inKey ? 'bg-quantum-glow/10' : ''
+                      } ${
+                        isStepByStep && index === currentBitIndex ? 'ring-2 ring-quantum-glow/50 bg-quantum-glow/5' : ''
                       }`}
                     >
                       <td className="p-2">{bit.id + 1}</td>
