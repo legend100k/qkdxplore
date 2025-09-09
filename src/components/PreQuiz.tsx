@@ -16,58 +16,123 @@ interface Question {
 const questions: Question[] = [
   {
     id: 1,
-    question: "What does BB84 stand for?",
+    question: "What is the smallest unit of digital information in a computer?",
     options: [
-      "Bennett-Brassard 1984 protocol",
-      "Binary Bit 84-channel protocol", 
-      "Quantum Bit 84-state protocol",
-      "Bell-Bennett 1984 protocol"
+      "Byte",
+      "Bit",
+      "Qubit",
+      "File"
     ],
-    correct: 0,
-    explanation: "BB84 is named after Charles Bennett and Gilles Brassard who proposed it in 1984."
+    correct: 1,
+    explanation: "A bit (binary digit) is the smallest unit of digital information, representing either 0 or 1."
   },
   {
     id: 2,
-    question: "In quantum cryptography, what is Alice's role?",
+    question: "What is the main purpose of cryptography?",
     options: [
-      "The receiver who measures photons",
-      "The sender who prepares and transmits photons",
-      "The eavesdropper trying to intercept messages",
-      "The quantum channel medium"
+      "To make communication faster",
+      "To keep information secure",
+      "To store data in small space",
+      "To improve computer speed"
     ],
     correct: 1,
-    explanation: "Alice is conventionally the sender who prepares quantum states (photons) and transmits them to Bob."
+    explanation: "Cryptography's primary purpose is to secure information by transforming it into a form that unauthorized parties cannot easily understand."
   },
   {
     id: 3,
-    question: "What is Bob's primary function in the BB84 protocol?",
+    question: "Which of these is an example of classical encryption?",
     options: [
-      "To generate random quantum states",
-      "To encrypt the final messages",
-      "To receive and measure photons using random bases",
-      "To detect eavesdropping attempts"
+      "RSA",
+      "AES",
+      "Quantum Key Distribution",
+      "Blockchain"
     ],
-    correct: 2,
-    explanation: "Bob receives the photons from Alice and measures them using randomly chosen measurement bases."
+    correct: 1,
+    explanation: "AES (Advanced Encryption Standard) is a widely used classical encryption algorithm that uses mathematical operations to secure data."
   },
   {
     id: 4,
-    question: "How many polarization bases are used in the standard BB84 protocol?",
-    options: ["1", "2", "3", "4"],
-    correct: 1,
-    explanation: "BB84 uses 2 bases: rectilinear (+ basis) and diagonal (× basis), each containing 2 polarization states."
+    question: "What is a 'key' in cryptography?",
+    options: [
+      "A password that locks and unlocks information",
+      "A file used to increase speed",
+      "A type of software",
+      "A physical USB stick"
+    ],
+    correct: 0,
+    explanation: "In cryptography, a key is like a password - it's the secret information used to encrypt and decrypt data."
   },
   {
     id: 5,
-    question: "What happens when Alice and Bob use different bases for the same photon?",
+    question: "Why is randomness important in generating secure keys?",
     options: [
-      "The measurement is always correct",
-      "The measurement result is random (50% probability of each outcome)",
-      "The photon is destroyed",
-      "An error is immediately detected"
+      "To avoid predictable patterns",
+      "To make encryption faster",
+      "To reduce memory usage",
+      "To simplify algorithms"
+    ],
+    correct: 0,
+    explanation: "Random keys are crucial because predictable patterns make it easier for attackers to guess or crack the encryption."
+  },
+  {
+    id: 6,
+    question: "What is one main challenge of classical cryptography today?",
+    options: [
+      "It is too slow on the internet",
+      "It can be broken by powerful computers",
+      "It cannot be used on mobile phones",
+      "It needs photons to work"
     ],
     correct: 1,
-    explanation: "When different bases are used, Bob's measurement becomes random with 50% probability for each outcome, making the bit unusable for the final key."
+    explanation: "As computers become more powerful, they can potentially break classical encryption methods by trying many possible keys quickly."
+  },
+  {
+    id: 7,
+    question: "What is a qubit?",
+    options: [
+      "A basic unit of classical information",
+      "A binary digit that is only 0 or 1",
+      "A quantum unit that can be in a mix of 0 and 1",
+      "A type of encryption key"
+    ],
+    correct: 2,
+    explanation: "A qubit (quantum bit) can exist in a superposition of both 0 and 1 states simultaneously, unlike classical bits that are definitively either 0 or 1."
+  },
+  {
+    id: 8,
+    question: "What does 'superposition' mean in quantum mechanics?",
+    options: [
+      "A particle is always fixed in one state",
+      "A particle can be in multiple states at once",
+      "A particle is destroyed when measured",
+      "A particle cannot interact with others"
+    ],
+    correct: 1,
+    explanation: "Superposition allows quantum particles to exist in multiple states simultaneously until they are measured or observed."
+  },
+  {
+    id: 9,
+    question: "What does 'entanglement' mean?",
+    options: [
+      "Two qubits instantly affect each other's states",
+      "Two qubits exist independently",
+      "Two particles collide and merge",
+      "Two particles have the same speed"
+    ],
+    correct: 0,
+    explanation: "Quantum entanglement creates a connection between particles where measuring one instantly affects the state of the other, regardless of distance."
+  },
+  {
+    id: 10,
+    question: "Why do we need secure communication methods today?",
+    options: [
+      "To reduce internet bills",
+      "To watch movies faster",
+      "To protect privacy and prevent hacking",
+      "To improve Wi-Fi range"
+    ],
+    correct: 2,
+    explanation: "Secure communication is essential to protect personal information, financial data, and sensitive communications from unauthorized access and cyberattacks."
   }
 ];
 
