@@ -37,6 +37,7 @@ export const SimulationSection = () => {
   const steps = [
     "Alice generates random bits and bases",
     "Alice sends photons to Bob",
+    "Photon transmitted",
     "Bob randomly chooses measurement bases", 
     "Bob measures photons",
     "Public basis comparison",
@@ -171,9 +172,9 @@ export const SimulationSection = () => {
   };
 
   const nextBitStep = () => {
-    if (bitStep < 4) {
+    if (bitStep < 5) {
       setBitStep(bitStep + 1);
-      if (bitStep === 3) {
+      if (bitStep === 4) {
         processBitStep(currentBitIndex, bitStep + 1);
       }
     } else if (currentBitIndex < stepByStepBits.length - 1) {
@@ -195,7 +196,7 @@ export const SimulationSection = () => {
       setBitStep(bitStep - 1);
     } else if (currentBitIndex > 0) {
       setCurrentBitIndex(currentBitIndex - 1);
-      setBitStep(4);
+      setBitStep(5);
     }
   };
 
@@ -392,7 +393,7 @@ export const SimulationSection = () => {
                         
                         <Button
                           onClick={nextBitStep}
-                          disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 4 && !!finalKey}
+                          disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 5 && !!finalKey}
                           className="bg-quantum-purple hover:bg-quantum-purple/90"
                           size="sm"
                         >
@@ -538,11 +539,12 @@ export const SimulationSection = () => {
 
                         <div className="space-y-2">
                           <h4 className="font-semibold text-sm">Current Step:</h4>
-                          <div className="grid grid-cols-5 gap-2">
+                          <div className="grid grid-cols-6 gap-2">
                             {[
                               "Alice generates bit & basis",
-                              "Bob chooses basis",
                               "Photon transmitted",
+                              "Bob chooses basis",
+                              "Photon measured",
                               "Bob measures",
                               "Basis comparison"
                             ].map((step, index) => (
@@ -562,7 +564,7 @@ export const SimulationSection = () => {
                           </div>
                         </div>
 
-                        {bitStep >= 4 && (
+                        {bitStep >= 5 && (
                           <Card className={`${stepByStepBits[currentBitIndex].isMatching ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}`}>
                             <CardContent className="p-3">
                               <div className="flex items-center justify-between">
@@ -798,6 +800,129 @@ export const SimulationSection = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Analysis Graphs - Moved to bottom */}
+      {showGraphs && simulationData.length > 0 && (
+        <Card className="border-quantum-glow/30">
+          <CardHeader>
+            <CardTitle className="text-quantum-glow flex items-center gap-2">
+              <BarChart3 className="w-6 h-6" />
+              Simulation Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-4 gap-6">
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Total Bits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">{simulationData[0]?.value || 0}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Matching Bases</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">{simulationData[1]?.value || 0}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Key Bits</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">{simulationData[2]?.value || 0}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Error Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold">{simulationData[3]?.value || 0}%</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Error Rate (%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[simulationData[3]]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '6px'
+                          }} 
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--destructive))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Key Rate (%)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[simulationData[4]]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '6px'
+                          }} 
+                        />
+                        <Bar dataKey="value" fill="hsl(var(--quantum-glow))" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <Card className="bg-quantum-glow/10 border-quantum-glow/30">
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-quantum-glow mb-2">Security Assessment</h4>
+                <p className="text-sm">
+                  {parseFloat(simulationData[3]?.value || '0') > 10 
+                    ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
+                    : "✅ Error rate within acceptable limits for secure communication."
+                  }
+                </p>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

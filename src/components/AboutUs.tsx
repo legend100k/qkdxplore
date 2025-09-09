@@ -36,10 +36,14 @@ export const AboutUs = () => {
               <div>
                 <h4 className="font-semibold mb-2">Project Team</h4>
                 <p className="text-sm text-muted-foreground">
-                  Created by: Tejas Naringrekar, Shantaram Chari, Harsh Mhadgut<br />
+                  Team Members:<br />
+                  Tejas Naringrekar - 2022.tejas.naringrekar@ves.ac.in<br />
+                  Shantaram Chari - 2022.shantaram.chari@ves.ac.in<br />
+                  Harsh Mhadgut - 2022.harsh.mhadgut@ves.ac.in<br />
+                  <br />
+                  Mentor: Dr. [Mentor Name] - [mentor.email@ves.ac.in]<br />
                   Department of Electronics and Telecommunication<br />
                   Vivekanand Education Society's Institute of Technology<br />
-                  Email: 2022.tejas.naringrekar@ves.ac.in
                 </p>
               </div>
               

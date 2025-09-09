@@ -7,6 +7,8 @@ import { ExperimentsSection } from "@/components/ExperimentsSection";
 import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
+import { Certificate } from "@/components/Certificate";
+import { Report } from "@/components/Report";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("theory");
@@ -25,6 +27,10 @@ const Index = () => {
         return <ReportsSection />;
       case "post-quiz":
         return <PostQuiz />;
+      case "certificate":
+        return <Certificate />;
+      case "report":
+        return <Report />;
       case "about":
         return <AboutUs />;
       default:
