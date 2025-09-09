@@ -289,7 +289,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {experiments.map((experiment) => {
               const Icon = experiment.icon;
               const isCompleted = results[experiment.id]?.completed;
@@ -407,7 +407,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
             )}
 
             {results[selectedExp.id] && (
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {/* Left Column - Experiment Details */}
                 <div className="space-y-6">
                   {/* Experiment Formulas */}
