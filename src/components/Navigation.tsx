@@ -28,7 +28,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
         </div>
         
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-          <TabsList className="grid w-full grid-cols-9 bg-secondary/50">
+          <TabsList className="grid w-full grid-cols-8 bg-secondary/50">
             <TabsTrigger value="theory" className="data-[state=active]:bg-primary">
               Theory
             </TabsTrigger>
@@ -49,9 +49,6 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
             </TabsTrigger>
             <TabsTrigger value="certificate" className="data-[state=active]:bg-primary">
               Certificate
-            </TabsTrigger>
-            <TabsTrigger value="report" className="data-[state=active]:bg-primary">
-              Report
             </TabsTrigger>
             <TabsTrigger value="about" className="data-[state=active]:bg-primary">
               About

@@ -8,7 +8,6 @@ import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
 import { Certificate } from "@/components/Certificate";
-import { Report } from "@/components/Report";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("theory");
@@ -30,8 +29,6 @@ const Index = () => {
         return <PostQuiz onQuizComplete={(score) => setPostQuizScore(score)} />;
       case "certificate":
         return <Certificate postQuizScore={postQuizScore || 0} />;
-      case "report":
-        return <Report />;
       case "about":
         return <AboutUs />;
       default:
