@@ -247,6 +247,21 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     };
   };
 
+  const getXAxisLabel = (experimentId: string) => {
+    switch (experimentId) {
+      case "noise-analysis":
+        return "Noise Level (%)";
+      case "eavesdropping-detection":
+        return "Eavesdropping Rate (%)";
+      case "qubit-scaling":
+        return "Number of Qubits";
+      case "basis-mismatch":
+        return "Iteration";
+      default:
+        return "X-Axis";
+    }
+  };
+
   const generateAnalysis = (experimentId: string, data: any[]) => {
     switch (experimentId) {
       case "noise-analysis":
@@ -554,9 +569,22 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                                        selectedExp.id === "qubit-scaling" ? "qubits" :
                                        selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"} 
                               stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12} 
+                              fontSize={12}
+                              label={{ 
+                                value: getXAxisLabel(selectedExp.id), 
+                                position: "insideBottom", 
+                                offset: -5 
+                              }}
                             />
-                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <YAxis 
+                              stroke="hsl(var(--muted-foreground))" 
+                              fontSize={12}
+                              label={{ 
+                                value: "Error Rate (%)", 
+                                angle: -90, 
+                                position: "insideLeft" 
+                              }}
+                            />
                             <Tooltip 
                               contentStyle={{ 
                                 backgroundColor: 'hsl(var(--background))', 

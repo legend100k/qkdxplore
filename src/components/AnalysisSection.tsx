@@ -127,8 +127,23 @@ export const AnalysisSection = () => {
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={efficiencyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="basis" stroke="hsl(var(--foreground))" />
-                  <YAxis stroke="hsl(var(--foreground))" />
+                  <XAxis 
+                    dataKey="basis" 
+                    stroke="hsl(var(--foreground))" 
+                    label={{ 
+                      value: "Basis Type", 
+                      position: "insideBottom", 
+                      offset: -5 
+                    }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--foreground))" 
+                    label={{ 
+                      value: "Efficiency (%)", 
+                      angle: -90, 
+                      position: "insideLeft" 
+                    }}
+                  />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 

@@ -331,6 +331,29 @@ export const ReportsSection = () => {
     return theories[experimentId as keyof typeof theories] || "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
   };
 
+  const getXAxisLabel = (experimentId: string) => {
+    switch (experimentId) {
+      case "noise-analysis":
+        return "Noise Level (%)";
+      case "eavesdropping-detection":
+        return "Eavesdropping Rate (%)";
+      case "qubit-scaling":
+        return "Number of Qubits";
+      default:
+        return "X-Axis";
+    }
+  };
+
+  const getYAxisLabel = (experimentId: string, series: string) => {
+    if (series === "keyRate") {
+      return "Key Rate (%)";
+    } else if (series === "keyLength") {
+      return "Key Length";
+    } else {
+      return "Y-Axis";
+    }
+  };
+
   const renderExperimentChart = (data: any[], experimentId: string) => {
     // Determine chart configuration based on experiment type
     let xAxisKey, series1, series2;
@@ -361,18 +384,33 @@ export const ReportsSection = () => {
             <XAxis 
               dataKey={xAxisKey}
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12} 
+              fontSize={12}
+              label={{ 
+                value: getXAxisLabel(experimentId), 
+                position: "insideBottom", 
+                offset: -5 
+              }}
             />
             <YAxis 
               yAxisId="left" 
               stroke="hsl(var(--muted-foreground))" 
-              fontSize={12} 
+              fontSize={12}
+              label={{ 
+                value: "Error Rate (%)", 
+                angle: -90, 
+                position: "insideLeft" 
+              }}
             />
             <YAxis 
               yAxisId="right" 
               orientation="right" 
               stroke="hsl(var(--quantum-glow))" 
-              fontSize={12} 
+              fontSize={12}
+              label={{ 
+                value: getYAxisLabel(experimentId, series2), 
+                angle: 90, 
+                position: "insideRight" 
+              }}
             />
             <Tooltip 
               contentStyle={{ 

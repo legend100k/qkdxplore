@@ -744,22 +744,39 @@ export const SimulationSection = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={simulationData.slice(0, 3)}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                                <Tooltip 
-                                  contentStyle={{ 
-                                    backgroundColor: 'hsl(var(--background))', 
-                                    border: '1px solid hsl(var(--border))',
-                                    borderRadius: '6px'
-                                  }} 
-                                />
-                                <Bar dataKey="value" fill="hsl(var(--primary))" />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={simulationData.slice(0, 3)}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                      label={{ 
+                        value: "Metrics", 
+                        position: "insideBottom", 
+                        offset: -5 
+                      }}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                      label={{ 
+                        value: "Count", 
+                        angle: -90, 
+                        position: "insideLeft" 
+                      }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px'
+                      }} 
+                    />
+                    <Bar dataKey="value" fill="hsl(var(--primary))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
                         </CardContent>
                       </Card>
 
