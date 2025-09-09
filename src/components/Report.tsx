@@ -44,19 +44,6 @@ export const Report = () => {
     { qubits: 50, keyLength: 25, errorRate: 0.4, statisticalSecurity: 100 }
   ];
 
-  const basisMismatchData = [
-    { iteration: 1, basisMatchRate: 48.2, theoreticalMatch: 50, deviation: 1.8 },
-    { iteration: 2, basisMatchRate: 51.6, theoreticalMatch: 50, deviation: 1.6 },
-    { iteration: 3, basisMatchRate: 49.8, theoreticalMatch: 50, deviation: 0.2 },
-    { iteration: 4, basisMatchRate: 50.4, theoreticalMatch: 50, deviation: 0.4 },
-    { iteration: 5, basisMatchRate: 48.7, theoreticalMatch: 50, deviation: 1.3 },
-    { iteration: 6, basisMatchRate: 52.1, theoreticalMatch: 50, deviation: 2.1 },
-    { iteration: 7, basisMatchRate: 49.3, theoreticalMatch: 50, deviation: 0.7 },
-    { iteration: 8, basisMatchRate: 50.8, theoreticalMatch: 50, deviation: 0.8 },
-    { iteration: 9, basisMatchRate: 47.9, theoreticalMatch: 50, deviation: 2.1 },
-    { iteration: 10, basisMatchRate: 51.2, theoreticalMatch: 50, deviation: 1.2 }
-  ];
-
   // Sample output table data
   const sampleBitsData = [
     { bit: 1, aliceBit: 1, aliceBasis: "+", bobBasis: "×", bobMeasurement: 0, match: false, kept: false },
@@ -289,7 +276,6 @@ export const Report = () => {
                   <li>Channel noise significantly affects key generation efficiency</li>
                   <li>Eavesdropping detection is possible through increased error rates</li>
                   <li>Qubit scaling improves statistical security of the protocol</li>
-                  <li>Basis mismatch rate aligns with theoretical predictions</li>
                 </ul>
               </CardContent>
             </Card>
@@ -443,44 +429,6 @@ export const Report = () => {
                         stroke="hsl(var(--quantum-glow))" 
                         strokeWidth={2} 
                         activeDot={{ r: 8 }} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              {/* Basis Mismatch Graph */}
-              <div>
-                <h3 className="font-semibold mb-4">Basis Mismatch Rate Analysis</h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={basisMismatchData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                      <XAxis dataKey="iteration" name="Iteration" stroke="hsl(var(--muted-foreground))" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--background))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '6px'
-                        }} 
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="basisMatchRate" 
-                        name="Actual Match Rate (%)" 
-                        stroke="hsl(var(--quantum-blue))" 
-                        strokeWidth={2} 
-                        activeDot={{ r: 8 }} 
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="theoreticalMatch" 
-                        name="Theoretical Match Rate (%)" 
-                        stroke="hsl(var(--quantum-purple))" 
-                        strokeWidth={2} 
-                        strokeDasharray="3 3"
                       />
                     </LineChart>
                   </ResponsiveContainer>
