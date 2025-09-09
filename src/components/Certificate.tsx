@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, Award } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 interface CertificateProps {
   postQuizScore?: number;
@@ -39,8 +41,87 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
   };
 
   const handleDownloadCertificate = () => {
-    toast.success("Certificate downloaded successfully!");
-    // In a real implementation, this would trigger a PDF download
+    try {
+      // Create a new jsPDF instance
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Set font and title
+      doc.setFontSize(24);
+      doc.setTextColor(0, 102, 204);
+      doc.text("Certificate of Completion", 148, 30, { align: "center" });
+
+      // Add decorative line
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.5);
+      doc.line(60, 38, 235, 38);
+
+      // Subtitle
+      doc.setFontSize(16);
+      doc.setTextColor(100, 100, 100);
+      doc.text("This certificate is proudly presented to", 148, 48, { align: "center" });
+
+      // Student name
+      doc.setFontSize(22);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'bold');
+      doc.text(studentName, 148, 65, { align: "center" });
+
+      // Description
+      doc.setFontSize(14);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont(undefined, 'normal');
+      doc.text("For successfully completing the", 148, 75, { align: "center" });
+
+      // Course name
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text(courseName, 148, 85, { align: "center" });
+
+      // Score
+      doc.setFontSize(14);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont(undefined, 'normal');
+      doc.text(`with a post-quiz score of ${postQuizScore}%`, 148, 95, { align: "center" });
+
+      // Details table
+      (doc as any).autoTable({
+        startY: 110,
+        head: [['', '']],
+        body: [
+          ['Instructor:', instructorName],
+          ['Date:', currentDate],
+          ['Institution:', 'Vivekanand Education Society\'s Institute of Technology'],
+          ['Department:', 'Department of Electronics and Telecommunication']
+        ],
+        theme: 'grid',
+        styles: { cellPadding: 3, fontSize: 12 },
+        headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        columnStyles: {
+          0: { cellWidth: 40, fontStyle: 'bold' },
+          1: { cellWidth: 120 }
+        }
+      });
+
+      // Footer
+      doc.setFontSize(10);
+      doc.setTextColor(150, 150, 150);
+      doc.setFont(undefined, 'italic');
+      doc.text("This certificate was generated electronically and is valid without signature.", 148, 180, { align: "center" });
+
+      // Save the PDF
+      doc.save(`certificate_${studentName.replace(/\s+/g, '_')}.pdf`);
+      
+      toast.success("Certificate downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      toast.error("Error generating certificate. Please try again.");
+    }
   };
 
   // If post-quiz score is less than 40%, show a message instead of the certificate
