@@ -149,7 +149,7 @@ export const ProtocolSteps = () => {
             <h2 className="text-2xl font-bold text-quantum-purple mb-2">
               {steps[currentStep].title}
             </h2>
-            <p className="text-foreground/80 max-w-2xl mx-auto">
+            <p className="text-foreground/80">
               {steps[currentStep].description}
             </p>
           </div>

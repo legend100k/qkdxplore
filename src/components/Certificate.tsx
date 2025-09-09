@@ -128,7 +128,7 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
   if (postQuizScore < 40 && postQuizScore > 0) {
     return (
       <div className="space-y-6">
-        <Card className="border-quantum-purple/30 max-w-2xl mx-auto">
+        <Card className="border-quantum-purple/30">
           <CardHeader>
             <CardTitle className="text-quantum-purple flex items-center gap-2">
               <Award className="w-6 h-6" />
@@ -158,7 +158,7 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
   if (!showCertificate) {
     return (
       <div className="space-y-6">
-        <Card className="border-quantum-glow/30 max-w-2xl mx-auto">
+        <Card className="border-quantum-glow/30">
           <CardHeader>
             <CardTitle className="text-quantum-glow flex items-center gap-2">
               <Award className="w-6 h-6" />
@@ -228,7 +228,7 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
   // Show the certificate
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-glow/30 max-w-4xl mx-auto">
+      <Card className="border-quantum-glow/30">
         <CardContent className="p-8">
           <div className="text-center space-y-6">
             <div className="border-b border-quantum-glow/30 pb-6">

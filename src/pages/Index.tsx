@@ -38,7 +38,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <div className="container mx-auto px-4 py-8 flex-grow">
+      <div className="px-4 py-8 flex-grow">
         {/* Header with college logo */}
         <div className="flex justify-between items-center mb-6">
           <div></div>
