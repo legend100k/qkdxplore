@@ -13,6 +13,10 @@ interface Question {
   explanation: string;
 }
 
+interface PostQuizProps {
+  onQuizComplete?: (score: number) => void;
+}
+
 const questions: Question[] = [
   {
     id: 1,
@@ -88,7 +92,7 @@ const questions: Question[] = [
   }
 ];
 
-export const PostQuiz = () => {
+export const PostQuiz = ({ onQuizComplete }: PostQuizProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -106,7 +110,10 @@ export const PostQuiz = () => {
     } else {
       setShowResults(true);
       setQuizCompleted(true);
-      toast.success("Post-quiz completed! Great job exploring quantum cryptography!");
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      onQuizComplete?.(percentage);
+      toast.success(`Post-quiz completed! Great job exploring quantum cryptography! Your score: ${score}/${questions.length}`);
     }
   };
 

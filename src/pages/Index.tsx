@@ -12,6 +12,7 @@ import { Report } from "@/components/Report";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("theory");
+  const [postQuizScore, setPostQuizScore] = useState<number | null>(null);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -26,9 +27,9 @@ const Index = () => {
       case "reports":
         return <ReportsSection />;
       case "post-quiz":
-        return <PostQuiz />;
+        return <PostQuiz onQuizComplete={(score) => setPostQuizScore(score)} />;
       case "certificate":
-        return <Certificate />;
+        return <Certificate postQuizScore={postQuizScore || 0} />;
       case "report":
         return <Report />;
       case "about":
