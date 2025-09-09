@@ -2,6 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, BarChart3, Table } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import { toast } from "sonner";
 
 export const Report = () => {
   // Sample experiment data - in a real implementation, this would come from the experiment results
@@ -68,11 +71,187 @@ export const Report = () => {
     { bit: 10, aliceBit: 0, aliceBasis: "×", bobBasis: "×", bobMeasurement: 0, match: true, kept: true }
   ];
 
+  const handleDownloadReport = () => {
+    try {
+      // Create a new jsPDF instance
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Set title
+      doc.setFontSize(22);
+      doc.setTextColor(0, 102, 204);
+      doc.text("Quantum Key Distribution Experiment Report", 105, 20, { align: "center" });
+
+      // Subtitle
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'bold');
+      doc.text("BB84 Protocol Analysis", 105, 30, { align: "center" });
+
+      // Add report date
+      const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Report Generated: ${currentDate}`, 105, 38, { align: "center" });
+
+      // Add a line separator
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.2);
+      doc.line(20, 42, 190, 42);
+
+      // Add overview section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Experiment Overview", 20, 50);
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      const overviewText = "This report documents the analysis of the BB84 quantum key distribution protocol " +
+        "through various simulated experiments. The BB84 protocol, developed by Charles " +
+        "Bennett and Gilles Brassard in 1984, is a fundamental quantum cryptography protocol " +
+        "that enables secure communication by exploiting the principles of quantum mechanics.";
+      doc.text(doc.splitTextToSize(overviewText, 170), 20, 58);
+
+      // Add key findings
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Key Findings", 20, 85);
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      const findings = [
+        "• Channel noise significantly affects key generation efficiency",
+        "• Eavesdropping detection is possible through increased error rates",
+        "• Qubit scaling improves statistical security of the protocol",
+        "• Basis mismatch rate aligns with theoretical predictions"
+      ];
+      doc.text(findings, 25, 93);
+
+      // Add experiment data tables
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Noise Analysis Data", 20, 120);
+
+      // Noise analysis table
+      (doc as any).autoTable({
+        startY: 125,
+        head: [['Noise (%)', 'Error Rate (%)', 'Key Rate (%)', 'Key Length']],
+        body: noiseAnalysisData.map(item => [
+          item.noise, 
+          item.errorRate, 
+          item.keyRate, 
+          item.keyLength
+        ]),
+        theme: 'grid',
+        styles: { cellPadding: 2, fontSize: 10 },
+        headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] }
+      });
+
+      // Add eavesdropping data
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Eavesdropping Detection Data", 20, (doc as any).lastAutoTable.finalY + 10);
+
+      (doc as any).autoTable({
+        startY: (doc as any).lastAutoTable.finalY + 15,
+        head: [['Eavesdropping (%)', 'Error Rate (%)', 'Detection Probability (%)', 'Key Rate (%)']],
+        body: eavesdroppingData.map(item => [
+          item.eavesdropping, 
+          item.errorRate, 
+          item.detectionProbability, 
+          item.keyRate
+        ]),
+        theme: 'grid',
+        styles: { cellPadding: 2, fontSize: 10 },
+        headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] }
+      });
+
+      // Add qubit scaling data
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Qubit Scaling Data", 20, (doc as any).lastAutoTable.finalY + 10);
+
+      (doc as any).autoTable({
+        startY: (doc as any).lastAutoTable.finalY + 15,
+        head: [['Qubits', 'Key Length', 'Error Rate (%)', 'Statistical Security (%)']],
+        body: qubitScalingData.map(item => [
+          item.qubits, 
+          item.keyLength, 
+          item.errorRate, 
+          item.statisticalSecurity
+        ]),
+        theme: 'grid',
+        styles: { cellPadding: 2, fontSize: 10 },
+        headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] }
+      });
+
+      // Add team information
+      doc.setFontSize(16);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Team Information", 20, (doc as any).lastAutoTable.finalY + 15);
+
+      (doc as any).autoTable({
+        startY: (doc as any).lastAutoTable.finalY + 20,
+        head: [['Category', 'Details']],
+        body: [
+          ['Team Members', 'Tejas Naringrekar, Shantaram Chari, Harsh Mhadgut'],
+          ['Instructor', 'Dr. [Instructor Name]'],
+          ['Institution', 'Vivekanand Education Society\'s Institute of Technology'],
+          ['Department', 'Department of Electronics and Telecommunication']
+        ],
+        theme: 'grid',
+        styles: { cellPadding: 3, fontSize: 11 },
+        headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
+        alternateRowStyles: { fillColor: [240, 240, 240] },
+        columnStyles: {
+          0: { cellWidth: 40, fontStyle: 'bold' },
+          1: { cellWidth: 130 }
+        }
+      });
+
+      // Add footer
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: "center" });
+      }
+
+      // Save the PDF
+      doc.save("quantum_key_distribution_report.pdf");
+      
+      toast.success("Report downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.error("Error generating report. Please try again.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-quantum-glow">Experiment Report</h1>
-        <Button className="bg-quantum-blue hover:bg-quantum-blue/90">
+        <Button className="bg-quantum-blue hover:bg-quantum-blue/90" onClick={handleDownloadReport}>
           <Download className="w-4 h-4 mr-2" />
           Download PDF
         </Button>
