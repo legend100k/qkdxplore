@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText, RotateCw } from "lucide-react";
+import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface QuantumBit {
   id: number;
@@ -26,69 +26,57 @@ interface ExperimentResult {
   analysis: string;
   completed: boolean;
   timestamp: string;
+  usedBits?: QuantumBit[];
 }
 
 const experiments = [
   {
     id: "noise-analysis",
-    name: "Noise Impact Analysis",
-    description: "Analyze how channel noise affects protocol performance",
-    icon: Zap,
-    color: "yellow-500",
+    name: "Channel Noise Impact Analysis",
+    description: "Study how different noise levels affect key generation and error rates",
+    icon: Beaker,
+    color: "quantum-blue",
     parameters: {
-      qubits: 30,
       noiseRange: [0, 20],
-      noiseStep: 2,
-      eavesdropping: 0
-    },
-    statusColor: "yellow"
+      step: 2,
+      qubits: 30
+    }
   },
   {
-    id: "eavesdropping-detection",
-    name: "Eavesdropping Detection",
-    description: "Study how eavesdropping affects error rates",
+    id: "eavesdropping-detection", 
+    name: "Eavesdropping Detection Experiment",
+    description: "Analyze how Eve's presence affects the quantum channel and error patterns",
     icon: Eye,
-    color: "red-500",
+    color: "quantum-purple",
     parameters: {
-      qubits: 30,
-      eavesdroppingRange: [0, 30],
-      eavesdroppingStep: 3,
-      noise: 0
-    },
-    statusColor: "red"
+      eavesDroppingRange: [0, 100],
+      step: 10,
+      qubits: 40
+    }
   },
   {
     id: "qubit-scaling",
-    name: "Qubit Scaling Analysis",
-    description: "Examine how key length scales with qubit count",
+    name: "Qubit Number Scaling Study",
+    description: "Examine how the number of qubits affects statistical security and key rates",
     icon: BarChart3,
-    color: "purple-500", 
+    color: "quantum-glow",
     parameters: {
       qubitRange: [10, 50],
-      qubitStep: 5,
-      noise: 5,
-      eavesdropping: 0
-    },
-    statusColor: "purple"
+      step: 5,
+      noise: 5
+    }
   },
   {
-    id: "real-world-comparison",
-    name: "Real World Comparison",
-    description: "Compare various real-world conditions",
+    id: "basis-mismatch",
+    name: "Basis Mismatch Rate Analysis", 
+    description: "Study the theoretical vs practical basis matching rates in BB84",
     icon: Shield,
-    color: "green-500",
+    color: "primary",
     parameters: {
-      qubits: 30,
-      conditions: [
-        { name: "Ideal", noise: 0, eavesdropping: 0 },
-        { name: "Low Noise", noise: 5, eavesdropping: 0 },
-        { name: "Medium Noise", noise: 10, eavesdropping: 0 },
-        { name: "High Noise", noise: 15, eavesdropping: 0 },
-        { name: "Eavesdropping", noise: 0, eavesdropping: 10 },
-        { name: "Noise + Eavesdropping", noise: 10, eavesdropping: 10 }
-      ]
-    },
-    statusColor: "green"
+      iterations: 20,
+      qubits: 25,
+      noise: 3
+    }
   }
 ];
 
@@ -99,8 +87,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
   const [results, setResults] = useState<{ [key: string]: ExperimentResult }>({});
   const [currentBits, setCurrentBits] = useState<QuantumBit[]>([]);
   const [showBitsSimulation, setShowBitsSimulation] = useState(false);
-  const [currentIteration, setCurrentIteration] = useState(0);
-  const [totalIterations, setTotalIterations] = useState(0);
+  const [finalExperimentBits, setFinalExperimentBits] = useState<QuantumBit[]>([]);
 
   const runExperiment = async (experimentId: string) => {
     const experiment = experiments.find(e => e.id === experimentId);
@@ -110,115 +97,79 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     setProgress(0);
     setShowBitsSimulation(true);
     setCurrentBits([]);
-    setCurrentIteration(0);
     
-    let experimentData: any[] = [];
-    
-    if (experimentId === "noise-analysis") {
-      const { qubits, noiseRange, noiseStep, eavesdropping } = experiment.parameters;
-      const [minNoise, maxNoise] = noiseRange;
-      const iterations = Math.floor((maxNoise - minNoise) / noiseStep) + 1;
-      setTotalIterations(iterations);
-      
-      for (let i = 0; i <= iterations; i++) {
-        const noise = minNoise + i * noiseStep;
-        setProgress((i / iterations) * 100);
-        setCurrentIteration(i + 1);
-        
-        const result = simulateBB84(qubits, eavesdropping, noise);
-        experimentData.push({
-          noise,
-          errorRate: result.errorRate,
-          keyRate: result.keyRate,
-          keyLength: result.keyLength,
-          basisMatchRate: result.basisMatchRate
-        });
-        
-        // Small delay to show progress
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } else if (experimentId === "eavesdropping-detection") {
-      const { qubits, eavesdroppingRange, eavesdroppingStep, noise } = experiment.parameters;
-      const [minEavesdropping, maxEavesdropping] = eavesdroppingRange;
-      const iterations = Math.floor((maxEavesdropping - minEavesdropping) / eavesdroppingStep) + 1;
-      setTotalIterations(iterations);
-      
-      for (let i = 0; i <= iterations; i++) {
-        const eavesdropping = minEavesdropping + i * eavesdroppingStep;
-        setProgress((i / iterations) * 100);
-        setCurrentIteration(i + 1);
-        
-        const result = simulateBB84(qubits, eavesdropping, noise);
-        experimentData.push({
-          eavesdropping,
-          errorRate: result.errorRate,
-          keyRate: result.keyRate,
-          keyLength: result.keyLength,
-          basisMatchRate: result.basisMatchRate
-        });
-        
-        // Small delay to show progress
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } else if (experimentId === "qubit-scaling") {
-      const { qubitRange, qubitStep, noise, eavesdropping } = experiment.parameters;
-      const [minQubits, maxQubits] = qubitRange;
-      const iterations = Math.floor((maxQubits - minQubits) / qubitStep) + 1;
-      setTotalIterations(iterations);
-      
-      for (let i = 0; i <= iterations; i++) {
-        const qubits = minQubits + i * qubitStep;
-        setProgress((i / iterations) * 100);
-        setCurrentIteration(i + 1);
-        
-        const result = simulateBB84(qubits, eavesdropping, noise);
-        experimentData.push({
-          qubits,
-          errorRate: result.errorRate,
-          keyRate: result.keyRate,
-          keyLength: result.keyLength,
-          basisMatchRate: result.basisMatchRate
-        });
-        
-        // Small delay to show progress
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    } else if (experimentId === "real-world-comparison") {
-      const { qubits, conditions } = experiment.parameters;
-      setTotalIterations(conditions.length);
-      
-      for (let i = 0; i < conditions.length; i++) {
-        const condition = conditions[i];
-        setProgress(((i + 1) / conditions.length) * 100);
-        setCurrentIteration(i + 1);
-        
-        const result = simulateBB84(qubits, condition.eavesdropping, condition.noise);
-        experimentData.push({
-          condition: condition.name,
-          noise: condition.noise,
-          eavesdropping: condition.eavesdropping,
-          errorRate: result.errorRate,
-          keyRate: result.keyRate,
-          keyLength: result.keyLength,
-          basisMatchRate: result.basisMatchRate
-        });
-        
-        // Small delay to show progress
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    const experimentData: any[] = [];
+    let totalSteps = 0;
+    let currentStep = 0;
+
+    switch (experimentId) {
+      case "noise-analysis":
+        totalSteps = (experiment.parameters.noiseRange[1] - experiment.parameters.noiseRange[0]) / experiment.parameters.step + 1;
+        for (let noise = experiment.parameters.noiseRange[0]; noise <= experiment.parameters.noiseRange[1]; noise += experiment.parameters.step) {
+          const result = simulateBB84(experiment.parameters.qubits, 0, noise);
+          experimentData.push({
+            noise,
+            errorRate: result.errorRate,
+            keyRate: result.keyRate,
+            securityLevel: result.errorRate < 10 ? "Secure" : "Compromised"
+          });
+          currentStep++;
+          setProgress((currentStep / totalSteps) * 100);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        // Store the final simulation bits
+        setFinalExperimentBits([...currentBits]);
+        break;
+
+      case "eavesdropping-detection":
+        totalSteps = (experiment.parameters.eavesDroppingRange[1] - experiment.parameters.eavesDroppingRange[0]) / experiment.parameters.step + 1;
+        for (let eves = experiment.parameters.eavesDroppingRange[0]; eves <= experiment.parameters.eavesDroppingRange[1]; eves += experiment.parameters.step) {
+          const result = simulateBB84(experiment.parameters.qubits, eves, 2);
+          experimentData.push({
+            eavesdropping: eves,
+            errorRate: result.errorRate,
+            detectionProbability: Math.min(100, result.errorRate * 4),
+            keyRate: result.keyRate
+          });
+          currentStep++;
+          setProgress((currentStep / totalSteps) * 100);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        break;
+
+      case "qubit-scaling":
+        totalSteps = (experiment.parameters.qubitRange[1] - experiment.parameters.qubitRange[0]) / experiment.parameters.step + 1;
+        for (let qubits = experiment.parameters.qubitRange[0]; qubits <= experiment.parameters.qubitRange[1]; qubits += experiment.parameters.step) {
+          const result = simulateBB84(qubits, 10, experiment.parameters.noise);
+          experimentData.push({
+            qubits,
+            keyLength: result.keyLength,
+            errorRate: result.errorRate,
+            statisticalSecurity: Math.min(100, (qubits / 50) * 100)
+          });
+          currentStep++;
+          setProgress((currentStep / totalSteps) * 100);
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        break;
+
+      case "basis-mismatch":
+        totalSteps = experiment.parameters.iterations;
+        for (let i = 0; i < experiment.parameters.iterations; i++) {
+          const result = simulateBB84(experiment.parameters.qubits, 0, experiment.parameters.noise);
+          experimentData.push({
+            iteration: i + 1,
+            basisMatchRate: result.basisMatchRate,
+            theoreticalMatch: 50,
+            deviation: Math.abs(result.basisMatchRate - 50)
+          });
+          currentStep++;
+          setProgress((currentStep / totalSteps) * 100);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        break;
     }
-    
-    // For demo purposes, show the last simulation bits
-    if (experimentData.length > 0) {
-      const lastData = experimentData[experimentData.length - 1];
-      const result = simulateBB84(
-        experiment.parameters.qubits || lastData.qubits || 30,
-        experiment.parameters.eavesdropping || lastData.eavesdropping || 0,
-        experiment.parameters.noise || lastData.noise || 0
-      );
-      setCurrentBits(result.simulationBits);
-    }
-    
+
     const experimentResult: ExperimentResult = {
       id: experimentId,
       name: experiment.name,
@@ -226,15 +177,15 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
       data: experimentData,
       analysis: generateAnalysis(experimentId, experimentData),
       completed: true,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      usedBits: finalExperimentBits
     };
 
     setResults(prev => ({ ...prev, [experimentId]: experimentResult }));
     onSaveExperiment?.(experimentResult);
     setIsRunning(false);
-    setProgress(100);
-    setCurrentIteration(totalIterations);
-    toast.success(`${experiment.name} completed successfully with ${experimentData.length} iterations!`);
+    setProgress(0);
+    toast.success(`${experiment.name} completed successfully!`);
   };
 
   const simulateBB84 = (qubits: number, eavesdropping: number, noise: number) => {
@@ -250,160 +201,77 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
       const isEavesdropped = Math.random() < eavesdropping / 100;
 
       let bobResult = aliceBit;
+      let hasError = false;
 
       // Apply eavesdropping
       if (isEavesdropped) {
-        // Eve measures the photon and randomly changes the bit with 75% probability
-        if (Math.random() < 0.75) {
-          bobResult = 1 - bobResult;
-        }
+        bobResult = Math.random() > 0.25 ? 1 - aliceBit : aliceBit;
       }
 
       // Apply noise
       if (Math.random() < noise / 100) {
         bobResult = 1 - bobResult;
+        hasError = true;
       }
 
       const basisMatch = aliceBasis === bobBasis;
-      const kept = basisMatch && bobResult === aliceBit;
+      const kept = basisMatch;
 
       if (basisMatch) {
         matchingBases++;
-        if (kept) {
-          keyBits++;
-        } else {
+        keyBits++;
+        if (bobResult !== aliceBit && !hasError) {
           errors++;
         }
       }
 
-      // Only store first 20 bits for display
-      if (i < 20) {
-        simulationBits.push({
-          id: i,
-          aliceBit,
-          aliceBasis: aliceBasis ? "Diagonal" : "Rectilinear",
-          bobBasis: bobBasis ? "Diagonal" : "Rectilinear", 
-          bobMeasurement: bobResult,
-          match: basisMatch,
-          kept,
-          eavesdropped: isEavesdropped
-        });
-      }
+      simulationBits.push({
+        id: i,
+        aliceBit,
+        aliceBasis: aliceBasis ? "Diagonal" : "Rectilinear",
+        bobBasis: bobBasis ? "Diagonal" : "Rectilinear", 
+        bobMeasurement: bobResult,
+        match: basisMatch,
+        kept: kept && bobResult === aliceBit,
+        eavesdropped: isEavesdropped
+      });
     }
 
+    setCurrentBits(simulationBits);
+
     return {
-      errorRate: qubits > 0 ? (errors / qubits) * 100 : 0,
+      errorRate: matchingBases > 0 ? (errors / matchingBases) * 100 : 0,
       keyRate: (keyBits / qubits) * 100,
       keyLength: keyBits,
-      basisMatchRate: (matchingBases / qubits) * 100,
-      simulationBits
+      basisMatchRate: (matchingBases / qubits) * 100
     };
   };
 
   const generateAnalysis = (experimentId: string, data: any[]) => {
     switch (experimentId) {
       case "noise-analysis":
-        return `Noise analysis shows a linear relationship between channel noise and error rate. As noise increases from ${data[0].noise}% to ${data[data.length-1].noise}%, the error rate increases from ${data[0].errorRate.toFixed(2)}% to ${data[data.length-1].errorRate.toFixed(2)}%. Key generation rate decreases from ${data[0].keyRate.toFixed(2)}% to ${data[data.length-1].keyRate.toFixed(2)}%. This demonstrates the sensitivity of quantum key distribution to environmental noise.`;
+        const maxNoise = Math.max(...data.map(d => d.noise));
+        const errorAtMaxNoise = data.find(d => d.noise === maxNoise)?.errorRate || 0;
+        return `Channel noise significantly affects BB84 performance. At ${maxNoise}% noise, error rate reaches ${errorAtMaxNoise.toFixed(1)}%. The linear relationship demonstrates quantum channel sensitivity.`;
       
       case "eavesdropping-detection":
-        return `Eavesdropping detection experiment shows that interception significantly increases error rates. With ${data[0].eavesdropping}% eavesdropping, error rate is ${data[0].errorRate.toFixed(2)}%, increasing to ${data[data.length-1].errorRate.toFixed(2)}% at ${data[data.length-1].eavesdropping}% interception. This validates the fundamental principle of quantum cryptography: any eavesdropping attempt introduces detectable errors.`;
+        const maxEaves = Math.max(...data.map(d => d.eavesdropping));
+        const detectionAtMax = data.find(d => d.eavesdropping === maxEaves)?.detectionProbability || 0;
+        return `Eavesdropping detection shows clear correlation with error rates. At ${maxEaves}% interception, detection probability reaches ${detectionAtMax.toFixed(1)}%, demonstrating quantum security principles.`;
       
       case "qubit-scaling":
-        return `Qubit scaling analysis demonstrates that larger key sizes improve statistical security. With ${data[0].qubits} qubits, ${data[0].keyLength} bits were generated (${data[0].keyRate.toFixed(2)}% efficiency). With ${data[data.length-1].qubits} qubits, ${data[data.length-1].keyLength} bits were generated (${data[data.length-1].keyRate.toFixed(2)}% efficiency). Larger qubit counts provide better security through statistical confidence.`;
+        const maxQubits = Math.max(...data.map(d => d.qubits));
+        const keyAtMax = data.find(d => d.qubits === maxQubits)?.keyLength || 0;
+        return `Qubit scaling demonstrates improved statistical security. With ${maxQubits} qubits, ${keyAtMax} key bits generated. Higher qubit counts provide better eavesdropping detection confidence.`;
       
-      case "real-world-comparison":
-        return `Real-world comparison shows that noise has a more significant impact on performance than eavesdropping at equivalent levels. Ideal conditions yield near-zero error rates, while 15% noise increases error rate to ~15%. Eavesdropping at 10% causes ~7.5% error rate. Combined noise and eavesdropping show additive effects, demonstrating practical implementation challenges.`;
+      case "basis-mismatch":
+        const avgMatch = data.reduce((sum, d) => sum + d.basisMatchRate, 0) / data.length;
+        const avgDeviation = data.reduce((sum, d) => sum + d.deviation, 0) / data.length;
+        return `Basis matching shows expected ~50% rate with ${avgMatch.toFixed(1)}% average. Standard deviation of ${avgDeviation.toFixed(1)}% confirms theoretical predictions and random basis selection.`;
       
       default:
         return "Experiment completed successfully. Data shows expected quantum behavior patterns.";
     }
-  };
-
-  const resetExperiment = (experimentId: string) => {
-    setResults(prev => {
-      const newResults = { ...prev };
-      delete newResults[experimentId];
-      return newResults;
-    });
-  };
-
-  const renderExperimentChart = (data: any[], experimentId: string) => {
-    // Determine chart configuration based on experiment type
-    let xAxisKey, series1, series2;
-    if (experimentId === "noise-analysis") {
-      xAxisKey = "noise";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else if (experimentId === "eavesdropping-detection") {
-      xAxisKey = "eavesdropping";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else if (experimentId === "qubit-scaling") {
-      xAxisKey = "qubits";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else if (experimentId === "real-world-comparison") {
-      xAxisKey = "condition";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else {
-      // Default case
-      xAxisKey = Object.keys(data[0] || {})[0];
-      series1 = Object.keys(data[0] || {})[1];
-      series2 = Object.keys(data[0] || {})[2];
-    }
-
-    return (
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-            <XAxis 
-              dataKey={xAxisKey}
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12} 
-            />
-            <YAxis 
-              yAxisId="left" 
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12} 
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              stroke="hsl(var(--quantum-glow))" 
-              fontSize={12} 
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px'
-              }} 
-            />
-            <Legend />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey={series1} 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={2}
-              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
-              activeDot={{ r: 8 }}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey={series2} 
-              stroke="hsl(var(--quantum-glow))" 
-              strokeWidth={2}
-              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    );
   };
 
   const selectedExp = experiments.find(e => e.id === selectedExperiment);
@@ -431,106 +299,22 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                   key={experiment.id}
                   className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
                     selectedExperiment === experiment.id 
-                      ? `border-${experiment.statusColor}-400/50 bg-${experiment.statusColor}-400/10 shadow-${experiment.statusColor}-400/20`
+                      ? `border-${experiment.color} bg-${experiment.color}/10 quantum-glow`
                       : 'border-muted-foreground/20 hover:border-quantum-glow/50'
                   } ${isCompleted ? 'bg-green-400/5 border-green-400/30' : ''}`}
                   onClick={() => setSelectedExperiment(experiment.id)}
                 >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`w-3 h-3 rounded-full bg-${experiment.statusColor}-400`}></div>
-                      <div className={`p-2 rounded-lg bg-${experiment.statusColor}-400/20`}>
-                        <Icon className={`w-6 h-6 text-${experiment.statusColor}-400`} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-full bg-${experiment.color}/20`}>
+                        <Icon className={`w-5 h-5 text-${experiment.color}`} />
                       </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-1 flex items-center gap-2">
                           {experiment.name}
                           {isCompleted && <span className="text-green-400 text-xs">✓ Completed</span>}
                         </h3>
                         <p className="text-sm text-muted-foreground">{experiment.description}</p>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        {experiment.id === "noise-analysis" && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">📊</div>
-                              <span className="text-muted-foreground">Qubits: {experiment.parameters.qubits}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">🌊</div>
-                              <span className="text-muted-foreground">Noise: {experiment.parameters.noiseRange[0]}% to {experiment.parameters.noiseRange[1]}%</span>
-                            </div>
-                          </>
-                        )}
-                        {experiment.id === "eavesdropping-detection" && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">📊</div>
-                              <span className="text-muted-foreground">Qubits: {experiment.parameters.qubits}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">👁</div>
-                              <span className="text-muted-foreground">Eavesdropping: {experiment.parameters.eavesdroppingRange[0]}% to {experiment.parameters.eavesdroppingRange[1]}%</span>
-                            </div>
-                          </>
-                        )}
-                        {experiment.id === "qubit-scaling" && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">📊</div>
-                              <span className="text-muted-foreground">Qubits: {experiment.parameters.qubitRange[0]} to {experiment.parameters.qubitRange[1]}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">🌊</div>
-                              <span className="text-muted-foreground">Noise: {experiment.parameters.noise}%</span>
-                            </div>
-                          </>
-                        )}
-                        {experiment.id === "real-world-comparison" && (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">📊</div>
-                              <span className="text-muted-foreground">Conditions: {experiment.parameters.conditions.length}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 flex items-center justify-center bg-primary/20 rounded text-xs">🔍</div>
-                              <span className="text-muted-foreground">Qubits: {experiment.parameters.qubits}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            runExperiment(experiment.id);
-                          }}
-                          disabled={isRunning}
-                          className={`flex-1 ${
-                            experiment.id === "noise-analysis" ? "bg-yellow-500 hover:bg-yellow-600" :
-                            experiment.id === "eavesdropping-detection" ? "bg-red-500 hover:bg-red-600" :
-                            experiment.id === "qubit-scaling" ? "bg-purple-500 hover:bg-purple-600" :
-                            "bg-green-500 hover:bg-green-600"
-                          } text-white`}
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Run Experiment
-                        </Button>
-                        {isCompleted && (
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              resetExperiment(experiment.id);
-                            }}
-                            variant="outline"
-                            size="icon"
-                            className="border-quantum-purple/50 hover:bg-quantum-purple/10"
-                          >
-                            <RotateCw className="w-4 h-4" />
-                          </Button>
-                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -554,12 +338,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
               <div className="text-center">
                 <Button
                   onClick={() => runExperiment(selectedExp.id)}
-                  className={
-                    selectedExp.id === "noise-analysis" ? "bg-yellow-500 hover:bg-yellow-600" :
-                    selectedExp.id === "eavesdropping-detection" ? "bg-red-500 hover:bg-red-600" :
-                    selectedExp.id === "qubit-scaling" ? "bg-purple-500 hover:bg-purple-600" :
-                    "bg-green-500 hover:bg-green-600"
-                  }
+                  className={`bg-${selectedExp.color} hover:bg-${selectedExp.color}/80`}
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Run Experiment
@@ -570,9 +349,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
             {isRunning && (
               <div className="space-y-4">
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Running experiment... Iteration {currentIteration} of {totalIterations}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Running experiment...</p>
                   <Progress value={progress} className="mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">{progress.toFixed(0)}%</p>
                 </div>
@@ -594,7 +371,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                           <div className="font-semibold">Key</div>
                           <div className="font-semibold">Eve</div>
                           
-                          {currentBits.map((bit) => (
+                          {currentBits.slice(0, Math.min(20, currentBits.length)).map((bit) => (
                             <React.Fragment key={bit.id}>
                               <div className="p-1 text-center">{bit.id + 1}</div>
                               <div className={`p-1 text-center rounded ${bit.aliceBit ? 'bg-quantum-blue/30' : 'bg-quantum-purple/30'}`}>
@@ -617,6 +394,11 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                             </React.Fragment>
                           ))}
                         </div>
+                        {currentBits.length > 20 && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Showing first 20 of {currentBits.length} qubits...
+                          </p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -625,45 +407,192 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
             )}
 
             {results[selectedExp.id] && (
-              <div className="space-y-6">
-                <Card className="bg-secondary/30">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Experiment Results</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-80 mb-4">
-                      {renderExperimentChart(results[selectedExp.id].data, selectedExp.id)}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      {results[selectedExp.id].data.slice(0, 4).map((dataPoint, index) => (
-                        <Card key={index} className="bg-background/50">
-                          <CardContent className="p-3">
-                            <div className="text-center">
-                              <div className="font-semibold text-sm">
-                                {selectedExp.id === "noise-analysis" ? `Noise: ${dataPoint.noise}%` :
-                                 selectedExp.id === "eavesdropping-detection" ? `Eavesdropping: ${dataPoint.eavesdropping}%` :
-                                 selectedExp.id === "qubit-scaling" ? `Qubits: ${dataPoint.qubits}` :
-                                 dataPoint.condition}
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Left Column - Experiment Details */}
+                <div className="space-y-6">
+                  {/* Experiment Formulas */}
+                  <Card className="bg-secondary/20 border-quantum-glow/20">
+                    <CardHeader>
+                      <CardTitle className="text-sm text-quantum-glow flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Calculations & Formulas
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-quantum-purple">Statistical Formulas:</h4>
+                        <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded">
+                          {selectedExp.id === 'noise-analysis' && (
+                            <>
+                              <div>Error Rate = (Noise Level + Base Errors) / Total</div>
+                              <div>Security = Error Rate &lt; 11% ? "Secure" : "Compromised"</div>
+                            </>
+                          )}
+                          {selectedExp.id === 'eavesdropping-detection' && (
+                            <>
+                              <div>Detection Prob = min(100%, Error Rate × 4)</div>
+                              <div>Eve Error = 25% per intercepted qubit</div>
+                            </>
+                          )}
+                          {selectedExp.id === 'qubit-scaling' && (
+                            <>
+                              <div>Statistical Security = (Qubits / 50) × 100%</div>
+                              <div>Key Length = Matched Bases - Errors</div>
+                            </>
+                          )}
+                          {selectedExp.id === 'basis-mismatch' && (
+                            <>
+                              <div>Basis Match Rate = (Matches / Total) × 100%</div>
+                              <div>Theoretical Rate = 50% (random choice)</div>
+                              <div>Deviation = |Actual - Theoretical|</div>
+                            </>
+                          )}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-quantum-blue">Experiment Data:</h4>
+                          <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded max-h-32 overflow-y-auto">
+                            {results[selectedExp.id].data.slice(0, 5).map((dataPoint, idx) => (
+                              <div key={idx} className="text-xs">
+                                {Object.entries(dataPoint).map(([key, value]) => (
+                                  <span key={key} className="mr-2">
+                                    {key}: {typeof value === 'number' ? value.toFixed(1) : String(value)}
+                                  </span>
+                                ))}
                               </div>
-                              <div className="flex justify-between text-xs mt-1">
-                                <span className="text-destructive">Error: {dataPoint.errorRate.toFixed(2)}%</span>
-                                <span className="text-quantum-glow">Key: {dataPoint.keyRate.toFixed(2)}%</span>
-                              </div>
+                            ))}
+                            {results[selectedExp.id].data.length > 5 && (
+                              <div className="text-muted-foreground">...and {results[selectedExp.id].data.length - 5} more data points</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  {/* Bits Storage Display */}
+                  {results[selectedExp.id].usedBits && results[selectedExp.id].usedBits!.length > 0 && (
+                    <div className="grid gap-4">
+                      {/* Alice's Bits */}
+                      <Card className="bg-quantum-blue/10 border-quantum-blue/30">
+                        <CardHeader>
+                          <CardTitle className="text-sm text-quantum-blue flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-quantum-blue"></div>
+                            Alice's Transmitted Bits
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="text-xs text-muted-foreground">Bits: {results[selectedExp.id].usedBits!.filter(b => b.kept).length} kept from {results[selectedExp.id].usedBits!.length} total</div>
+                            <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                              {results[selectedExp.id].usedBits!.map((bit, index) => (
+                                <div 
+                                  key={index}
+                                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded border ${
+                                    bit.kept 
+                                      ? 'bg-quantum-blue/30 border-quantum-blue text-quantum-blue' 
+                                      : 'bg-muted/20 border-muted text-muted-foreground'
+                                  }`}
+                                  title={`Bit ${index + 1}: ${bit.aliceBit} (${bit.aliceBasis}) ${bit.kept ? '- Kept' : '- Discarded'}`}
+                                >
+                                  {bit.aliceBit}
+                                </div>
+                              ))}
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Bob's Bits */}
+                      <Card className="bg-quantum-purple/10 border-quantum-purple/30">
+                        <CardHeader>
+                          <CardTitle className="text-sm text-quantum-purple flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-quantum-purple"></div>
+                            Bob's Received Bits
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="text-xs text-muted-foreground">Measurements: {results[selectedExp.id].usedBits!.filter(b => b.kept).length} kept from {results[selectedExp.id].usedBits!.length} total</div>
+                            <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                              {results[selectedExp.id].usedBits!.map((bit, index) => (
+                                <div 
+                                  key={index}
+                                  className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded border ${
+                                    bit.kept 
+                                      ? bit.eavesdropped 
+                                        ? 'bg-destructive/30 border-destructive text-destructive'
+                                        : 'bg-quantum-purple/30 border-quantum-purple text-quantum-purple'
+                                      : 'bg-muted/20 border-muted text-muted-foreground'
+                                  }`}
+                                  title={`Bit ${index + 1}: ${bit.bobMeasurement} (${bit.bobBasis}) ${bit.kept ? '- Kept' : '- Discarded'} ${bit.eavesdropped ? '- Eavesdropped' : ''}`}
+                                >
+                                  {bit.bobMeasurement}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                    
-                    <Card className="bg-quantum-glow/10 border-quantum-glow/30">
-                      <CardContent className="p-4">
-                        <h4 className="font-semibold text-quantum-glow mb-2">Analysis</h4>
-                        <p className="text-sm">{results[selectedExp.id].analysis}</p>
-                      </CardContent>
-                    </Card>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
+
+                {/* Right Column - Results and Analysis */}
+                <div className="space-y-6">
+                  <Card className="bg-secondary/30">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Experiment Results</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64 mb-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={results[selectedExp.id].data}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+                            <XAxis 
+                              dataKey={selectedExp.id === "basis-mismatch" ? "iteration" : 
+                                       selectedExp.id === "qubit-scaling" ? "qubits" :
+                                       selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"} 
+                              stroke="hsl(var(--muted-foreground))" 
+                              fontSize={12} 
+                            />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'hsl(var(--background))', 
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '6px'
+                              }} 
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="errorRate" 
+                              stroke="hsl(var(--destructive))" 
+                              strokeWidth={2}
+                              name="Error Rate (%)"
+                            />
+                            {selectedExp.id !== "basis-mismatch" && (
+                              <Line 
+                                type="monotone" 
+                                dataKey={selectedExp.id === "qubit-scaling" ? "statisticalSecurity" : "keyRate"}
+                                stroke={`hsl(var(--${selectedExp.color}))`}
+                                strokeWidth={2}
+                                name={selectedExp.id === "qubit-scaling" ? "Statistical Security (%)" : "Key Rate (%)"}
+                              />
+                            )}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                      
+                      <Card className="bg-quantum-glow/10 border-quantum-glow/30">
+                        <CardContent className="p-4">
+                          <h4 className="font-semibold text-quantum-glow mb-2">Analysis</h4>
+                          <p className="text-sm">{results[selectedExp.id].analysis}</p>
+                        </CardContent>
+                      </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
           </CardContent>
