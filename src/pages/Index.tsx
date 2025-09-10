@@ -41,9 +41,8 @@ const Index = () => {
       <div className="px-4 py-8 flex-grow">
         {/* Header with college logo */}
         <div className="flex justify-between items-center mb-6">
-          <div></div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-4 mb-2">
+          <div className="text-left">
+            <div className="flex items-center gap-4 mb-2">
               <img 
                 src="https://vesit.ves.ac.in/website_tour/skin/Image_A0096B4D_B18D_2BFC_41B8_ED811B459B6B_mobile_en.png?v=1656663582984" 
                 alt="Vivekanand Education Society's Institute of Technology" 
@@ -51,8 +50,9 @@ const Index = () => {
               />
               <h1 className="text-xl font-bold text-foreground">Vivekanand Education Society's Institute of Technology</h1>
             </div>
-            <p className="text-sm text-muted-foreground">Department of Electronics and Telecommunication</p>
+            <p className="text-sm text-muted-foreground ml-[68px]">Department of Electronics and Telecommunication</p>
           </div>
+          <div></div>
         </div>
         
         <Navigation activeTab={activeTab} onTabChange={setActiveTab} />

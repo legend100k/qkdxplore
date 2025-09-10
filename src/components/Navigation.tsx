@@ -29,28 +29,28 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
         
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-8 bg-secondary/50">
-            <TabsTrigger value="theory" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="theory" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Theory
             </TabsTrigger>
-            <TabsTrigger value="pre-quiz" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="pre-quiz" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Pre-Quiz
             </TabsTrigger>
-            <TabsTrigger value="simulation" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="simulation" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Simulation
             </TabsTrigger>
-            <TabsTrigger value="experiments" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="experiments" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Experiments
             </TabsTrigger>
-            <TabsTrigger value="reports" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="reports" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Reports
             </TabsTrigger>
-            <TabsTrigger value="post-quiz" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="post-quiz" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Post-Quiz
             </TabsTrigger>
-            <TabsTrigger value="certificate" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="certificate" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               Certificate
             </TabsTrigger>
-            <TabsTrigger value="about" className="data-[state=active]:bg-primary">
+            <TabsTrigger value="about" className="data-[state=active]:bg-quantum-blue data-[state=active]:text-white">
               About
             </TabsTrigger>
           </TabsList>

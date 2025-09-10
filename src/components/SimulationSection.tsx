@@ -17,6 +17,14 @@ interface QuantumBit {
   inKey: boolean;
 }
 
+const getBasisSymbol = (basis: string): string => {
+  switch (basis) {
+    case "+": return "→";  // Rectilinear basis (Horizontal/Vertical)
+    case "×": return "↗";  // Diagonal basis (Diagonal/Anti-diagonal)
+    default: return basis;
+  }
+};
+
 export const SimulationSection = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -172,9 +180,9 @@ export const SimulationSection = () => {
   };
 
   const nextBitStep = () => {
-    if (bitStep < 5) {
+    if (bitStep < 4) {
       setBitStep(bitStep + 1);
-      if (bitStep === 4) {
+      if (bitStep === 3) {
         processBitStep(currentBitIndex, bitStep + 1);
       }
     } else if (currentBitIndex < stepByStepBits.length - 1) {
@@ -196,7 +204,7 @@ export const SimulationSection = () => {
       setBitStep(bitStep - 1);
     } else if (currentBitIndex > 0) {
       setCurrentBitIndex(currentBitIndex - 1);
-      setBitStep(5);
+      setBitStep(4);
     }
   };
 
@@ -280,10 +288,53 @@ export const SimulationSection = () => {
     <div className="space-y-6">
       <Card className="border-quantum-blue/30">
         <CardHeader>
-          <CardTitle className="text-quantum-blue flex items-center gap-2">
-            <Zap className="w-6 h-6" />
-            BB84 Protocol Simulation
-          </CardTitle>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle className="text-quantum-blue flex items-center gap-2">
+              <Zap className="w-6 h-6" />
+              BB84 Protocol Simulation
+            </CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => setIsStepByStep(!isStepByStep)}
+                variant={isStepByStep ? "default" : "outline"}
+                className={`border-quantum-purple/30 ${isStepByStep ? "bg-quantum-purple hover:bg-quantum-purple/90" : ""}`}
+                size="sm"
+              >
+                <StepForward className="w-4 h-4 mr-1" />
+                {isStepByStep ? "Step" : "Auto"}
+              </Button>
+              {!isStepByStep ? (
+                <Button
+                  onClick={runSimulation}
+                  disabled={isRunning}
+                  className="bg-quantum-blue hover:bg-quantum-blue/90"
+                  size="sm"
+                >
+                  {isRunning ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                  {isRunning ? "Running" : "Start"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={startStepByStepMode}
+                  disabled={stepByStepBits.length > 0}
+                  className="bg-quantum-blue hover:bg-quantum-blue/90"
+                  size="sm"
+                >
+                  <Play className="w-4 h-4 mr-1" />
+                  Start
+                </Button>
+              )}
+              <Button
+                onClick={resetSimulation}
+                variant="outline"
+                className="border-quantum-glow/30"
+                size="sm"
+              >
+                <RotateCw className="w-4 h-4 mr-1" />
+                Reset
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Two-column layout for simulation controls and results */}
@@ -300,123 +351,71 @@ export const SimulationSection = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Number of Qubits: {numQubits[0]}</label>
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm font-medium whitespace-nowrap">Qubits:</label>
                       <Slider
                         value={numQubits}
                         onValueChange={setNumQubits}
                         max={50}
                         min={8}
                         step={2}
-                        className="w-full"
+                        className="flex-1"
                         disabled={isRunning}
                       />
-                      <p className="text-xs text-muted-foreground">Range: 8-50 qubits</p>
+                      <span className="text-sm w-8">{numQubits[0]}</span>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Eavesdropping Rate: {eavesdroppingRate[0]}%</label>
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm font-medium whitespace-nowrap">Eavesdrop:</label>
                       <Slider
                         value={eavesdroppingRate}
                         onValueChange={setEavesdroppingRate}
                         max={100}
                         min={0}
                         step={5}
-                        className="w-full"
+                        className="flex-1"
                         disabled={isRunning}
                       />
-                      <p className="text-xs text-muted-foreground">Probability of Eve intercepting</p>
+                      <span className="text-sm w-8">{eavesdroppingRate[0]}%</span>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Noise Level: {noiseLevel[0]}%</label>
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm font-medium whitespace-nowrap">Noise:</label>
                       <Slider
                         value={noiseLevel}
                         onValueChange={setNoiseLevel}
                         max={20}
                         min={0}
                         step={1}
-                        className="w-full"
+                        className="flex-1"
                         disabled={isRunning}
                       />
-                      <p className="text-xs text-muted-foreground">Channel noise and imperfections</p>
+                      <span className="text-sm w-8">{noiseLevel[0]}%</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => setIsStepByStep(!isStepByStep)}
-                    variant={isStepByStep ? "default" : "outline"}
-                    className={`border-quantum-purple/30 ${isStepByStep ? "bg-quantum-purple hover:bg-quantum-purple/90" : ""}`}
-                  >
-                    <StepForward className="w-4 h-4 mr-2" />
-                    {isStepByStep ? "Step Mode" : "Auto Mode"}
-                  </Button>
-                </div>
-
-                {!isStepByStep ? (
-                  <>
-                    <Button
-                      onClick={runSimulation}
-                      disabled={isRunning}
-                      className="bg-quantum-blue hover:bg-quantum-blue/90"
-                    >
-                      {isRunning ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                      {isRunning ? "Running..." : "Start Simulation"}
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      onClick={startStepByStepMode}
-                      disabled={stepByStepBits.length > 0}
-                      className="bg-quantum-blue hover:bg-quantum-blue/90"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Step-by-Step
-                    </Button>
-                    
-                    {stepByStepBits.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={previousBitStep}
-                          disabled={currentBitIndex === 0 && bitStep === 0}
-                          variant="outline"
-                          size="sm"
-                          className="border-quantum-purple/30"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        
-                        <Button
-                          onClick={nextBitStep}
-                          disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 5 && !!finalKey}
-                          className="bg-quantum-purple hover:bg-quantum-purple/90"
-                          size="sm"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                        
-                        <span className="text-sm px-3 py-1 bg-muted rounded border whitespace-nowrap">
-                          Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step {bitStep + 1}/5
-                        </span>
-                      </div>
-                    )}
-                  </>
+              <div className="space-y-4">
+                {!isStepByStep && (
+                  <div className="flex items-center gap-4">
+                    <span className="font-semibold">Progress:</span>
+                    <Progress value={progress} className="flex-1" />
+                    <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+                  </div>
                 )}
                 
-                <Button
-                  onClick={resetSimulation}
-                  variant="outline"
-                  className="border-quantum-glow/30"
-                >
-                  <RotateCw className="w-4 h-4 mr-2" />
-                  Reset
-                </Button>
+                {currentStep > 0 && !isStepByStep && (
+                  <Card className="bg-quantum-blue/5 border-quantum-blue/20">
+                    <CardContent className="p-3">
+                      <p className="font-semibold text-quantum-blue">Current Step:</p>
+                      <p className="text-sm">{steps[currentStep - 1]}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
+              <div className="flex flex-wrap items-center gap-2">
                 {eavesdroppingRate[0] > 0 && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive rounded">
                     <Eye className="w-4 h-4 text-destructive" />
@@ -432,22 +431,134 @@ export const SimulationSection = () => {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <span className="font-semibold">Progress:</span>
-                  <Progress value={progress} className="flex-1" />
-                  <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
+              {/* Step-by-step controls */}
+              {isStepByStep && stepByStepBits.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={previousBitStep}
+                    disabled={currentBitIndex === 0 && bitStep === 0}
+                    variant="outline"
+                    className="border-quantum-purple/30"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    onClick={nextBitStep}
+                    disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 4 && !!finalKey}
+                    className="bg-quantum-purple hover:bg-quantum-purple/90"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  
+                  <span className="text-sm px-3 py-2 bg-muted rounded border whitespace-nowrap">
+                    Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step {bitStep + 1}/5
+                  </span>
                 </div>
-                
-                {currentStep > 0 && (
-                  <Card className="bg-quantum-blue/5 border-quantum-blue/20">
-                    <CardContent className="p-3">
-                      <p className="font-semibold text-quantum-blue">Current Step:</p>
-                      <p className="text-sm">{steps[currentStep - 1]}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+              )}
+
+              {/* Step-by-step visualization */}
+              {isStepByStep && stepByStepBits.length > 0 && (
+                <Card className="border-quantum-glow/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      Step-by-Step Visualization - Bit {currentBitIndex + 1}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {stepByStepBits[currentBitIndex] && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Card className="border-quantum-blue/30">
+                            <CardHeader>
+                              <CardTitle className="text-quantum-blue flex items-center gap-2 text-sm">
+                                <span className="text-lg">👩‍🔬</span>
+                                Alice (Sender)
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Bit Value:</span>
+                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
+                                  {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBit : '?'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Basis Choice:</span>
+                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
+                                  {bitStep >= 0 ? getBasisSymbol(stepByStepBits[currentBitIndex].aliceBasis) : '?'}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className="border-quantum-purple/30">
+                            <CardHeader>
+                              <CardTitle className="text-quantum-purple flex items-center gap-2 text-sm">
+                                <span className="text-lg">👨‍🔬</span>
+                                Bob (Receiver)
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Basis Choice:</span>
+                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
+                                  {bitStep >= 1 ? getBasisSymbol(stepByStepBits[currentBitIndex].bobBasis) : '?'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm">Measurement:</span>
+                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
+                                  {bitStep >= 3 ? stepByStepBits[currentBitIndex].bobMeasurement : '?'}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+
+                                                  <div className="space-y-2">
+                            <h4 className="font-semibold text-sm">Current Step:</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {[
+                                "Alice generates bits and random bases",
+                                "Photon transmitted on quantum channel",
+                                "Bob selects random bases",
+                                "Bob measures photon",
+                                "Selected basis are shared and compared"
+                              ].map((step, index) => (
+                                <div
+                                  key={index}
+                                  className={`p-4 rounded text-sm text-center transition-all ${
+                                    bitStep === index
+                                      ? 'bg-quantum-glow/20 border-2 border-quantum-glow text-quantum-glow font-semibold'
+                                      : bitStep > index
+                                      ? 'bg-green-400/20 border border-green-400/30 text-green-400'
+                                      : 'bg-muted/20 border border-muted/30 text-muted-foreground'
+                                  }`}
+                                >
+                                  {step}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                        {bitStep >= 4 && (
+                          <Card className={`${stepByStepBits[currentBitIndex].isMatching ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}`}>
+                            <CardContent className="p-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">Basis Match:</span>
+                                <span className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? 'text-green-400' : 'text-red-400'}`}>
+                                  {stepByStepBits[currentBitIndex].isMatching ? '✓ Yes - Key bit!' : 'X No - Discarded'}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Photon transmission visualization */}
               {currentStep === 1 && !isStepByStep && (
@@ -474,110 +585,6 @@ export const SimulationSection = () => {
                         </div>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Step-by-step visualization */}
-              {isStepByStep && stepByStepBits.length > 0 && (
-                <Card className="border-quantum-glow/30">
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Step-by-Step Visualization - Bit {currentBitIndex + 1}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {stepByStepBits[currentBitIndex] && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <Card className="border-quantum-blue/30">
-                            <CardHeader>
-                              <CardTitle className="text-quantum-blue flex items-center gap-2 text-sm">
-                                <span className="text-lg">👩‍🔬</span>
-                                Alice (Sender)
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Bit Value:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBit : '?'}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Basis Choice:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBasis : '?'}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-
-                          <Card className="border-quantum-purple/30">
-                            <CardHeader>
-                              <CardTitle className="text-quantum-purple flex items-center gap-2 text-sm">
-                                <span className="text-lg">👨‍🔬</span>
-                                Bob (Receiver)
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Basis Choice:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 1 ? stepByStepBits[currentBitIndex].bobBasis : '?'}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Measurement:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 3 ? stepByStepBits[currentBitIndex].bobMeasurement : '?'}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm">Current Step:</h4>
-                          <div className="grid grid-cols-6 gap-2">
-                            {[
-                              "Alice generates bit & basis",
-                              "Photon transmitted",
-                              "Bob chooses basis",
-                              "Photon measured",
-                              "Bob measures",
-                              "Basis comparison"
-                            ].map((step, index) => (
-                              <div
-                                key={index}
-                                className={`p-2 rounded text-xs text-center transition-all ${
-                                  bitStep === index
-                                    ? 'bg-quantum-glow/20 border border-quantum-glow/50 text-quantum-glow font-semibold'
-                                    : bitStep > index
-                                    ? 'bg-green-400/20 border border-green-400/30 text-green-400'
-                                    : 'bg-muted/20 border border-muted/30 text-muted-foreground'
-                                }`}
-                              >
-                                {step}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {bitStep >= 5 && (
-                          <Card className={`${stepByStepBits[currentBitIndex].isMatching ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}`}>
-                            <CardContent className="p-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">Basis Match:</span>
-                                <span className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? 'text-green-400' : 'text-red-400'}`}>
-                                  {stepByStepBits[currentBitIndex].isMatching ? '✓ Yes - Key bit!' : '✗ No - Discarded'}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </>
-                    )}
                   </CardContent>
                 </Card>
               )}
@@ -647,7 +654,7 @@ export const SimulationSection = () => {
                                 </span>
                               </td>
                               <td className="p-2 font-mono text-quantum-blue bg-quantum-blue/5 border-r border-quantum-blue/20 text-center">
-                                <span className="text-lg font-bold">{bit.aliceBasis}</span>
+                                <span className="text-lg font-bold">{getBasisSymbol(bit.aliceBasis)}</span>
                               </td>
                               <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
                                 <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
@@ -655,7 +662,7 @@ export const SimulationSection = () => {
                                 </span>
                               </td>
                               <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
-                                <span className="text-lg font-bold">{bit.bobBasis}</span>
+                                <span className="text-lg font-bold">{getBasisSymbol(bit.bobBasis)}</span>
                               </td>
                               <td className="p-2 bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
                                 {bit.bobMeasurement !== null ? (
@@ -679,7 +686,7 @@ export const SimulationSection = () => {
                                       ? 'bg-green-400/20 text-green-400' 
                                       : 'bg-red-400/20 text-red-400'
                                   }`}>
-                                    {bit.isMatching ? '✓' : '✗'}
+                                    {bit.isMatching ? '✓' : 'X'}
                                   </span>
                                 )}
                               </td>
