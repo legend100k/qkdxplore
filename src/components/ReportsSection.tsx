@@ -47,14 +47,25 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     const experiment = availableExperiments.find(e => e.id === selectedExperiment);
     if (!experiment) return;
 
+    // Auto-fill aim, theory, and procedure based on experiment type
+    const aim = `To analyze and document the results of the "${experiment.name}" experiment conducted using the QKD_Xplore quantum key distribution simulator.`;
+    
+    const theory = getDefaultTheory(experiment.id);
+    
+    const procedure = `This experiment was performed using the QKD_Xplore web-based quantum key distribution simulator. The experiment "${experiment.name}" was conducted with the following parameters:\n\n` +
+      Object.entries(experiment.parameters || {}).map(([key, value]) => 
+        `- ${key}: ${JSON.stringify(value)}`
+      ).join('\n') + 
+      `\n\nThe simulation was run multiple times with varying parameters to collect statistical data. The results were automatically recorded and analyzed by the system to generate the data visualization and statistical findings presented in this report.`;
+
     setCurrentReport({
       id: Date.now().toString(),
       title: `Report: ${experiment.name}`,
       experimentId: experiment.id,
       experimentName: experiment.name,
-      aim: "",
-      procedure: "",
-      theory: "",
+      aim: aim,
+      procedure: procedure,
+      theory: theory,
       conclusion: "",
       timestamp: new Date().toISOString(),
       data: experiment.data
@@ -620,7 +631,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
         <CardContent className="space-y-6">
           <Card className="bg-secondary/30">
             <CardContent className="p-4">
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="flex-1">
                   <label className="text-sm font-medium mb-2 block">Select Experiment</label>
                   <Select value={selectedExperiment} onValueChange={setSelectedExperiment}>
@@ -636,14 +647,16 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                     </SelectContent>
                   </Select>
                 </div>
-                <Button
-                  onClick={startNewReport}
-                  disabled={!selectedExperiment}
-                  className="bg-quantum-glow hover:bg-quantum-glow/80"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Report
-                </Button>
+                <div className="pt-6"> {/* Add padding to align with the select box */}
+                  <Button
+                    onClick={startNewReport}
+                    disabled={!selectedExperiment}
+                    className="bg-quantum-glow hover:bg-quantum-glow/80 whitespace-nowrap"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Report
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
