@@ -30,68 +30,13 @@ interface Report {
   data: any[];
 }
 
-export const ReportsSection = () => {
+export const ReportsSection = ({ availableExperiments = [] }: { availableExperiments?: ExperimentResult[] }) => {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedExperiment, setSelectedExperiment] = useState<string>("");
   const [currentReport, setCurrentReport] = useState<Partial<Report> | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [viewingReport, setViewingReport] = useState<Report | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
-
-  // Mock experiment results (would come from ExperimentsSection)
-  const [availableExperiments] = useState<ExperimentResult[]>([
-    {
-      id: "noise-analysis",
-      name: "Channel Noise Impact Analysis",
-      parameters: { noiseRange: [0, 20], step: 2, qubits: 30 },
-      data: [
-        { noise: 0, errorRate: 0.5, keyRate: 49.8 },
-        { noise: 5, errorRate: 5.2, keyRate: 47.3 },
-        { noise: 10, errorRate: 10.8, keyRate: 44.1 },
-        { noise: 15, errorRate: 15.4, keyRate: 41.2 },
-        { noise: 20, errorRate: 20.1, keyRate: 38.5 }
-      ],
-      analysis: "Channel noise significantly affects BB84 performance with linear error rate increase.",
-      completed: true,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: "eavesdropping-detection",
-      name: "Eavesdropping Detection Analysis",
-      parameters: { eavesdroppingRange: [0, 30], step: 3, qubits: 30 },
-      data: [
-        { eavesdropping: 0, errorRate: 0.3, keyRate: 49.7 },
-        { eavesdropping: 5, errorRate: 3.8, keyRate: 48.1 },
-        { eavesdropping: 10, errorRate: 7.4, keyRate: 46.2 },
-        { eavesdropping: 15, errorRate: 11.2, keyRate: 44.3 },
-        { eavesdropping: 20, errorRate: 15.1, keyRate: 42.1 },
-        { eavesdropping: 25, errorRate: 18.9, keyRate: 39.8 },
-        { eavesdropping: 30, errorRate: 22.7, keyRate: 37.5 }
-      ],
-      analysis: "Eavesdropping introduces detectable errors that increase linearly with interception probability.",
-      completed: true,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: "qubit-scaling",
-      name: "Qubit Scaling Analysis",
-      parameters: { qubitRange: [10, 50], step: 5, noise: 5 },
-      data: [
-        { qubits: 10, errorRate: 5.2, keyRate: 47.3, keyLength: 5 },
-        { qubits: 15, errorRate: 5.1, keyRate: 47.8, keyLength: 7 },
-        { qubits: 20, errorRate: 5.0, keyRate: 48.1, keyLength: 10 },
-        { qubits: 25, errorRate: 4.9, keyRate: 48.3, keyLength: 12 },
-        { qubits: 30, errorRate: 5.1, keyRate: 47.9, keyLength: 14 },
-        { qubits: 35, errorRate: 5.0, keyRate: 48.2, keyLength: 17 },
-        { qubits: 40, errorRate: 4.8, keyRate: 48.5, keyLength: 19 },
-        { qubits: 45, errorRate: 4.9, keyRate: 48.3, keyLength: 22 },
-        { qubits: 50, errorRate: 4.7, keyRate: 48.7, keyLength: 24 }
-      ],
-      analysis: "Key length scales approximately linearly with qubit count, improving statistical security.",
-      completed: true,
-      timestamp: new Date().toISOString()
-    }
-  ]);
 
   const startNewReport = () => {
     if (!selectedExperiment) {

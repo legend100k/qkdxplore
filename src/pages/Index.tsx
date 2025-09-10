@@ -8,10 +8,19 @@ import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
 import { Certificate } from "@/components/Certificate";
+import { ExperimentResult } from "@/components/ExperimentsSection";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("theory");
   const [postQuizScore, setPostQuizScore] = useState<number | null>(null);
+  const [experimentResults, setExperimentResults] = useState<{ [key: string]: ExperimentResult }>({});
+
+  const handleSaveExperiment = (result: ExperimentResult) => {
+    setExperimentResults(prev => ({
+      ...prev,
+      [result.id]: result
+    }));
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -22,9 +31,9 @@ const Index = () => {
       case "simulation":
         return <SimulationSection />;
       case "experiments":
-        return <ExperimentsSection />;
+        return <ExperimentsSection onSaveExperiment={handleSaveExperiment} />;
       case "reports":
-        return <ReportsSection />;
+        return <ReportsSection availableExperiments={Object.values(experimentResults)} />;
       case "post-quiz":
         return <PostQuiz onQuizComplete={(score) => setPostQuizScore(score)} />;
       case "certificate":
