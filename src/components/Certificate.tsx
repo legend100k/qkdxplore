@@ -49,48 +49,69 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
         format: 'a4'
       });
 
-      // Set font and title
-      doc.setFontSize(24);
-      doc.setTextColor(0, 102, 204);
-      doc.text("Certificate of Completion", 148, 30, { align: "center" });
-
-      // Add decorative line
-      doc.setDrawColor(0, 102, 204);
+      // Add decorative border
+      doc.setDrawColor(100, 100, 255);
       doc.setLineWidth(0.5);
-      doc.line(60, 38, 235, 38);
+      doc.rect(10, 10, 277, 190); // Border around the certificate
+
+      // Add decorative elements
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.3);
+      doc.line(60, 25, 237, 25); // Top decorative line
+      doc.line(60, 185, 237, 185); // Bottom decorative line
+
+      // Set font and title
+      doc.setFontSize(28);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text("Certificate of Completion", 148, 35, { align: "center" });
+
+      // Add award icon representation
+      doc.setDrawColor(0, 102, 204);
+      doc.setFillColor(0, 102, 204);
+      doc.circle(148, 50, 8, 'F'); // Circle for award icon
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.text("★", 148, 53, { align: "center" }); // Star symbol
 
       // Subtitle
       doc.setFontSize(16);
       doc.setTextColor(100, 100, 100);
-      doc.text("This certificate is proudly presented to", 148, 48, { align: "center" });
+      doc.setFont(undefined, 'normal');
+      doc.text("This certificate is proudly presented to", 148, 65, { align: "center" });
 
       // Student name
-      doc.setFontSize(22);
+      doc.setFontSize(26);
       doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, 'bold');
-      doc.text(studentName, 148, 65, { align: "center" });
+      doc.text(studentName, 148, 80, { align: "center" });
 
       // Description
       doc.setFontSize(14);
       doc.setTextColor(100, 100, 100);
       doc.setFont(undefined, 'normal');
-      doc.text("For successfully completing the", 148, 75, { align: "center" });
+      doc.text("For successfully completing the", 148, 90, { align: "center" });
 
       // Course name
-      doc.setFontSize(16);
+      doc.setFontSize(18);
       doc.setTextColor(0, 102, 204);
       doc.setFont(undefined, 'bold');
-      doc.text(courseName, 148, 85, { align: "center" });
+      doc.text(courseName, 148, 100, { align: "center" });
 
-      // Score
-      doc.setFontSize(14);
+      // Score with better styling
+      doc.setFontSize(16);
       doc.setTextColor(100, 100, 100);
       doc.setFont(undefined, 'normal');
-      doc.text(`with a post-quiz score of ${postQuizScore}%`, 148, 95, { align: "center" });
+      doc.text("with a post-quiz score of", 148, 110, { align: "center" });
+      
+      doc.setFontSize(20);
+      doc.setTextColor(0, 102, 204);
+      doc.setFont(undefined, 'bold');
+      doc.text(`${postQuizScore}%`, 148, 118, { align: "center" });
 
-      // Details table
+      // Details table with enhanced styling
       (doc as any).autoTable({
-        startY: 110,
+        startY: 130,
         head: [['', '']],
         body: [
           ['Instructor:', instructorName],
@@ -99,20 +120,36 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
           ['Department:', 'Department of Electronics and Telecommunication']
         ],
         theme: 'grid',
-        styles: { cellPadding: 3, fontSize: 12 },
+        styles: { cellPadding: 4, fontSize: 12 },
         headStyles: { fillColor: [0, 102, 204], textColor: [255, 255, 255] },
         alternateRowStyles: { fillColor: [240, 240, 240] },
         columnStyles: {
-          0: { cellWidth: 40, fontStyle: 'bold' },
-          1: { cellWidth: 120 }
+          0: { cellWidth: 45, fontStyle: 'bold' },
+          1: { cellWidth: 115 }
         }
       });
 
-      // Footer
+      // Footer with enhanced styling
       doc.setFontSize(10);
       doc.setTextColor(150, 150, 150);
       doc.setFont(undefined, 'italic');
-      doc.text("This certificate was generated electronically and is valid without signature.", 148, 180, { align: "center" });
+      doc.text("This certificate was generated electronically and is valid without signature.", 148, 185, { align: "center" });
+
+      // Add decorative corner elements
+      doc.setDrawColor(0, 102, 204);
+      doc.setLineWidth(0.2);
+      // Top-left corner
+      doc.line(15, 15, 30, 15);
+      doc.line(15, 15, 15, 30);
+      // Top-right corner
+      doc.line(282, 15, 267, 15);
+      doc.line(282, 15, 282, 30);
+      // Bottom-left corner
+      doc.line(15, 185, 30, 185);
+      doc.line(15, 185, 15, 170);
+      // Bottom-right corner
+      doc.line(282, 185, 267, 185);
+      doc.line(282, 185, 282, 170);
 
       // Save the PDF
       doc.save(`certificate_${studentName.replace(/\s+/g, '_')}.pdf`);
@@ -230,44 +267,51 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
     <div className="space-y-6">
       <Card className="border-quantum-glow/30">
         <CardContent className="p-8">
-          <div className="text-center space-y-6">
-            <div className="border-b border-quantum-glow/30 pb-6">
+          <div className="text-center space-y-6 certificate-container">
+            <div className="border-b border-quantum-glow/30 pb-6 certificate-header">
               <div className="flex justify-center mb-4">
-                <Award className="w-16 h-16 text-quantum-glow" />
+                <Award className="w-16 h-16 text-quantum-glow certificate-icon" />
               </div>
-              <h1 className="text-4xl font-bold text-quantum-glow mb-2">Certificate of Completion</h1>
-              <p className="text-muted-foreground">This certificate is proudly presented to</p>
+              <h1 className="text-4xl font-bold text-quantum-glow mb-2 certificate-title">Certificate of Completion</h1>
+              <p className="text-muted-foreground certificate-subtitle">This certificate is proudly presented to</p>
             </div>
             
-            <div className="py-8">
-              <h2 className="text-3xl font-bold mb-4">{studentName}</h2>
-              <p className="text-lg text-muted-foreground mb-2">
+            <div className="py-8 certificate-body">
+              <h2 className="text-3xl font-bold mb-4 certificate-name">{studentName}</h2>
+              <p className="text-lg text-muted-foreground mb-2 certificate-text">
                 For successfully completing the
               </p>
-              <p className="text-xl font-semibold text-quantum-blue mb-4">
+              <p className="text-xl font-semibold text-quantum-blue mb-4 certificate-course">
                 {courseName}
               </p>
-              <p className="text-lg text-muted-foreground">
-                with a post-quiz score of {postQuizScore}%
+              <p className="text-lg text-muted-foreground certificate-score">
+                with a post-quiz score of <span className="font-bold text-quantum-glow">{postQuizScore}%</span>
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
-              <div>
-                <p className="font-semibold">Instructor</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-6 certificate-details">
+              <div className="certificate-detail-item">
+                <p className="font-semibold text-quantum-blue">Instructor</p>
                 <p className="text-muted-foreground">{instructorName}</p>
               </div>
-              <div>
-                <p className="font-semibold">Date</p>
+              <div className="certificate-detail-item">
+                <p className="font-semibold text-quantum-blue">Date</p>
                 <p className="text-muted-foreground">{currentDate}</p>
               </div>
-              <div>
-                <p className="font-semibold">Institution</p>
+              <div className="certificate-detail-item">
+                <p className="font-semibold text-quantum-blue">Institution</p>
                 <p className="text-muted-foreground">Vivekanand Education Society's Institute of Technology</p>
+              </div>
+              <div className="certificate-detail-item">
+                <p className="font-semibold text-quantum-blue">Department</p>
+                <p className="text-muted-foreground">Electronics and Telecommunication</p>
               </div>
             </div>
             
-            <div className="pt-6">
+            <div className="pt-6 certificate-footer">
+              <p className="text-sm text-muted-foreground italic mb-4">
+                This certificate was generated electronically and is valid without signature.
+              </p>
               <Button className="bg-quantum-blue hover:bg-quantum-blue/90" onClick={handleDownloadCertificate}>
                 <Download className="w-4 h-4 mr-2" />
                 Download Certificate

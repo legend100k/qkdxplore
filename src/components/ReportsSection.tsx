@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus, BarChart3 } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import ChartJsImage from "chartjs-to-image";
 
 interface ExperimentResult {
   id: string;
@@ -253,18 +256,106 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 </html>`;
   };
 
-  const downloadReport = (report: Report) => {
-    const htmlContent = generateReportHTML(report);
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Report downloaded!");
+  const generateReportPDF = async (report: Report) => {
+    try {
+      // Create a new jsPDF instance
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Add title
+      doc.setFontSize(22);
+      doc.setTextColor(0, 102, 204);
+      doc.text(report.title, 105, 20, { align: "center" });
+
+      // Add metadata
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Date: ${new Date(report.timestamp).toLocaleDateString()}`, 20, 30);
+      doc.text(`Experiment: ${report.experimentName}`, 20, 37);
+
+      // Add Aim section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Aim", 20, 47);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const aimLines = doc.splitTextToSize(report.aim, 170);
+      doc.text(aimLines, 20, 54);
+
+      // Add Theory section
+      let currentY = 54 + (aimLines.length * 5);
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Theory", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const theoryLines = doc.splitTextToSize(report.theory, 170);
+      doc.text(theoryLines, 20, currentY + 7);
+      currentY += 7 + (theoryLines.length * 5);
+
+      // Add Procedure section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Procedure", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const procedureLines = doc.splitTextToSize(report.procedure, 170);
+      doc.text(procedureLines, 20, currentY + 7);
+      currentY += 7 + (procedureLines.length * 5);
+
+      // Add Results and Data Visualization section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Results and Data Visualization", 20, currentY);
+      currentY += 10;
+
+      // Add a note about charts being available in HTML report
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Charts are available in the HTML report. For PDF with charts, please use the HTML version.", 20, currentY);
+      currentY += 10;
+
+      // Add Conclusion section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Conclusion", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const conclusionLines = doc.splitTextToSize(report.conclusion, 170);
+      doc.text(conclusionLines, 20, currentY + 7);
+
+      return doc;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      throw error;
+    }
+  };
+
+  const downloadReport = (report: Report, format: 'html' | 'pdf' = 'html') => {
+    if (format === 'pdf') {
+      generateReportPDF(report).then(doc => {
+        doc.save(`${report.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+        toast.success("PDF Report downloaded!");
+      }).catch(error => {
+        console.error("Error generating PDF:", error);
+        toast.error("Error generating PDF report. Please try again.");
+      });
+    } else {
+      const htmlContent = generateReportHTML(report);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("HTML Report downloaded!");
+    }
   };
 
   const getDefaultProcedure = (experimentId: string) => {
@@ -492,11 +583,18 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 
             <div className="flex justify-center mt-6">
               <Button
-                onClick={() => downloadReport(viewingReport)}
-                className="bg-quantum-blue hover:bg-quantum-blue/80"
+                onClick={() => downloadReport(viewingReport, 'html')}
+                className="bg-quantum-blue hover:bg-quantum-blue/80 mr-2"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download Report
+                Download HTML Report
+              </Button>
+              <Button
+                onClick={() => downloadReport(viewingReport, 'pdf')}
+                className="bg-quantum-purple hover:bg-quantum-purple/80"
+              >
+                <File className="w-4 h-4 mr-2" />
+                Download PDF Report
               </Button>
             </div>
           </CardContent>
@@ -686,13 +784,22 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                             View
                           </Button>
                           <Button
-                            onClick={() => downloadReport(report)}
+                            onClick={() => downloadReport(report, 'html')}
                             variant="outline"
                             size="sm"
-                            className="border-quantum-glow/50 hover:bg-quantum-glow/10"
+                            className="border-quantum-glow/50 hover:bg-quantum-glow/10 mr-1"
                           >
                             <Download className="w-4 h-4 mr-1" />
-                            Download
+                            HTML
+                          </Button>
+                          <Button
+                            onClick={() => downloadReport(report, 'pdf')}
+                            variant="outline"
+                            size="sm"
+                            className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+                          >
+                            <File className="w-4 h-4 mr-1" />
+                            PDF
                           </Button>
                           <Button
                             onClick={() => deleteReport(report.id)}

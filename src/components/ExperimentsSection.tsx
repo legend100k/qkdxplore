@@ -21,8 +21,8 @@ interface QuantumBit {
 export interface ExperimentResult {
   id: string;
   name: string;
-  parameters: any;
-  data: any[];
+  parameters: Record<string, unknown>;
+  data: Record<string, unknown>[];
   analysis: string;
   completed: boolean;
   timestamp: string;
@@ -98,7 +98,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     setShowBitsSimulation(true);
     setCurrentBits([]);
     
-    const experimentData: any[] = [];
+    const experimentData: Record<string, unknown>[] = [];
     let totalSteps = 0;
     let currentStep = 0;
 
@@ -262,27 +262,31 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     }
   };
 
-  const generateAnalysis = (experimentId: string, data: any[]) => {
+  const generateAnalysis = (experimentId: string, data: Record<string, unknown>[]) => {
     switch (experimentId) {
-      case "noise-analysis":
-        const maxNoise = Math.max(...data.map(d => d.noise));
-        const errorAtMaxNoise = data.find(d => d.noise === maxNoise)?.errorRate || 0;
+      case "noise-analysis": {
+        const maxNoise = Math.max(...data.map(d => Number(d.noise)));
+        const errorAtMaxNoise = data.find(d => Number(d.noise) === maxNoise)?.errorRate || 0;
         return `Channel noise significantly affects BB84 performance. At ${maxNoise}% noise, error rate reaches ${errorAtMaxNoise.toFixed(1)}%. The linear relationship demonstrates quantum channel sensitivity.`;
+      }
       
-      case "eavesdropping-detection":
-        const maxEaves = Math.max(...data.map(d => d.eavesdropping));
-        const detectionAtMax = data.find(d => d.eavesdropping === maxEaves)?.detectionProbability || 0;
+      case "eavesdropping-detection": {
+        const maxEaves = Math.max(...data.map(d => Number(d.eavesdropping)));
+        const detectionAtMax = data.find(d => Number(d.eavesdropping) === maxEaves)?.detectionProbability || 0;
         return `Eavesdropping detection shows clear correlation with error rates. At ${maxEaves}% interception, detection probability reaches ${detectionAtMax.toFixed(1)}%, demonstrating quantum security principles.`;
+      }
       
-      case "qubit-scaling":
-        const maxQubits = Math.max(...data.map(d => d.qubits));
-        const keyAtMax = data.find(d => d.qubits === maxQubits)?.keyLength || 0;
+      case "qubit-scaling": {
+        const maxQubits = Math.max(...data.map(d => Number(d.qubits)));
+        const keyAtMax = data.find(d => Number(d.qubits) === maxQubits)?.keyLength || 0;
         return `Qubit scaling demonstrates improved statistical security. With ${maxQubits} qubits, ${keyAtMax} key bits generated. Higher qubit counts provide better eavesdropping detection confidence.`;
+      }
       
-      case "basis-mismatch":
-        const avgMatch = data.reduce((sum, d) => sum + d.basisMatchRate, 0) / data.length;
-        const avgDeviation = data.reduce((sum, d) => sum + d.deviation, 0) / data.length;
+      case "basis-mismatch": {
+        const avgMatch = data.reduce((sum, d) => sum + Number(d.basisMatchRate), 0) / data.length;
+        const avgDeviation = data.reduce((sum, d) => sum + Number(d.deviation), 0) / data.length;
         return `Basis matching shows expected ~50% rate with ${avgMatch.toFixed(1)}% average. Standard deviation of ${avgDeviation.toFixed(1)}% confirms theoretical predictions and random basis selection.`;
+      }
       
       default:
         return "Experiment completed successfully. Data shows expected quantum behavior patterns.";
