@@ -14,6 +14,7 @@ const navigationItems = [
   { id: "experiments", label: "Experiments"},
   { id: "hardware", label: "Hardware"},
   { id: "qiskit", label: "Qiskit"},
+  { id: "python", label: "Python IDE"},
   { id: "reports", label: "Reports"},
   { id: "post-quiz", label: "Post-Quiz"},
   { id: "certificate", label: "Certificate"},
@@ -53,7 +54,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               }`}
               onClick={() => onTabChange(item.id)}
             >
-              <span className="text-lg mr-3">{item.icon}</span>
+              <span className="text-lg mr-3"></span>
               <span className="font-medium">{item.label}</span>
             </Button>
           ))}

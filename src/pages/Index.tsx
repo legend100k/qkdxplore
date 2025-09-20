@@ -6,6 +6,7 @@ import { SimulationSection } from "@/components/SimulationSection";
 import { ExperimentsSection } from "@/components/ExperimentsSection";
 import { QuantumHardware } from "@/components/QuantumHardware";
 import { QiskitIntegration } from "@/components/QiskitIntegration";
+import { PythonCodeEditor } from "@/components/PythonCodeEditor";
 import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
@@ -38,6 +39,8 @@ const Index = () => {
         return <QuantumHardware />;
       case "qiskit":
         return <QiskitIntegration />;
+      case "python":
+        return <PythonCodeEditor />;
       case "reports":
         return <ReportsSection availableExperiments={Object.values(experimentResults)} />;
       case "post-quiz":

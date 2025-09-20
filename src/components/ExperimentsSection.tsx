@@ -18,7 +18,7 @@ interface QuantumBit {
   eavesdropped: boolean;
 }
 
-interface ExperimentResult {
+export interface ExperimentResult {
   id: string;
   name: string;
   parameters: any;

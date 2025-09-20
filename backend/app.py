@@ -126,6 +126,82 @@ def simulate_bb84():
             'traceback': traceback.format_exc()
         }), 500
 
+@app.route('/api/execute-python', methods=['POST'])
+def execute_python():
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        
+        if not code.strip():
+            return jsonify({
+                'success': False,
+                'error': 'No code provided'
+            })
+        
+        # Create a safe execution environment
+        import io
+        import sys
+        from contextlib import redirect_stdout, redirect_stderr
+        
+        # Capture output
+        output_buffer = io.StringIO()
+        error_buffer = io.StringIO()
+        
+        # Prepare execution environment
+        exec_globals = {
+            '__builtins__': __builtins__,
+            'print': lambda *args, **kwargs: print(*args, file=output_buffer, **kwargs),
+        }
+        
+        # Add common imports
+        try:
+            import numpy as np
+            import matplotlib.pyplot as plt
+            from qiskit import QuantumCircuit, transpile
+            from qiskit.visualization import plot_histogram
+            from qiskit_aer import AerSimulator
+            exec_globals.update({
+                'numpy': np,
+                'np': np,
+                'matplotlib': plt,
+                'plt': plt,
+                'QuantumCircuit': QuantumCircuit,
+                'transpile': transpile,
+                'plot_histogram': plot_histogram,
+                'AerSimulator': AerSimulator
+            })
+        except ImportError as e:
+            return jsonify({
+                'success': False,
+                'error': f'Required library not available: {str(e)}'
+            })
+        
+        try:
+            # Execute the code
+            with redirect_stdout(output_buffer), redirect_stderr(error_buffer):
+                exec(code, exec_globals)
+            
+            output = output_buffer.getvalue()
+            error = error_buffer.getvalue()
+            
+            return jsonify({
+                'success': True,
+                'output': output,
+                'error': error if error else None
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': f'Execution error: {str(e)}'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Server error: {str(e)}'
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({'status': 'healthy', 'message': 'BB84 API is running'})
