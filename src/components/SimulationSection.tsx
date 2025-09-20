@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Pause, RotateCw, Zap, Eye, Shield, BarChart3, Settings, ChevronLeft, ChevronRight, StepForward, Loader2, CheckCircle, XCircle, Cpu, Atom } from "lucide-react";
+import { Play, Pause, RotateCw, Zap, Eye, Shield, Activity, Settings, ChevronLeft, ChevronRight, StepForward, Loader2, CheckCircle, XCircle, Cpu, Atom } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { MatlabPlot } from "@/components/MatlabPlot";
+import { apiFetch } from "@/lib/api";
 
 interface QuantumBit {
   id: number;
@@ -90,7 +91,7 @@ export const SimulationSection = () => {
 
     try {
       const endpoint = useSimulation ? '/api/bb84/simulate' : '/api/bb84';
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +118,18 @@ export const SimulationSection = () => {
         toast.error(`Qiskit error: ${data.error || 'Unknown error'}`);
       }
     } catch (err) {
-      const errorMsg = `Failed to connect to Qiskit backend: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      let errorMsg = 'Failed to connect to Qiskit backend.';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('fetch') || err.message.includes('Failed to connect')) {
+          errorMsg += ' Please ensure the backend service is running. In local development, run `python start_backend.py`.';
+        } else {
+          errorMsg += ` ${err.message}`;
+        }
+      } else {
+        errorMsg += ' Unknown error occurred.';
+      }
+      
       setQiskitError(errorMsg);
       toast.error(errorMsg);
     } finally {
@@ -1005,7 +1017,7 @@ export const SimulationSection = () => {
                 <Card className="border-quantum-glow/30">
                   <CardHeader>
                     <CardTitle className="text-quantum-glow flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6" />
+                      <Activity className="w-6 h-6" />
                       Simulation Analysis
                     </CardTitle>
                   </CardHeader>
@@ -1016,40 +1028,18 @@ export const SimulationSection = () => {
                           <CardTitle className="text-sm">Simulation Metrics</CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={simulationData.slice(0, 3)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      label={{ 
-                        value: "Metrics", 
-                        position: "insideBottom", 
-                        offset: -5 
-                      }}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      label={{ 
-                        value: "Count", 
-                        angle: -90, 
-                        position: "insideLeft" 
-                      }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px'
-                      }} 
-                    />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                          <div className="flex justify-center">
+                            <MatlabPlot
+                              data={simulationData.slice(0, 3)}
+                              xAxisKey="name"
+                              seriesKeys={["value"]}
+                              xAxisLabel="Metrics"
+                              yAxisLabel="Count"
+                              title="Simulation Metrics"
+                              width={400}
+                              height={300}
+                            />
+                          </div>
                         </CardContent>
                       </Card>
 

@@ -3,18 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Plus, Activity, File } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import ChartJsImage from "chartjs-to-image";
+import { MatlabPlot } from "@/components/MatlabPlot";
 
 interface ExperimentResult {
   id: string;
   name: string;
-  parameters: any;
-  data: any[];
+  parameters: Record<string, unknown>;
+  data: Record<string, unknown>[];
   analysis: string;
   completed: boolean;
   timestamp: string;
@@ -30,7 +29,7 @@ interface Report {
   theory: string;
   conclusion: string;
   timestamp: string;
-  data: any[];
+  data: Record<string, unknown>[];
 }
 
 export const ReportsSection = ({ availableExperiments = [] }: { availableExperiments?: ExperimentResult[] }) => {
@@ -401,7 +400,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
   };
 
-  const renderExperimentChart = (data: any[], experimentId: string) => {
+  const renderExperimentChart = (data: Record<string, unknown>[], experimentId: string) => {
     // Determine chart configuration based on experiment type
     let xAxisKey, series1, series2;
     if (experimentId === "noise-analysis") {
@@ -424,69 +423,17 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
 
     return (
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-            <XAxis 
-              dataKey={xAxisKey}
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: getXAxisLabel(experimentId), 
-                position: "insideBottom", 
-                offset: -5 
-              }}
-            />
-            <YAxis 
-              yAxisId="left" 
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: "Error Rate (%)", 
-                angle: -90, 
-                position: "insideLeft" 
-              }}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              stroke="hsl(var(--quantum-glow))" 
-              fontSize={12}
-              label={{ 
-                value: getYAxisLabel(experimentId, series2), 
-                angle: 90, 
-                position: "insideRight" 
-              }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px'
-              }} 
-            />
-            <Legend />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey={series1} 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={2}
-              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
-              activeDot={{ r: 8 }}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey={series2} 
-              stroke="hsl(var(--quantum-glow))" 
-              strokeWidth={2}
-              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="flex justify-center">
+        <MatlabPlot
+          data={data}
+          xAxisKey={xAxisKey}
+          seriesKeys={[series1, series2]}
+          xAxisLabel={getXAxisLabel(experimentId)}
+          yAxisLabel="Values"
+          title={`${experimentId} Results`}
+          width={600}
+          height={400}
+        />
       </div>
     );
   };
@@ -536,7 +483,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 
                 <div>
                   <h2 className="text-xl font-semibold text-quantum-purple mb-2 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
+                    <Activity className="w-5 h-5" />
                     Results and Data Visualization
                   </h2>
                   <Card className="bg-secondary/20">
@@ -676,7 +623,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
               <Card className="bg-secondary/20">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
+                    <Activity className="w-4 h-4" />
                     Experimental Data Visualization
                   </CardTitle>
                 </CardHeader>

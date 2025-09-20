@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
+import { Beaker, Play, Eye, Zap, Shield, Activity, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { MatlabPlot } from "@/components/MatlabPlot";
 
 interface QuantumBit {
   id: number;
@@ -58,7 +58,7 @@ const experiments = [
     id: "qubit-scaling",
     name: "Qubit Number Scaling Study",
     description: "Examine how the number of qubits affects statistical security and key rates",
-    icon: BarChart3,
+    icon: Activity,
     color: "quantum-glow",
     parameters: {
       qubitRange: [10, 50],
@@ -564,56 +564,21 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                       <CardTitle className="text-sm">Experiment Results</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64 mb-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={results[selectedExp.id].data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                            <XAxis 
-                              dataKey={selectedExp.id === "basis-mismatch" ? "iteration" : 
-                                       selectedExp.id === "qubit-scaling" ? "qubits" :
-                                       selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"} 
-                              stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ 
-                                value: getXAxisLabel(selectedExp.id), 
-                                position: "insideBottom", 
-                                offset: -5 
-                              }}
-                            />
-                            <YAxis 
-                              stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ 
-                                value: "Error Rate (%)", 
-                                angle: -90, 
-                                position: "insideLeft" 
-                              }}
-                            />
-                            <Tooltip 
-                              contentStyle={{ 
-                                backgroundColor: 'hsl(var(--background))', 
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '6px'
-                              }} 
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="errorRate" 
-                              stroke="hsl(var(--destructive))" 
-                              strokeWidth={2}
-                              name="Error Rate (%)"
-                            />
-                            {selectedExp.id !== "basis-mismatch" && (
-                              <Line 
-                                type="monotone" 
-                                dataKey={selectedExp.id === "qubit-scaling" ? "statisticalSecurity" : "keyRate"}
-                                stroke={`hsl(var(--${selectedExp.color}))`}
-                                strokeWidth={2}
-                                name={selectedExp.id === "qubit-scaling" ? "Statistical Security (%)" : "Key Rate (%)"}
-                              />
-                            )}
-                          </LineChart>
-                        </ResponsiveContainer>
+                      <div className="flex justify-center mb-4">
+                        <MatlabPlot
+                          data={results[selectedExp.id].data}
+                          xAxisKey={selectedExp.id === "basis-mismatch" ? "iteration" : 
+                                   selectedExp.id === "qubit-scaling" ? "qubits" :
+                                   selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"}
+                          seriesKeys={selectedExp.id === "basis-mismatch" ? ["errorRate"] : 
+                                    selectedExp.id === "qubit-scaling" ? ["errorRate", "statisticalSecurity"] : 
+                                    ["errorRate", "keyRate"]}
+                          xAxisLabel={getXAxisLabel(selectedExp.id)}
+                          yAxisLabel="Error Rate (%)"
+                          title={`${selectedExp.name} Results`}
+                          width={600}
+                          height={400}
+                        />
                       </div>
                       
                       <Card className="bg-quantum-glow/10 border-quantum-glow/30">
