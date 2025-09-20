@@ -20,7 +20,6 @@ import {
   Zap
 } from "lucide-react";
 import { toast } from "sonner";
-import { apiFetch } from "@/lib/api";
 
 interface CodeExecutionResult {
   output: string;
@@ -248,7 +247,7 @@ export const PythonCodeEditor = () => {
       const startTime = Date.now();
       
       // Send code to backend for execution
-      const response = await apiFetch('/api/execute-python', {
+      const response = await fetch('http://localhost:5000/api/execute-python', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,21 +282,9 @@ export const PythonCodeEditor = () => {
         toast.error("Code execution failed");
       }
     } catch (error) {
-      let errorMsg = 'Connection error: ';
-      
-      if (error instanceof Error) {
-        if (error.message.includes('fetch') || error.message.includes('Failed to connect')) {
-          errorMsg += 'Failed to connect to Python execution service. Please ensure the backend is running. In local development, run `python start_backend.py`.';
-        } else {
-          errorMsg += error.message;
-        }
-      } else {
-        errorMsg += 'Unknown error occurred.';
-      }
-      
       const executionResult: CodeExecutionResult = {
         output: '',
-        error: errorMsg,
+        error: `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         executionTime: 0,
         success: false
       };

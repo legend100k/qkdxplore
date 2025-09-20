@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Play, RefreshCw, CheckCircle, XCircle } from "lucide-react";
-import { apiFetch } from "@/lib/api";
 
 interface BB84Result {
   alice_bits: number[];
@@ -43,7 +42,7 @@ export const QiskitIntegration = () => {
 
     try {
       const endpoint = useSimulation ? '/api/bb84/simulate' : '/api/bb84';
-      const response = await apiFetch(endpoint, {
+      const response = await fetch(`http://localhost:5000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,19 +61,7 @@ export const QiskitIntegration = () => {
         setError(data.error || 'Unknown error occurred');
       }
     } catch (err) {
-      let errorMsg = 'Failed to connect to backend.';
-      
-      if (err instanceof Error) {
-        if (err.message.includes('fetch') || err.message.includes('Failed to connect')) {
-          errorMsg += ' Please ensure the backend service is running. In local development, run `python start_backend.py`.';
-        } else {
-          errorMsg += ` ${err.message}`;
-        }
-      } else {
-        errorMsg += ' Unknown error occurred.';
-      }
-      
-      setError(errorMsg);
+      setError(`Failed to connect to backend: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
