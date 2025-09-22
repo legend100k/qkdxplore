@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
+import { Beaker, Play, Eye, Zap, Shield, Activity, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { MatlabPlot } from "@/components/MatlabPlot";
 
 interface QuantumBit {
   id: number;
@@ -18,11 +18,11 @@ interface QuantumBit {
   eavesdropped: boolean;
 }
 
-interface ExperimentResult {
+export interface ExperimentResult {
   id: string;
   name: string;
-  parameters: any;
-  data: any[];
+  parameters: Record<string, unknown>;
+  data: Record<string, unknown>[];
   analysis: string;
   completed: boolean;
   timestamp: string;
@@ -58,7 +58,7 @@ const experiments = [
     id: "qubit-scaling",
     name: "Qubit Number Scaling Study",
     description: "Examine how the number of qubits affects statistical security and key rates",
-    icon: BarChart3,
+    icon: Activity,
     color: "quantum-glow",
     parameters: {
       qubitRange: [10, 50],
@@ -98,7 +98,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     setShowBitsSimulation(true);
     setCurrentBits([]);
     
-    const experimentData: any[] = [];
+    const experimentData: Record<string, unknown>[] = [];
     let totalSteps = 0;
     let currentStep = 0;
 
@@ -262,27 +262,31 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     }
   };
 
-  const generateAnalysis = (experimentId: string, data: any[]) => {
+  const generateAnalysis = (experimentId: string, data: Record<string, unknown>[]) => {
     switch (experimentId) {
-      case "noise-analysis":
-        const maxNoise = Math.max(...data.map(d => d.noise));
-        const errorAtMaxNoise = data.find(d => d.noise === maxNoise)?.errorRate || 0;
+      case "noise-analysis": {
+        const maxNoise = Math.max(...data.map(d => Number(d.noise)));
+        const errorAtMaxNoise = data.find(d => Number(d.noise) === maxNoise)?.errorRate || 0;
         return `Channel noise significantly affects BB84 performance. At ${maxNoise}% noise, error rate reaches ${errorAtMaxNoise.toFixed(1)}%. The linear relationship demonstrates quantum channel sensitivity.`;
+      }
       
-      case "eavesdropping-detection":
-        const maxEaves = Math.max(...data.map(d => d.eavesdropping));
-        const detectionAtMax = data.find(d => d.eavesdropping === maxEaves)?.detectionProbability || 0;
+      case "eavesdropping-detection": {
+        const maxEaves = Math.max(...data.map(d => Number(d.eavesdropping)));
+        const detectionAtMax = data.find(d => Number(d.eavesdropping) === maxEaves)?.detectionProbability || 0;
         return `Eavesdropping detection shows clear correlation with error rates. At ${maxEaves}% interception, detection probability reaches ${detectionAtMax.toFixed(1)}%, demonstrating quantum security principles.`;
+      }
       
-      case "qubit-scaling":
-        const maxQubits = Math.max(...data.map(d => d.qubits));
-        const keyAtMax = data.find(d => d.qubits === maxQubits)?.keyLength || 0;
+      case "qubit-scaling": {
+        const maxQubits = Math.max(...data.map(d => Number(d.qubits)));
+        const keyAtMax = data.find(d => Number(d.qubits) === maxQubits)?.keyLength || 0;
         return `Qubit scaling demonstrates improved statistical security. With ${maxQubits} qubits, ${keyAtMax} key bits generated. Higher qubit counts provide better eavesdropping detection confidence.`;
+      }
       
-      case "basis-mismatch":
-        const avgMatch = data.reduce((sum, d) => sum + d.basisMatchRate, 0) / data.length;
-        const avgDeviation = data.reduce((sum, d) => sum + d.deviation, 0) / data.length;
+      case "basis-mismatch": {
+        const avgMatch = data.reduce((sum, d) => sum + Number(d.basisMatchRate), 0) / data.length;
+        const avgDeviation = data.reduce((sum, d) => sum + Number(d.deviation), 0) / data.length;
         return `Basis matching shows expected ~50% rate with ${avgMatch.toFixed(1)}% average. Standard deviation of ${avgDeviation.toFixed(1)}% confirms theoretical predictions and random basis selection.`;
+      }
       
       default:
         return "Experiment completed successfully. Data shows expected quantum behavior patterns.";
@@ -560,56 +564,21 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                       <CardTitle className="text-sm">Experiment Results</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64 mb-4">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={results[selectedExp.id].data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                            <XAxis 
-                              dataKey={selectedExp.id === "basis-mismatch" ? "iteration" : 
-                                       selectedExp.id === "qubit-scaling" ? "qubits" :
-                                       selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"} 
-                              stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ 
-                                value: getXAxisLabel(selectedExp.id), 
-                                position: "insideBottom", 
-                                offset: -5 
-                              }}
-                            />
-                            <YAxis 
-                              stroke="hsl(var(--muted-foreground))" 
-                              fontSize={12}
-                              label={{ 
-                                value: "Error Rate (%)", 
-                                angle: -90, 
-                                position: "insideLeft" 
-                              }}
-                            />
-                            <Tooltip 
-                              contentStyle={{ 
-                                backgroundColor: 'hsl(var(--background))', 
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '6px'
-                              }} 
-                            />
-                            <Line 
-                              type="monotone" 
-                              dataKey="errorRate" 
-                              stroke="hsl(var(--destructive))" 
-                              strokeWidth={2}
-                              name="Error Rate (%)"
-                            />
-                            {selectedExp.id !== "basis-mismatch" && (
-                              <Line 
-                                type="monotone" 
-                                dataKey={selectedExp.id === "qubit-scaling" ? "statisticalSecurity" : "keyRate"}
-                                stroke={`hsl(var(--${selectedExp.color}))`}
-                                strokeWidth={2}
-                                name={selectedExp.id === "qubit-scaling" ? "Statistical Security (%)" : "Key Rate (%)"}
-                              />
-                            )}
-                          </LineChart>
-                        </ResponsiveContainer>
+                      <div className="flex justify-center mb-4">
+                        <MatlabPlot
+                          data={results[selectedExp.id].data}
+                          xAxisKey={selectedExp.id === "basis-mismatch" ? "iteration" : 
+                                   selectedExp.id === "qubit-scaling" ? "qubits" :
+                                   selectedExp.id === "eavesdropping-detection" ? "eavesdropping" : "noise"}
+                          seriesKeys={selectedExp.id === "basis-mismatch" ? ["errorRate"] : 
+                                    selectedExp.id === "qubit-scaling" ? ["errorRate", "statisticalSecurity"] : 
+                                    ["errorRate", "keyRate"]}
+                          xAxisLabel={getXAxisLabel(selectedExp.id)}
+                          yAxisLabel="Error Rate (%)"
+                          title={`${selectedExp.name} Results`}
+                          width={600}
+                          height={400}
+                        />
                       </div>
                       
                       <Card className="bg-quantum-glow/10 border-quantum-glow/30">
