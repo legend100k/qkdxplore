@@ -1059,16 +1059,16 @@ export const SimulationSection = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
-                            {simulationData.slice(3).map((item, index) => (
+                            {simulationData.slice(3).map(item, index) => (
                               <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded">
-                                <span className="text-sm font-medium">{item.name}</span>
+                                <span className="text-sm font-medium">{item.n;=[me}</span>
                                 <span className={`text-lg font-bold ${
                                   item.name.includes('Error') ? 'text-red-400' : 'text-green-400'
                                 }`}>
                                   {item.value}
                                 </span>
                               </div>
-                            ))}
+                            
                             
                             <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
                               <h4 className="font-semibold text-quantum-glow text-sm mb-2">Security Assessment</h4>

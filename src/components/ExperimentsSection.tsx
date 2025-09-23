@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { PhotonTransmissionAnimation } from "@/components/PhotonTransmissionAnimation";
 
 interface QuantumBit {
   id: number;
@@ -84,6 +85,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
   const [selectedExperiment, setSelectedExperiment] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [photonPosition, setPhotonPosition] = useState(0);
   const [results, setResults] = useState<{ [key: string]: ExperimentResult }>({});
   const [currentBits, setCurrentBits] = useState<QuantumBit[]>([]);
   const [showBitsSimulation, setShowBitsSimulation] = useState(false);
@@ -95,12 +97,24 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
 
     setIsRunning(true);
     setProgress(0);
+    setPhotonPosition(0);
     setShowBitsSimulation(true);
     setCurrentBits([]);
     
     const experimentData: Record<string, unknown>[] = [];
     let totalSteps = 0;
     let currentStep = 0;
+
+    // Animate photon during experiment
+    const animatePhoton = async () => {
+      while (isRunning) {
+        setPhotonPosition(prev => (prev >= 100 ? 0 : prev + 2));
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    };
+
+    // Start photon animation
+    animatePhoton();
 
     switch (experimentId) {
       case "noise-analysis":
@@ -184,6 +198,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     setResults(prev => ({ ...prev, [experimentId]: experimentResult }));
     onSaveExperiment?.(experimentResult);
     setIsRunning(false);
+    setPhotonPosition(0);
     setProgress(0);
     toast.success(`${experiment.name} completed successfully!`);
   };
@@ -372,6 +387,16 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
                   <Progress value={progress} className="mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">{progress.toFixed(0)}%</p>
                 </div>
+                
+                {/* Photon Transmission Animation */}
+                <Card className="border-quantum-glow/30">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Photon Transmission</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PhotonTransmissionAnimation photonPosition={photonPosition} />
+                  </CardContent>
+                </Card>
                 
                 {showBitsSimulation && currentBits.length > 0 && (
                   <Card className="bg-secondary/20">
