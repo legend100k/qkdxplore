@@ -40,11 +40,6 @@ interface APIResponse {
   error?: string;
 }
 
-interface SimulationData {
-  name: string;
-  value: string | number;
-}
-
 const getBasisSymbol = (basis: string): string => {
   switch (basis) {
     case "+": return "→";  // Rectilinear basis (Horizontal/Vertical)
@@ -63,7 +58,7 @@ export const SimulationSection = () => {
   const [numQubits, setNumQubits] = useState([16]);
   const [eavesdroppingRate, setEavesdroppingRate] = useState([0]);
   const [noiseLevel, setNoiseLevel] = useState([0]);
-  const [simulationData, setSimulationData] = useState<SimulationData[]>([]);
+  const [simulationData, setSimulationData] = useState<QuantumBit[]>([]);
   const [showGraphs, setShowGraphs] = useState(false);
   const [isStepByStep, setIsStepByStep] = useState(false);
   const [currentBitIndex, setCurrentBitIndex] = useState(0);
@@ -458,8 +453,8 @@ export const SimulationSection = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left column - Controls */}
             <div className="space-y-6">
-            {/* Simulation Mode Selection */}
-             <Card className="border-quantum-blue/20"> 
+              {/* Simulation Mode Selection */}
+              <Card className="border-quantum-blue/20">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Settings className="w-5 h-5" />
@@ -1078,7 +1073,7 @@ export const SimulationSection = () => {
                             <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
                               <h4 className="font-semibold text-quantum-glow text-sm mb-2">Security Assessment</h4>
                               <p className="text-xs">
-                                {parseFloat(String(simulationData[3]?.value || '0')) > 10
+                                {parseFloat(simulationData[3]?.value || '0') > 10
                                   ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
                                   : "✅ Error rate within acceptable limits for secure communication."
                                 }

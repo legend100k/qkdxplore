@@ -12,9 +12,9 @@ const navigationItems = [
   { id: "pre-quiz", label: "Pre-Quiz"},
   { id: "simulation", label: "Simulation"},
   { id: "experiments", label: "Experiments"},
-  { id: "hardware", label: "Hardware"},
-  { id: "qiskit", label: "Qiskit"},
-  { id: "python", label: "Python IDE"},
+  { id: "hardware", label: "Info about quantum hardware"},
+  //{ id: "qiskit", label: "Qiskit"},
+  { id: "python", label: "Try it using python!"},
   { id: "reports", label: "Reports"},
   { id: "post-quiz", label: "Post-Quiz"},
   { id: "certificate", label: "Certificate"},
@@ -32,7 +32,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
             </div>
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent">
-                QKD_Xplore
+                QKD Xplore
               </h1>
               <p className="text-xs text-muted-foreground">
                 Quantum Lab

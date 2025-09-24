@@ -6,7 +6,7 @@ import { SimulationSection } from "@/components/SimulationSection";
 import { ExperimentsSection } from "@/components/ExperimentsSection";
 import { QuantumHardware } from "@/components/QuantumHardware";
 import { QiskitIntegration } from "@/components/QiskitIntegration";
-import { PythonCodeEditor } from "@/components/PythonCodeEditor";
+import PythonCodeEditor from "@/components/PythonCodeEditor";
 import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
