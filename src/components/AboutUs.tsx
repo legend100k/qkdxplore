@@ -4,12 +4,12 @@ import { Input } from "@/components/ui/input";
 
 export const AboutUs = () => {
   const teamMembers = [
-    "Tejas Naringrekar - 2022.tejas.naringrekar@ves.ac.in",
-    "Shantaram Chari - 2022.shantaram.chari@ves.ac.in",
-    "Harsh Mhadgut - 2022.harsh.mhadgut@ves.ac.in",
-    "Sharavani Kale - 2022.Sharavani.kale@ves.ac.in",
-    "Arundhati Nair - 2022.arundhati.nair@ves.ac.in",
-    "Aniruddha Gharat - 2022.aniruddha.gharat@ves.ac.in"
+    "Tejas Naringrekar",
+    "Shantaram Chari",
+    "Harsh Mhadgut",
+    "Sharavani Kale",
+    "Arundhati Nair",
+    "Aniruddha Gharat"
   ];
 
   return (
