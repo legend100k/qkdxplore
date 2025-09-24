@@ -16,8 +16,8 @@ const navigationItems = [
   //{ id: "qiskit", label: "Qiskit"},
   { id: "python", label: "Try it using python!"},
   { id: "reports", label: "Reports"},
-  { id: "post-quiz", label: "Post-Quiz"},
-  { id: "certificate", label: "Certificate"},
+  { id: "post-quiz", label: "Post-Quiz"},    
+  //{ id: "certificate", label: "Certificate"},
   { id: "about", label: "About"},
 ];
 

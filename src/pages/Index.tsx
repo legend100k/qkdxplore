@@ -10,7 +10,7 @@ import PythonCodeEditor from "@/components/PythonCodeEditor";
 import { ReportsSection } from "@/components/ReportsSection";
 import { PostQuiz } from "@/components/PostQuiz";
 import { AboutUs } from "@/components/AboutUs";
-import { Certificate } from "@/components/Certificate";
+//import { Certificate } from "@/components/Certificate";
 import { ExperimentResult } from "@/components/ExperimentsSection";
 
 const Index = () => {
@@ -45,8 +45,8 @@ const Index = () => {
         return <ReportsSection availableExperiments={Object.values(experimentResults)} />;
       case "post-quiz":
         return <PostQuiz onQuizComplete={(score) => setPostQuizScore(score)} />;
-      case "certificate":
-        return <Certificate postQuizScore={postQuizScore || 0} />;
+      //case "certificate":
+      //  return <Certificate postQuizScore={postQuizScore || 0} />;
       case "about":
         return <AboutUs />;
       default:
