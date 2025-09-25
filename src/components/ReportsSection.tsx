@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import ChartJsImage from "chartjs-to-image";
 
@@ -256,93 +255,58 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 </html>`;
   };
 
-  const generateReportPDF = async (report: Report) => {
-    try {
-      // Create a new jsPDF instance
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+  
 
-      // Add title
-      doc.setFontSize(22);
-      doc.setTextColor(0, 102, 204);
-      doc.text(report.title, 105, 20, { align: "center" });
-
-      // Add metadata
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Date: ${new Date(report.timestamp).toLocaleDateString()}`, 20, 30);
-      doc.text(`Experiment: ${report.experimentName}`, 20, 37);
-
-      // Add Aim section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Aim", 20, 47);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const aimLines = doc.splitTextToSize(report.aim, 170);
-      doc.text(aimLines, 20, 54);
-
-      // Add Theory section
-      let currentY = 54 + (aimLines.length * 5);
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Theory", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const theoryLines = doc.splitTextToSize(report.theory, 170);
-      doc.text(theoryLines, 20, currentY + 7);
-      currentY += 7 + (theoryLines.length * 5);
-
-      // Add Procedure section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Procedure", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const procedureLines = doc.splitTextToSize(report.procedure, 170);
-      doc.text(procedureLines, 20, currentY + 7);
-      currentY += 7 + (procedureLines.length * 5);
-
-      // Add Results and Data Visualization section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Results and Data Visualization", 20, currentY);
-      currentY += 10;
-
-      // Add a note about charts being available in HTML report
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Charts are available in the HTML report. For PDF with charts, please use the HTML version.", 20, currentY);
-      currentY += 10;
-
-      // Add Conclusion section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Conclusion", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const conclusionLines = doc.splitTextToSize(report.conclusion, 170);
-      doc.text(conclusionLines, 20, currentY + 7);
-
-      return doc;
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      throw error;
-    }
-  };
-
-  const downloadReport = (report: Report, format: 'html' | 'pdf' = 'html') => {
+  const downloadReport = async (report: Report, format: 'html' | 'pdf' = 'html') => {
+    // NOTE: 'pdf' format now downloads an image file (png) instead of a PDF due to jsPDF removal
     if (format === 'pdf') {
-      generateReportPDF(report).then(doc => {
-        doc.save(`${report.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
-        toast.success("PDF Report downloaded!");
-      }).catch(error => {
-        console.error("Error generating PDF:", error);
-        toast.error("Error generating PDF report. Please try again.");
-      });
+      try {
+        // Create a temporary container for the report content
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = generateReportHTML(report);
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '-9999px';
+        tempContainer.style.width = '210mm'; // A4 width
+        tempContainer.style.height = '297mm'; // A4 height
+        tempContainer.style.backgroundColor = 'white';
+        tempContainer.style.padding = '20px';
+        tempContainer.style.boxSizing = 'border-box';
+        tempContainer.style.zIndex = '-1';
+        
+        document.body.appendChild(tempContainer);
+        
+        // Wait for any potential content to load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Use html2canvas to capture the HTML content as an image
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2, // Higher resolution
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        // Remove the temporary container
+        document.body.removeChild(tempContainer);
+        
+        // Convert canvas to image data
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Create a link to download the image as PNG
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success("Report image downloaded!");
+      } catch (error) {
+        console.error("Error generating report image:", error);
+        toast.error("Error generating report image. Please try again or use HTML format.");
+      }
     } else {
       const htmlContent = generateReportHTML(report);
       const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -589,13 +553,13 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 <Download className="w-4 h-4 mr-2" />
                 Download HTML Report
               </Button>
-              <Button
+              {/*<Button
                 onClick={() => downloadReport(viewingReport, 'pdf')}
                 className="bg-quantum-purple hover:bg-quantum-purple/80"
               >
                 <File className="w-4 h-4 mr-2" />
-                Download PDF Report
-              </Button>
+                Download Image Report
+              </Button>*/}
             </div>
           </CardContent>
         </Card>
@@ -792,15 +756,15 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                             <Download className="w-4 h-4 mr-1" />
                             HTML
                           </Button>
-                          <Button
+                          {/*<Button
                             onClick={() => downloadReport(report, 'pdf')}
                             variant="outline"
                             size="sm"
                             className="border-quantum-purple/50 hover:bg-quantum-purple/10"
                           >
                             <File className="w-4 h-4 mr-1" />
-                            PDF
-                          </Button>
+                            Image
+                          </Button>*/}
                           <Button
                             onClick={() => deleteReport(report.id)}
                             variant="outline"
