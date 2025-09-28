@@ -5,9 +5,33 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Pause, RotateCw, Zap, Eye, Shield, BarChart3, Settings, ChevronLeft, ChevronRight, StepForward, Loader2, Cpu } from "lucide-react";
+import {
+  Play,
+  Pause,
+  RotateCw,
+  Zap,
+  Eye,
+  Shield,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  StepForward,
+  Loader2,
+  Cpu,
+} from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
 
 // Add CSS animations
 const animationStyles = `
@@ -50,8 +74,8 @@ const animationStyles = `
 `;
 
 // Inject CSS animations into the document
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
   styleSheet.innerText = animationStyles;
   document.head.appendChild(styleSheet);
 }
@@ -85,29 +109,32 @@ interface APIResponse {
   error?: string;
 }
 
-  const getBasisSymbol = (basis: string): string => {
-    switch (basis) {
-      case "+": return "→";  // Rectilinear basis (Horizontal/Vertical)
-      case "×": return "↗";  // Diagonal basis (Diagonal/Anti-diagonal)
-      default: return basis;
-    }
-  };
+const getBasisSymbol = (basis: string): string => {
+  switch (basis) {
+    case "+":
+      return "→"; // Rectilinear basis (Horizontal/Vertical)
+    case "×":
+      return "↗"; // Diagonal basis (Diagonal/Anti-diagonal)
+    default:
+      return basis;
+  }
+};
 
-  const getPolarization = (bit: number, basis: string): string => {
-    if (basis === "+") {
-      return bit === 0 ? "H" : "V";
-    } else {
-      return bit === 0 ? "+45°" : "-45°";
-    }
-  };
+const getPolarization = (bit: number, basis: string): string => {
+  if (basis === "+") {
+    return bit === 0 ? "H" : "V";
+  } else {
+    return bit === 0 ? "+45°" : "-45°";
+  }
+};
 
-  const getPolarizationSymbol = (bit: number, basis: string): string => {
-    if (basis === "+") {
-      return bit === 0 ? "→" : "↑";
-    } else {
-      return bit === 0 ? "↗" : "↖";
-    }
-  };
+const getPolarizationSymbol = (bit: number, basis: string): string => {
+  if (basis === "+") {
+    return bit === 0 ? "→" : "↑";
+  } else {
+    return bit === 0 ? "↗" : "↖";
+  }
+};
 
 export const SimulationSection = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -118,7 +145,7 @@ export const SimulationSection = () => {
   const [numQubits, setNumQubits] = useState([16]);
   const [eavesdroppingRate, setEavesdroppingRate] = useState([0]);
   const [noiseLevel, setNoiseLevel] = useState([0]);
-  const [simulationData, setSimulationData] = useState<QuantumBit[]>([]);
+  const [simulationData, setSimulationData] = useState<Array<{name: string, value: number | string}>>([]);
   const [showGraphs, setShowGraphs] = useState(false);
   const [isStepByStep, setIsStepByStep] = useState(false);
   const [currentBitIndex, setCurrentBitIndex] = useState(0);
@@ -129,53 +156,62 @@ export const SimulationSection = () => {
   const [isPhotonVisible, setIsPhotonVisible] = useState(false);
   const [isPhotonVibrating, setIsPhotonVibrating] = useState(false);
   const [isPhotonFalling, setIsPhotonFalling] = useState(false);
-  const [statusInfo, setStatusInfo] = useState('Ready...');
+  const [statusInfo, setStatusInfo] = useState("Ready...");
   const [isStatusInfoVisible, setIsStatusInfoVisible] = useState(false);
   const [activeEve, setActiveEve] = useState<number | null>(null);
-  const [aliceBit, setAliceBit] = useState('-');
-  const [aliceBasis, setAliceBasis] = useState('-');
-  const [alicePol, setAlicePol] = useState('-');
-  const [bobBasis, setBobBasis] = useState('-');
-  const [bobBit, setBobBit] = useState('-');
-  const [bobResult, setBobResult] = useState('-');
-  const [alicePolarizer, setAlicePolarizer] = useState('+');
-  const [bobPolarizer, setBobPolarizer] = useState('+');
-  const [evePolarizers, setEvePolarizers] = useState<Array<{measure: string, send: string}>>([
-    {measure: '+', send: '+'},
-    {measure: '+', send: '+'},
-    {measure: '+', send: '+'},
-    {measure: '+', send: '+'},
-    {measure: '+', send: '+'}
+  const [aliceBit, setAliceBit] = useState("-");
+  const [aliceBasis, setAliceBasis] = useState("-");
+  const [alicePol, setAlicePol] = useState("-");
+  const [bobBasis, setBobBasis] = useState("-");
+  const [bobBit, setBobBit] = useState("-");
+  const [bobResult, setBobResult] = useState("-");
+  const [alicePolarizer, setAlicePolarizer] = useState("+");
+  const [bobPolarizer, setBobPolarizer] = useState("+");
+  const [evePolarizers, setEvePolarizers] = useState<
+    Array<{ measure: string; send: string }>
+  >([
+    { measure: "+", send: "+" },
+    { measure: "+", send: "+" },
+    { measure: "+", send: "+" },
+    { measure: "+", send: "+" },
+    { measure: "+", send: "+" },
   ]);
   const [numEves, setNumEves] = useState(0);
+
+  // Calculate number of Eves based on eavesdropping rate
+  useEffect(() => {
+    // Calculate number of Eves based on eavesdropping rate (0-100%)
+    const calculatedNumEves = Math.floor((eavesdroppingRate[0] / 100) * 5); // Max 5 Eves in the visualization
+    setNumEves(calculatedNumEves);
+  }, [eavesdroppingRate]);
 
   const steps = [
     "Alice generates random bits and bases",
     "Alice sends photons to Bob",
     "Photon transmitted",
-    "Bob randomly chooses measurement bases", 
+    "Bob randomly chooses measurement bases",
     "Bob measures photons",
     "Public basis comparison",
-    "Key sifting and final key generation"
+    "Key sifting and final key generation",
   ];
 
   // Initialize animation on mount
   useEffect(() => {
     // Set initial state for animation
-    setAliceBit('-');
-    setAliceBasis('-');
-    setAlicePol('-');
-    setBobBasis('-');
-    setBobBit('-');
-    setBobResult('-');
-    setAlicePolarizer('+');
-    setBobPolarizer('+');
+    setAliceBit("-");
+    setAliceBasis("-");
+    setAlicePol("-");
+    setBobBasis("-");
+    setBobBit("-");
+    setBobResult("-");
+    setAlicePolarizer("+");
+    setBobPolarizer("+");
     setEvePolarizers([
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'}
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
     ]);
     setNumEves(0);
     hidePhoton();
@@ -187,12 +223,12 @@ export const SimulationSection = () => {
     const totalBits = numQubits[0];
     const eavesProbability = eavesdroppingRate[0] / 100;
     const noise = noiseLevel[0] / 100;
-    
+
     for (let i = 0; i < totalBits; i++) {
       const aliceBit = Math.random() > 0.5 ? 1 : 0;
       const aliceBasis = Math.random() > 0.5 ? "+" : "×";
       const bobBasis = Math.random() > 0.5 ? "+" : "×";
-      
+
       const isMatching = aliceBasis === bobBasis;
       let bobMeasurement = null;
       let inKey = false;
@@ -202,15 +238,19 @@ export const SimulationSection = () => {
         // When bases match, Bob should get the same bit as Alice (in ideal conditions)
         bobMeasurement = aliceBit;
         inKey = true;
-        
+
         // Apply eavesdropping effect
         if (eavesProbability > 0 && Math.random() < eavesProbability) {
-          // Eve measures the photon and randomly changes the bit with 75% probability
+          // Eve intercepts the photon and randomly changes the bit with 75% probability
+          // This simulates Eve measuring in a random basis and sending a new photon
           if (Math.random() < 0.75) {
             bobMeasurement = 1 - bobMeasurement;
           }
+          // Activate one of the Eves visually in the animation
+          const eveIndex = Math.floor(Math.random() * 5); // Choose a random Eve to activate
+          activateEve(eveIndex);
         }
-        
+
         // Apply noise effect
         if (noise > 0 && Math.random() < noise) {
           bobMeasurement = 1 - bobMeasurement;
@@ -228,7 +268,7 @@ export const SimulationSection = () => {
         bobBasis,
         bobMeasurement,
         isMatching,
-        inKey
+        inKey,
       });
     }
     return bits;
@@ -241,10 +281,14 @@ export const SimulationSection = () => {
     setAlicePol(getPolarization(bit, basis));
   };
 
-  const updateBobInfo = (basis: string, bit: number | null, result: number | null) => {
+  const updateBobInfo = (
+    basis: string,
+    bit: number | null,
+    result: number | null,
+  ) => {
     setBobBasis(getBasisSymbol(basis));
-    setBobBit(bit !== null ? bit.toString() : '-');
-    setBobResult(result !== null ? result.toString() : '-');
+    setBobBit(bit !== null ? bit.toString() : "-");
+    setBobResult(result !== null ? result.toString() : "-");
   };
 
   const updatePolarizers = (aliceBasis: string, bobBasis: string) => {
@@ -252,12 +296,16 @@ export const SimulationSection = () => {
     setBobPolarizer(getBasisSymbol(bobBasis));
   };
 
-  const updateEvePolarizers = (index: number, measureBasis: string, sendBasis: string) => {
-    setEvePolarizers(prev => {
+  const updateEvePolarizers = (
+    index: number,
+    measureBasis: string,
+    sendBasis: string,
+  ) => {
+    setEvePolarizers((prev) => {
       const newPolarizers = [...prev];
       newPolarizers[index] = {
         measure: getBasisSymbol(measureBasis),
-        send: getBasisSymbol(sendBasis)
+        send: getBasisSymbol(sendBasis),
       };
       return newPolarizers;
     });
@@ -290,6 +338,20 @@ export const SimulationSection = () => {
     setIsPhotonFalling(true);
   };
 
+  const animatePhotonTransmission = async () => {
+    // Show the photon and animate it across the channel
+    showPhoton();
+    
+    // Animate photon from left to right
+    for (let pos = 0; pos <= 100; pos += 10) {
+      setPhotonPosition(pos);
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    // Optionally hide the photon after transmission
+    // hidePhoton();
+  };
+
   const updateStatusInfo = (text: string) => {
     setStatusInfo(text);
     setIsStatusInfoVisible(true);
@@ -310,12 +372,12 @@ export const SimulationSection = () => {
   const generateStepByStepBits = () => {
     const bits: QuantumBit[] = [];
     const totalBits = numQubits[0];
-    
+
     for (let i = 0; i < totalBits; i++) {
       const aliceBit = Math.random() > 0.5 ? 1 : 0;
       const aliceBasis = Math.random() > 0.5 ? "+" : "×";
       const bobBasis = Math.random() > 0.5 ? "+" : "×";
-      
+
       bits.push({
         id: i,
         aliceBit,
@@ -323,7 +385,7 @@ export const SimulationSection = () => {
         bobBasis,
         bobMeasurement: null,
         isMatching: null,
-        inKey: false
+        inKey: false,
       });
     }
     return bits;
@@ -332,41 +394,57 @@ export const SimulationSection = () => {
   const processBitStep = (bitIndex: number, step: number) => {
     const eavesProbability = eavesdroppingRate[0] / 100;
     const noise = noiseLevel[0] / 100;
-    
-    setStepByStepBits(prevBits => {
+
+    setStepByStepBits((prevBits) => {
       const newBits = [...prevBits];
       const bit = newBits[bitIndex];
-      
-      if (step >= 3) { // Bob measures
+
+      if (step >= 3) {
+        // Bob measures
         const isMatching = bit.aliceBasis === bit.bobBasis;
         bit.isMatching = isMatching;
-        
+
         if (isMatching) {
           // When bases match, Bob should get the same bit as Alice (in ideal conditions)
-          let correctBit = bit.aliceBit;
+          let aliceBitToBob = bit.aliceBit;
           bit.inKey = true;
-          
-          // Apply eavesdropping effect
+
+          // Apply eavesdropping effect - Eve intercepts the photon before Bob measures
           if (eavesProbability > 0 && Math.random() < eavesProbability) {
-            // Eve measures the photon and randomly changes the bit with 75% probability
-            if (Math.random() < 0.75) {
-              correctBit = 1 - correctBit;
+            // Eve chooses a random basis to measure the photon
+            const eveBasis = Math.random() > 0.5 ? "+" : "×";
+
+            if (eveBasis === bit.aliceBasis) {
+              // If Eve chooses the same basis as Alice, she gets the correct bit
+              // But if she forwards it in a different basis, there's a 50% chance it changes
+              if (eveBasis !== bit.bobBasis) {
+                // When Eve measures correctly but forwards in different basis, Bob has 50% chance of getting wrong result
+                if (Math.random() > 0.5) {
+                  aliceBitToBob = 1 - aliceBitToBob;
+                }
+              }
+            } else {
+              // If Eve chooses different basis than Alice, the quantum state collapses to Eve's measurement
+              // This means when Eve forwards it, Bob has a 50% chance of getting either value regardless of Alice's original bit
+              aliceBitToBob =
+                Math.random() > 0.5 ? aliceBitToBob : 1 - aliceBitToBob;
             }
           }
-          
+
           // Apply noise effect
           if (noise > 0 && Math.random() < noise) {
-            correctBit = 1 - correctBit;
+            aliceBitToBob = 1 - aliceBitToBob;
           }
-          
-          bit.bobMeasurement = correctBit;
+
+          // Bob receives the possibly altered bit
+          bit.bobMeasurement = aliceBitToBob;
         } else {
           // When bases don't match, Bob gets a random result
           bit.bobMeasurement = Math.random() > 0.5 ? 1 : 0;
           bit.inKey = false;
         }
       }
-      
+
       return newBits;
     });
   };
@@ -379,26 +457,37 @@ export const SimulationSection = () => {
     setBitStep(0);
     setShowGraphs(false);
     setFinalKey("");
-    toast.success("Step-by-step mode started. Use the controls to step through each bit.");
+    toast.success(
+      "Step-by-step mode started. Use the controls to step through each bit.",
+    );
   };
 
-  const nextBitStep = () => {
+  const nextBitStep = async () => {
     if (bitStep < 4) {
-      setBitStep(bitStep + 1);
-      if (bitStep === 3) {
-        processBitStep(currentBitIndex, bitStep + 1);
+      // Handle photon animation for step 2 (photon transmission)
+      if (bitStep === 1) { // When moving from step 1 to step 2 (photon transmission)
+        await animatePhotonTransmission();
+        // Only increment step after animation completes
+        setBitStep(bitStep + 1);
+      } else {
+        setBitStep(bitStep + 1);
+        if (bitStep === 3) {
+          processBitStep(currentBitIndex, bitStep + 1);
+        }
       }
     } else if (currentBitIndex < stepByStepBits.length - 1) {
       setCurrentBitIndex(currentBitIndex + 1);
       setBitStep(0);
     } else {
       // Finished all bits
-      const finalBits = stepByStepBits.filter(bit => bit.inKey);
-      const key = finalBits.map(bit => bit.aliceBit).join('');
+      const finalBits = stepByStepBits.filter((bit) => bit.inKey);
+      const key = finalBits.map((bit) => bit.aliceBit).join("");
       setFinalKey(key);
       generateAnalysisData(stepByStepBits);
       setShowGraphs(true);
-      toast.success(`Step-by-step simulation complete! Generated ${key.length}-bit key.`);
+      toast.success(
+        `Step-by-step simulation complete! Generated ${key.length}-bit key.`,
+      );
     }
   };
 
@@ -415,60 +504,69 @@ export const SimulationSection = () => {
     setIsRunning(true);
     setCurrentStep(0);
     setFinalKey("");
-    
+
     for (let step = 0; step <= 5; step++) {
       setCurrentStep(step);
-      
+
       if (step === 1) {
         // Animate photon transmission
         for (let pos = 0; pos <= 100; pos += 5) {
           setPhotonPositionAnimated(pos);
           showPhoton();
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
         }
         hidePhoton();
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     }
 
     const bits = generateRandomBits();
     setQuantumBits(bits);
-    
+
     const key = bits
-      .filter(bit => bit.inKey)
-      .map(bit => bit.aliceBit)
-      .join('');
+      .filter((bit) => bit.inKey)
+      .map((bit) => bit.aliceBit)
+      .join("");
     setFinalKey(key);
-    
+
     // Generate analysis data
     generateAnalysisData(bits);
     setShowGraphs(true);
-    
+
     toast.success(`Simulation complete! Generated ${key.length}-bit key.`);
     setIsRunning(false);
   };
 
   const generateAnalysisData = (bits: QuantumBit[]) => {
-    const matchingBits = bits.filter(bit => bit.isMatching);
-    const errorBits = matchingBits.filter(bit => bit.aliceBit !== bit.bobMeasurement);
-    const errorRate = matchingBits.length > 0 ? (errorBits.length / matchingBits.length) * 100 : 0;
-    const keyRate = (bits.filter(bit => bit.inKey).length / bits.length) * 100;
-    
+    const matchingBits = bits.filter((bit) => bit.isMatching);
+    const errorBits = matchingBits.filter(
+      (bit) => bit.aliceBit !== bit.bobMeasurement,
+    );
+    const errorRate =
+      matchingBits.length > 0
+        ? (errorBits.length / matchingBits.length) * 100
+        : 0;
+    const keyRate =
+      (bits.filter((bit) => bit.inKey).length / bits.length) * 100;
+
     // Create data for the graph with Qubit on x-axis and Key Rate on y-axis
     const graphData = bits.map((bit, index) => ({
       qubit: index + 1,
-      keyRate: ((bits.slice(0, index + 1).filter(b => b.inKey).length / (index + 1)) * 100).toFixed(2)
+      keyRate: (
+        (bits.slice(0, index + 1).filter((b) => b.inKey).length / (index + 1)) *
+        100
+      ).toFixed(2),
     }));
-    
+
     const data = [
-      { name: 'Total Bits', value: bits.length },
-      { name: 'Matching Bases', value: matchingBits.length },
-      { name: 'Key Bits', value: bits.filter(bit => bit.inKey).length },
-      { name: 'Error Rate (%)', value: errorRate.toFixed(2) },
-      { name: 'Key Rate (%)', value: keyRate.toFixed(2) }
+      { name: "Total Bits", value: bits.length },
+      { name: "Matching Bases", value: matchingBits.length },
+      { name: "Key Bits", value: bits.filter((bit) => bit.inKey).length },
+      { name: "Error Rate (%)", value: errorRate.toFixed(2) },
+      { name: "Key Rate (%)", value: keyRate.toFixed(2) },
     ];
-    
+
     setSimulationData(data);
   };
 
@@ -484,22 +582,22 @@ export const SimulationSection = () => {
     setCurrentBitIndex(0);
     setStepByStepBits([]);
     setBitStep(0);
-    
+
     // Reset animation state
-    setAliceBit('-');
-    setAliceBasis('-');
-    setAlicePol('-');
-    setBobBasis('-');
-    setBobBit('-');
-    setBobResult('-');
-    setAlicePolarizer('+');
-    setBobPolarizer('+');
+    setAliceBit("-");
+    setAliceBasis("-");
+    setAlicePol("-");
+    setBobBasis("-");
+    setBobBit("-");
+    setBobResult("-");
+    setAlicePolarizer("+");
+    setBobPolarizer("+");
     setEvePolarizers([
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'},
-      {measure: '+', send: '+'}
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
+      { measure: "+", send: "+" },
     ]);
     setNumEves(0);
     hidePhoton();
@@ -512,7 +610,9 @@ export const SimulationSection = () => {
       {/* Alice-Bob Animation Section */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Quantum Transmission Animation</h2>
+          <h2 className="text-xl font-bold text-gray-800">
+            Quantum Transmission Animation
+          </h2>
         </div>
         <div className="flex items-center justify-between min-h-[250px] relative">
           {/* Alice */}
@@ -522,26 +622,38 @@ export const SimulationSection = () => {
             </div>
             <div className="font-bold text-gray-800 mb-3">Alice</div>
             <div className="bg-gray-100 p-3 rounded-lg text-sm w-full text-center border border-gray-200">
-              <div className="font-medium">Bit: <strong>{aliceBit}</strong></div>
-              <div className="font-medium">Basis: <strong>{aliceBasis}</strong></div>
-              <div className="font-medium">Sends: <strong>{alicePol}</strong></div>
+              <div className="font-medium">
+                Bit: <strong>{aliceBit}</strong>
+              </div>
+              <div className="font-medium">
+                Basis: <strong>{aliceBasis}</strong>
+              </div>
+              <div className="font-medium">
+                Sends: <strong>{alicePol}</strong>
+              </div>
             </div>
           </div>
 
           {/* Channel Area */}
           <div className="flex-1 h-16 mx-8 relative flex items-center justify-center">
-            <div className="w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 relative shadow-sm" style={{ boxShadow: '0 0 15px rgba(52, 152, 219, 0.4)' }}>
-              <div 
-                className={`absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] left-[${photonPosition}%] flex items-center justify-center font-bold text-gray-800 shadow-lg transition-all duration-300 ${
-                  isPhotonVisible ? 'opacity-100' : 'opacity-0'
-                } ${isPhotonVibrating ? 'animate-vibrate' : ''} ${isPhotonFalling ? 'animate-fall' : ''}`}
-                style={{ boxShadow: '0 0 20px rgba(241, 196, 15, 0.7)' }}
+            <div
+              className="w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 relative shadow-sm"
+              style={{ boxShadow: "0 0 15px rgba(52, 152, 219, 0.4)" }}
+            >
+              <div
+                className={`absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-gray-800 shadow-lg transition-all duration-300 ${
+                  isPhotonVisible ? "opacity-100" : "opacity-0"
+                } ${isPhotonVibrating ? "animate-vibrate" : ""} ${isPhotonFalling ? "animate-fall" : ""}`}
+                style={{
+                  left: `${photonPosition}%`,
+                  boxShadow: "0 0 20px rgba(241, 196, 15, 0.7)",
+                }}
               >
                 →
               </div>
-              <div 
+              <div
                 className={`absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium transition-opacity whitespace-nowrap ${
-                  isStatusInfoVisible ? 'opacity-100' : 'opacity-0'
+                  isStatusInfoVisible ? "opacity-100" : "opacity-0"
                 }`}
               >
                 {statusInfo}
@@ -550,9 +662,9 @@ export const SimulationSection = () => {
 
             {/* Alice Polarizer */}
             <div className="absolute left-[10%] top-1/2 transform -translate-y-1/2 z-20">
-              <div 
+              <div
                 className={`w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 border-4 border-gray-700 flex items-center justify-center font-bold text-xl text-gray-800 shadow-lg ${
-                  alicePolarizer === '×' ? 'rotate-[45deg]' : ''
+                  alicePolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
                 {alicePolarizer}
@@ -561,33 +673,33 @@ export const SimulationSection = () => {
 
             {/* Eve Polarizer Pairs */}
             {[0, 1, 2, 3, 4].map((i) => (
-              <div 
+              <div
                 key={i}
-                className={`absolute top-1/2 transform -translate-y-1/2 z-20 ${i === 0 ? 'left-[25%]' : i === 1 ? 'left-[35%]' : i === 2 ? 'left-[45%]' : i === 3 ? 'left-[55%]' : 'left-[65%]'} ${
-                  i < numEves ? 'block' : 'hidden'
+                className={`absolute top-1/2 transform -translate-y-1/2 z-20 ${i === 0 ? "left-[25%]" : i === 1 ? "left-[35%]" : i === 2 ? "left-[45%]" : i === 3 ? "left-[55%]" : "left-[65%]"} ${
+                  i < numEves ? "block" : "hidden"
                 }`}
               >
-                <div 
+                <div
                   className={`w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-xs text-white border-2 border-red-600 shadow-lg mb-2 font-bold transition-all ${
-                    activeEve === i ? 'animate-pulse scale-110' : ''
+                    activeEve === i ? "animate-pulse scale-110" : ""
                   }`}
                 >
-                  E{i+1}
+                  E{i + 1}
                 </div>
                 <div className="flex gap-4">
-                  <div 
+                  <div
                     className={`w-12 h-12 bg-gradient-to-r from-red-100 to-red-200 border-3 border-red-600 flex items-center justify-center font-bold text-lg text-red-600 shadow ${
-                      evePolarizers[i]?.measure === '×' ? 'rotate-[45deg]' : ''
+                      evePolarizers[i]?.measure === "×" ? "rotate-[45deg]" : ""
                     }`}
                   >
-                    {evePolarizers[i]?.measure || '+'}
+                    {evePolarizers[i]?.measure || "+"}
                   </div>
-                  <div 
+                  <div
                     className={`w-12 h-12 bg-gradient-to-r from-green-100 to-green-200 border-3 border-green-600 flex items-center justify-center font-bold text-lg text-green-600 shadow ${
-                      evePolarizers[i]?.send === '×' ? 'rotate-[45deg]' : ''
+                      evePolarizers[i]?.send === "×" ? "rotate-[45deg]" : ""
                     }`}
                   >
-                    {evePolarizers[i]?.send || '+'}
+                    {evePolarizers[i]?.send || "+"}
                   </div>
                 </div>
               </div>
@@ -595,9 +707,9 @@ export const SimulationSection = () => {
 
             {/* Bob Polarizer */}
             <div className="absolute right-[10%] top-1/2 transform -translate-y-1/2 z-20">
-              <div 
+              <div
                 className={`w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 border-4 border-gray-700 flex items-center justify-center font-bold text-xl text-gray-800 shadow-lg ${
-                  bobPolarizer === '×' ? 'rotate-[45deg]' : ''
+                  bobPolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
                 {bobPolarizer}
@@ -612,9 +724,15 @@ export const SimulationSection = () => {
             </div>
             <div className="font-bold text-gray-800 mb-3">Bob</div>
             <div className="bg-gray-100 p-3 rounded-lg text-sm w-full text-center border border-gray-200">
-              <div className="font-medium">Basis: <strong>{bobBasis}</strong></div>
-              <div className="font-medium">Measures: <strong>{bobBit}</strong></div>
-              <div className="font-medium">Gets: <strong>{bobResult}</strong></div>
+              <div className="font-medium">
+                Basis: <strong>{bobBasis}</strong>
+              </div>
+              <div className="font-medium">
+                Measures: <strong>{bobBit}</strong>
+              </div>
+              <div className="font-medium">
+                Gets: <strong>{bobResult}</strong>
+              </div>
             </div>
           </div>
         </div>
@@ -683,8 +801,8 @@ export const SimulationSection = () => {
           {/* Two-column layout for simulation controls and results */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left column - Controls */}
-             
-             <div className="space-y-6">
+
+            <div className="space-y-6">
               {/* Simulation Parameters */}
               <Card className="border-quantum-blue/20">
                 <CardHeader>
@@ -696,7 +814,9 @@ export const SimulationSection = () => {
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <label className="text-sm font-medium whitespace-nowrap">Qubits:</label>
+                      <label className="text-sm font-medium whitespace-nowrap">
+                        Qubits:
+                      </label>
                       <Slider
                         value={numQubits}
                         onValueChange={setNumQubits}
@@ -710,32 +830,38 @@ export const SimulationSection = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                          <label className="text-sm font-medium whitespace-nowrap">Eavesdrop:</label>
-                          <Slider
-                            value={eavesdroppingRate}
-                            onValueChange={setEavesdroppingRate}
-                            max={100}
-                            min={0}
-                            step={5}
-                            className="flex-1"
-                            disabled={isRunning}
-                          />
-                          <span className="text-sm w-8">{eavesdroppingRate[0]}%</span>
-                        </div>
+                      <label className="text-sm font-medium whitespace-nowrap">
+                        Eavesdrop:
+                      </label>
+                      <Slider
+                        value={eavesdroppingRate}
+                        onValueChange={setEavesdroppingRate}
+                        max={100}
+                        min={0}
+                        step={5}
+                        className="flex-1"
+                        disabled={isRunning}
+                      />
+                      <span className="text-sm w-8">
+                        {eavesdroppingRate[0]}%
+                      </span>
+                    </div>
 
-                        <div className="flex items-center gap-4">
-                          <label className="text-sm font-medium whitespace-nowrap">Noise:</label>
-                          <Slider
-                            value={noiseLevel}
-                            onValueChange={setNoiseLevel}
-                            max={20}
-                            min={0}
-                            step={1}
-                            className="flex-1"
-                            disabled={isRunning}
-                          />
-                          <span className="text-sm w-8">{noiseLevel[0]}%</span>
-                        </div>
+                    <div className="flex items-center gap-4">
+                      <label className="text-sm font-medium whitespace-nowrap">
+                        Noise:
+                      </label>
+                      <Slider
+                        value={noiseLevel}
+                        onValueChange={setNoiseLevel}
+                        max={20}
+                        min={0}
+                        step={1}
+                        className="flex-1"
+                        disabled={isRunning}
+                      />
+                      <span className="text-sm w-8">{noiseLevel[0]}%</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -744,7 +870,9 @@ export const SimulationSection = () => {
                 {currentStep > 0 && !isStepByStep && (
                   <Card className="bg-quantum-blue/5 border-quantum-blue/20">
                     <CardContent className="p-3">
-                      <p className="font-semibold text-quantum-blue">Current Step:</p>
+                      <p className="font-semibold text-quantum-blue">
+                        Current Step:
+                      </p>
                       <p className="text-sm">{steps[currentStep - 1]}</p>
                     </CardContent>
                   </Card>
@@ -755,14 +883,18 @@ export const SimulationSection = () => {
                 {eavesdroppingRate[0] > 0 && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive rounded">
                     <Eye className="w-4 h-4 text-destructive" />
-                    <span className="text-sm text-destructive">Eve Active ({eavesdroppingRate[0]}%)</span>
+                    <span className="text-sm text-destructive">
+                      Eve Active ({eavesdroppingRate[0]}%)
+                    </span>
                   </div>
                 )}
 
                 {noiseLevel[0] > 0 && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500 rounded">
                     <Zap className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm text-yellow-500">Noise ({noiseLevel[0]}%)</span>
+                    <span className="text-sm text-yellow-500">
+                      Noise ({noiseLevel[0]}%)
+                    </span>
                   </div>
                 )}
               </div>
@@ -778,17 +910,22 @@ export const SimulationSection = () => {
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
-                  
+
                   <Button
                     onClick={nextBitStep}
-                    disabled={currentBitIndex === stepByStepBits.length - 1 && bitStep === 4 && !!finalKey}
+                    disabled={
+                      currentBitIndex === stepByStepBits.length - 1 &&
+                      bitStep === 4 &&
+                      !!finalKey
+                    }
                     className="bg-quantum-purple hover:bg-quantum-purple/90"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Button>
-                  
+
                   <span className="text-sm px-3 py-2 bg-muted rounded border whitespace-nowrap">
-                    Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step {bitStep + 1}/5
+                    Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step{" "}
+                    {bitStep + 1}/5
                   </span>
                 </div>
               )}
@@ -815,14 +952,25 @@ export const SimulationSection = () => {
                             <CardContent className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm">Bit Value:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBit : '?'}
+                                <span
+                                  className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? "bg-quantum-blue/20 text-quantum-blue" : "bg-muted/20 text-muted-foreground"}`}
+                                >
+                                  {bitStep >= 0
+                                    ? stepByStepBits[currentBitIndex].aliceBit
+                                    : "?"}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm">Basis Choice:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? 'bg-quantum-blue/20 text-quantum-blue' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 0 ? getBasisSymbol(stepByStepBits[currentBitIndex].aliceBasis) : '?'}
+                                <span
+                                  className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? "bg-quantum-blue/20 text-quantum-blue" : "bg-muted/20 text-muted-foreground"}`}
+                                >
+                                  {bitStep >= 0
+                                    ? getBasisSymbol(
+                                        stepByStepBits[currentBitIndex]
+                                          .aliceBasis,
+                                      )
+                                    : "?"}
                                 </span>
                               </div>
                             </CardContent>
@@ -838,53 +986,75 @@ export const SimulationSection = () => {
                             <CardContent className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm">Basis Choice:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 1 ? getBasisSymbol(stepByStepBits[currentBitIndex].bobBasis) : '?'}
+                                <span
+                                  className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? "bg-quantum-purple/20 text-quantum-purple" : "bg-muted/20 text-muted-foreground"}`}
+                                >
+                                  {bitStep >= 1
+                                    ? getBasisSymbol(
+                                        stepByStepBits[currentBitIndex]
+                                          .bobBasis,
+                                      )
+                                    : "?"}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm">Measurement:</span>
-                                <span className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? 'bg-quantum-purple/20 text-quantum-purple' : 'bg-muted/20 text-muted-foreground'}`}>
-                                  {bitStep >= 3 ? stepByStepBits[currentBitIndex].bobMeasurement : '?'}
+                                <span
+                                  className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? "bg-quantum-purple/20 text-quantum-purple" : "bg-muted/20 text-muted-foreground"}`}
+                                >
+                                  {bitStep >= 3
+                                    ? stepByStepBits[currentBitIndex]
+                                        .bobMeasurement
+                                    : "?"}
                                 </span>
                               </div>
                             </CardContent>
                           </Card>
                         </div>
 
-                                                  <div className="space-y-2">
-                            <h4 className="font-semibold text-sm">Current Step:</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {[
-                                "Alice generates bits and random bases",
-                                "Photon transmitted on quantum channel",
-                                "Bob selects random bases",
-                                "Bob measures photon",
-                                "Selected basis are shared and compared"
-                              ].map((step, index) => (
-                                <div
-                                  key={index}
-                                  className={`p-4 rounded text-sm text-center transition-all ${
-                                    bitStep === index
-                                      ? 'bg-quantum-glow/20 border-2 border-quantum-glow text-quantum-glow font-semibold'
-                                      : bitStep > index
-                                      ? 'bg-green-400/20 border border-green-400/30 text-green-400'
-                                      : 'bg-muted/20 border border-muted/30 text-muted-foreground'
-                                  }`}
-                                >
-                                  {step}
-                                </div>
-                              ))}
-                            </div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm">
+                            Current Step:
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {[
+                              "Alice prepares qubit",
+                              "Photon transmitted",
+                              "Bob selects measurement basis",
+                              "Bob measures qubit",
+                              "Bases compared",
+                            ].map((step, index) => (
+                              <div
+                                key={index}
+                                className={`p-4 rounded text-sm text-center transition-all ${
+                                  bitStep === index
+                                    ? "bg-quantum-glow/20 border-2 border-quantum-glow text-quantum-glow font-semibold"
+                                    : bitStep > index
+                                      ? "bg-green-400/20 border border-green-400/30 text-green-400"
+                                      : "bg-muted/20 border border-muted/30 text-muted-foreground"
+                                }`}
+                              >
+                                {step}
+                              </div>
+                            ))}
                           </div>
+                        </div>
 
                         {bitStep >= 4 && (
-                          <Card className={`${stepByStepBits[currentBitIndex].isMatching ? 'bg-green-400/10 border-green-400/30' : 'bg-red-400/10 border-red-400/30'}`}>
+                          <Card
+                            className={`${stepByStepBits[currentBitIndex].isMatching ? "bg-green-400/10 border-green-400/30" : "bg-red-400/10 border-red-400/30"}`}
+                          >
                             <CardContent className="p-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">Basis Match:</span>
-                                <span className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? 'text-green-400' : 'text-red-400'}`}>
-                                  {stepByStepBits[currentBitIndex].isMatching ? '✓ Yes - Key bit!' : 'X No - Discarded'}
+                                <span className="text-sm font-medium">
+                                  Basis Match:
+                                </span>
+                                <span
+                                  className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? "text-green-400" : "text-red-400"}`}
+                                >
+                                  {stepByStepBits[currentBitIndex].isMatching
+                                    ? "✓ Yes - Key bit!"
+                                    : "X No - Discarded"}
                                 </span>
                               </div>
                             </CardContent>
@@ -900,7 +1070,9 @@ export const SimulationSection = () => {
               {currentStep === 1 && !isStepByStep && (
                 <Card className="border-quantum-glow/30">
                   <CardHeader>
-                    <CardTitle className="text-sm">Photon Transmission</CardTitle>
+                    <CardTitle className="text-sm">
+                      Photon Transmission
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="relative h-20 bg-muted rounded-lg overflow-hidden">
@@ -910,11 +1082,10 @@ export const SimulationSection = () => {
                       <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-quantum-purple font-bold">
                         Bob
                       </div>
-                      <div 
+                      <div
                         className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-quantum-glow rounded-full transition-all duration-100"
                         style={{ left: `${photonPosition}%` }}
-                      >
-                      </div>
+                      ></div>
                       {eavesdroppingRate[0] > 0 && (
                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-destructive font-bold">
                           <Eye className="w-6 h-6" />
@@ -929,7 +1100,8 @@ export const SimulationSection = () => {
             {/* Right column - Results */}
             <div className="space-y-6">
               {/* Results Display */}
-              {(quantumBits.length > 0 || (isStepByStep && stepByStepBits.length > 0)) && (
+              {(quantumBits.length > 0 ||
+                (isStepByStep && stepByStepBits.length > 0)) && (
                 <Card className="border-quantum-purple/30">
                   <CardHeader>
                     <CardTitle className="text-quantum-purple flex items-center gap-2">
@@ -950,93 +1122,133 @@ export const SimulationSection = () => {
                             <th className="text-left p-2">Bit #</th>
                             <th className="text-left p-2 bg-quantum-blue/10 border-l border-r border-quantum-blue/30">
                               <div className="text-center">
-                                <div className="font-bold text-quantum-blue">Alice (Transmitter)</div>
-                                <div className="text-xs text-muted-foreground">Sending</div>
+                                <div className="font-bold text-quantum-blue">
+                                  Alice (Transmitter)
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Sending
+                                </div>
                               </div>
                             </th>
-                            <th className="text-left p-2 bg-quantum-blue/10 border-r border-quantum-blue/30">Basis</th>
+                            <th className="text-left p-2 bg-quantum-blue/10 border-r border-quantum-blue/30">
+                              Basis
+                            </th>
                             <th className="text-left p-2 bg-quantum-purple/10 border-l border-r border-quantum-purple/30">
                               <div className="text-center">
-                                <div className="font-bold text-quantum-purple">Bob (Receiver)</div>
-                                <div className="text-xs text-muted-foreground">Receiving</div>
+                                <div className="font-bold text-quantum-purple">
+                                  Bob (Receiver)
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Receiving
+                                </div>
                               </div>
                             </th>
-                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">Basis</th>
-                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">Result</th>
+                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">
+                              Basis
+                            </th>
+                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">
+                              Result
+                            </th>
                             <th className="text-left p-2">Match</th>
                             <th className="text-left p-2">In Key</th>
                           </tr>
                           <tr className="border-b border-quantum-blue/20 text-xs">
                             <th className="p-1"></th>
-                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">Transmitted Bit</th>
-                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">Polarization</th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">Received Bit</th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">Measurement</th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">Outcome</th>
+                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
+                              Transmitted Bit
+                            </th>
+                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
+                              Polarization
+                            </th>
+                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
+                              Received Bit
+                            </th>
+                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
+                              Measurement
+                            </th>
+                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
+                              Outcome
+                            </th>
                             <th className="p-1 text-center">Basis</th>
                             <th className="p-1 text-center">Secure</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {(isStepByStep ? stepByStepBits : quantumBits).map((bit, index) => (
-                            <tr 
-                              key={bit.id} 
-                              className={`border-b ${bit.inKey ? 'bg-quantum-glow/10' : ''} ${isStepByStep && index === currentBitIndex ? 'ring-2 ring-quantum-glow/50' : ''}`}
-                            >
-                              <td className="p-2">{bit.id + 1}</td>
-                              <td className="p-2 font-mono text-center bg-quantum-blue/5 border-l border-r border-quantum-blue/20">
-                                <span className="inline-block w-6 h-6 bg-quantum-blue/20 rounded-full text-center leading-6 text-quantum-blue font-bold">
-                                  {bit.aliceBit}
-                                </span>
-                              </td>
-                              <td className="p-2 font-mono text-quantum-blue bg-quantum-blue/5 border-r border-quantum-blue/20 text-center">
-                                <span className="text-lg font-bold">{getBasisSymbol(bit.aliceBasis)}</span>
-                              </td>
-                              <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
-                                <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
-                                  {bit.bobMeasurement ?? '-'}
-                                </span>
-                              </td>
-                              <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
-                                <span className="text-lg font-bold">{getBasisSymbol(bit.bobBasis)}</span>
-                              </td>
-                              <td className="p-2 bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
-                                {bit.bobMeasurement !== null ? (
-                                  <span className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
-                                    bit.aliceBit === bit.bobMeasurement 
-                                      ? 'bg-green-400/20 text-green-400' 
-                                      : 'bg-red-400/20 text-red-400'
-                                  }`}>
-                                    {bit.bobMeasurement}
+                          {(isStepByStep ? stepByStepBits : quantumBits).map(
+                            (bit, index) => (
+                              <tr
+                                key={bit.id}
+                                className={`border-b ${bit.inKey ? "bg-quantum-glow/10" : ""} ${isStepByStep && index === currentBitIndex ? "ring-2 ring-quantum-glow/50" : ""}`}
+                              >
+                                <td className="p-2">{bit.id + 1}</td>
+                                <td className="p-2 font-mono text-center bg-quantum-blue/5 border-l border-r border-quantum-blue/20">
+                                  <span className="inline-block w-6 h-6 bg-quantum-blue/20 rounded-full text-center leading-6 text-quantum-blue font-bold">
+                                    {bit.aliceBit}
                                   </span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </td>
-                              <td className="p-2 text-center">
-                                {bit.isMatching === null ? (
-                                  <span className="text-muted-foreground">-</span>
-                                ) : (
-                                  <span className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
-                                    bit.isMatching 
-                                      ? 'bg-green-400/20 text-green-400' 
-                                      : 'bg-red-400/20 text-red-400'
-                                  }`}>
-                                    {bit.isMatching ? '✓' : 'X'}
+                                </td>
+                                <td className="p-2 font-mono text-quantum-blue bg-quantum-blue/5 border-r border-quantum-blue/20 text-center">
+                                  <span className="text-lg font-bold">
+                                    {getBasisSymbol(bit.aliceBasis)}
                                   </span>
-                                )}
-                              </td>
-                              <td className="p-2 text-center">
-                                {bit.inKey ? (
-                                  <span className="inline-block w-6 h-6 bg-quantum-glow/20 rounded-full text-center leading-6 text-quantum-glow font-bold">
-                                    ✓
+                                </td>
+                                <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
+                                  <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
+                                    {bit.bobMeasurement ?? "-"}
                                   </span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                                </td>
+                                <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
+                                  <span className="text-lg font-bold">
+                                    {getBasisSymbol(bit.bobBasis)}
+                                  </span>
+                                </td>
+                                <td className="p-2 bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
+                                  {bit.bobMeasurement !== null ? (
+                                    <span
+                                      className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
+                                        bit.aliceBit === bit.bobMeasurement
+                                          ? "bg-green-400/20 text-green-400"
+                                          : "bg-red-400/20 text-red-400"
+                                      }`}
+                                    >
+                                      {bit.bobMeasurement}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      -
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-2 text-center">
+                                  {bit.isMatching === null ? (
+                                    <span className="text-muted-foreground">
+                                      -
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
+                                        bit.isMatching
+                                          ? "bg-green-400/20 text-green-400"
+                                          : "bg-red-400/20 text-red-400"
+                                      }`}
+                                    >
+                                      {bit.isMatching ? "✓" : "X"}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-2 text-center">
+                                  {bit.inKey ? (
+                                    <span className="inline-block w-6 h-6 bg-quantum-glow/20 rounded-full text-center leading-6 text-quantum-glow font-bold">
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      -
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ),
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -1055,12 +1267,14 @@ export const SimulationSection = () => {
                               Length: {finalKey.length} bits
                               {eavesdroppingRate[0] > 0 && (
                                 <span className="block text-destructive">
-                                  ⚠️ Eavesdropping detected! Key may be compromised.
+                                  ⚠️ Eavesdropping detected! Key may be
+                                  compromised.
                                 </span>
                               )}
                               {noiseLevel[0] > 0 && (
                                 <span className="block text-yellow-500">
-                                  ⚠️ Channel noise present! Some errors expected.
+                                  ⚠️ Channel noise present! Some errors
+                                  expected.
                                 </span>
                               )}
                             </p>
@@ -1085,71 +1299,126 @@ export const SimulationSection = () => {
                     <div className="grid md:grid-cols-2 gap-6">
                       <Card className="bg-secondary/20">
                         <CardHeader>
-                          <CardTitle className="text-sm">Simulation Metrics</CardTitle>
+                          <CardTitle className="text-sm">
+                            Simulation Metrics
+                          </CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={simulationData.slice(0, 3)}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      label={{ 
-                        value: "Metrics", 
-                        position: "insideBottom", 
-                        offset: -5 
-                      }}
-                    />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      label={{ 
-                        value: "Count", 
-                        angle: -90, 
-                        position: "insideLeft" 
-                      }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px'
-                      }} 
-                    />
-                    <Bar dataKey="value" fill="hsl(var(--primary))" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={simulationData.slice(0, 3)}>
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="hsl(var(--muted-foreground))"
+                                  opacity={0.3}
+                                />
+                                <XAxis
+                                  dataKey="name"
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={12}
+                                  label={{
+                                    value: "Metrics",
+                                    position: "insideBottom",
+                                    offset: -5,
+                                  }}
+                                />
+                                <YAxis
+                                  stroke="hsl(var(--muted-foreground))"
+                                  fontSize={12}
+                                  label={{
+                                    value: "Count",
+                                    angle: -90,
+                                    position: "insideLeft",
+                                  }}
+                                />
+                                <Tooltip
+                                  contentStyle={{
+                                    backgroundColor: "hsl(var(--background))",
+                                    border: "1px solid hsl(var(--border))",
+                                    borderRadius: "6px",
+                                  }}
+                                />
+                                <Bar
+                                  dataKey="value"
+                                  fill="hsl(var(--primary))"
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
                         </CardContent>
                       </Card>
 
                       <Card className="bg-secondary/20">
                         <CardHeader>
-                          <CardTitle className="text-sm">Error & Key Rates</CardTitle>
+                          <CardTitle className="text-sm">
+                            Error & Key Rates
+                          </CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
                             {simulationData.slice(3).map((item, index) => (
-                              <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded">
-                                <span className="text-sm font-medium">{item.name}</span>
-                                <span className={`text-lg font-bold ${
-                                  item.name.includes('Error') ? 'text-red-400' : 'text-green-400'
-                                }`}>
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-3 bg-background/50 rounded"
+                              >
+                                <span className="text-sm font-medium">
+                                  {item.name}
+                                </span>
+                                <span
+                                  className={`text-lg font-bold ${
+                                    item.name.includes("Error")
+                                      ? "text-red-400"
+                                      : "text-green-400"
+                                  }`}
+                                >
                                   {item.value}
                                 </span>
                               </div>
                             ))}
-                            
+
                             <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
-                              <h4 className="font-semibold text-quantum-glow text-sm mb-2">Security Assessment</h4>
+                              <h4 className="font-semibold text-quantum-glow text-sm mb-2">
+                                Security Assessment
+                              </h4>
                               <p className="text-xs">
-                                {parseFloat(String(simulationData[3]?.value || '0')) > 10
+                                {parseFloat(
+                                  String(simulationData[3]?.value || "0"),
+                                ) > 10
                                   ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
-                                  : "✅ Error rate within acceptable limits for secure communication."
-                                }
+                                  : "✅ Error rate within acceptable limits for secure communication."}
                               </p>
+                              <div className="mt-2 text-xs">
+                                <p className="font-medium">
+                                  Key Security Status:
+                                </p>
+                                <p
+                                  className={
+                                    parseFloat(
+                                      String(simulationData[3]?.value || "0"),
+                                    ) > 10
+                                      ? "text-destructive"
+                                      : parseFloat(
+                                            String(
+                                              simulationData[3]?.value || "0",
+                                            ),
+                                          ) > 5
+                                        ? "text-yellow-500"
+                                        : "text-green-400"
+                                  }
+                                >
+                                  {parseFloat(
+                                    String(simulationData[3]?.value || "0"),
+                                  ) > 10
+                                    ? "Key may be compromised! Discard and restart."
+                                    : parseFloat(
+                                          String(
+                                            simulationData[3]?.value || "0",
+                                          ),
+                                        ) > 5
+                                      ? "Possible eavesdropping detected. Review key."
+                                      : "Key appears secure for communication."}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </CardContent>
@@ -1162,7 +1431,6 @@ export const SimulationSection = () => {
           </div>
         </CardContent>
       </Card>
-      
     </div>
   );
 };
