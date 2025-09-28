@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -59,6 +59,17 @@ const animationStyles = `
     50% { transform: scale(1.15); }
   }
 
+  @keyframes photon-transmission {
+    0% { 
+      left: 0%; 
+      opacity: 1; 
+    }
+    100% { 
+      left: 100%; 
+      opacity: 1; 
+    }
+  }
+
   .animate-vibrate {
     animation: photon-vibrate 0.1s infinite;
   }
@@ -71,13 +82,20 @@ const animationStyles = `
   .animate-pulse {
     animation: eve-pulse 1s infinite;
   }
+
+  .animate-photon-transmission {
+    animation: photon-transmission 2s ease-in-out forwards;
+  }
 `;
 
-// Inject CSS animations into the document
-if (typeof document !== "undefined") {
+// Inject CSS animations into the document (only once)
+let styleSheetAdded = false;
+if (typeof document !== "undefined" && !styleSheetAdded) {
   const styleSheet = document.createElement("style");
+  styleSheet.id = "quantum-bb84-animations";
   styleSheet.innerText = animationStyles;
   document.head.appendChild(styleSheet);
+  styleSheetAdded = true;
 }
 
 interface QuantumBit {
@@ -183,6 +201,11 @@ export const SimulationSection = () => {
     // Calculate number of Eves based on eavesdropping rate (0-100%)
     const calculatedNumEves = Math.floor((eavesdroppingRate[0] / 100) * 5); // Max 5 Eves in the visualization
     setNumEves(calculatedNumEves);
+    
+    // Randomize Eve polarizers when eavesdropping rate changes
+    if (eavesdroppingRate[0] > 0) {
+      randomizeEvePolarizers();
+    }
   }, [eavesdroppingRate]);
 
   const steps = [
@@ -216,6 +239,14 @@ export const SimulationSection = () => {
     setNumEves(0);
     hidePhoton();
     hideStatusInfo();
+
+    // Cleanup function for component unmount
+    return () => {
+      const photonElement = document.querySelector('.photon-particle') as HTMLElement;
+      if (photonElement) {
+        photonElement.classList.remove('animate-photon-transmission', 'animate-vibrate', 'animate-fall');
+      }
+    };
   }, []);
 
   const generateRandomBits = () => {
@@ -248,7 +279,7 @@ export const SimulationSection = () => {
           }
           // Activate one of the Eves visually in the animation
           const eveIndex = Math.floor(Math.random() * 5); // Choose a random Eve to activate
-          activateEve(eveIndex);
+          setTimeout(() => activateEve(eveIndex), 100); // Delay activation for better visual effect
         }
 
         // Apply noise effect
@@ -275,13 +306,13 @@ export const SimulationSection = () => {
   };
 
   // Animation control functions
-  const updateAliceInfo = (bit: number, basis: string) => {
+  const updateAliceInfo = useCallback((bit: number, basis: string) => {
     setAliceBit(bit.toString());
     setAliceBasis(getBasisSymbol(basis));
     setAlicePol(getPolarization(bit, basis));
-  };
+  }, []);
 
-  const updateBobInfo = (
+  const updateBobInfo = useCallback((
     basis: string,
     bit: number | null,
     result: number | null,
@@ -289,14 +320,14 @@ export const SimulationSection = () => {
     setBobBasis(getBasisSymbol(basis));
     setBobBit(bit !== null ? bit.toString() : "-");
     setBobResult(result !== null ? result.toString() : "-");
-  };
+  }, []);
 
-  const updatePolarizers = (aliceBasis: string, bobBasis: string) => {
+  const updatePolarizers = useCallback((aliceBasis: string, bobBasis: string) => {
     setAlicePolarizer(getBasisSymbol(aliceBasis));
     setBobPolarizer(getBasisSymbol(bobBasis));
-  };
+  }, []);
 
-  const updateEvePolarizers = (
+  const updateEvePolarizers = useCallback((
     index: number,
     measureBasis: string,
     sendBasis: string,
@@ -309,48 +340,66 @@ export const SimulationSection = () => {
       };
       return newPolarizers;
     });
-  };
+  }, []);
 
-  const activateEve = (index: number) => {
+  const randomizeEvePolarizers = useCallback(() => {
+    setEvePolarizers((prev) => {
+      return prev.map(() => ({
+        measure: Math.random() > 0.5 ? "+" : "×",
+        send: Math.random() > 0.5 ? "+" : "×",
+      }));
+    });
+  }, []);
+
+  const activateEve = useCallback((index: number) => {
     setActiveEve(index);
     setTimeout(() => setActiveEve(null), 1500);
-  };
+  }, []);
 
-  const showPhoton = () => {
+  const showPhoton = useCallback(() => {
     setIsPhotonVisible(true);
-  };
+  }, []);
 
-  const hidePhoton = () => {
+  const hidePhoton = useCallback(() => {
     setIsPhotonVisible(false);
     setIsPhotonVibrating(false);
     setIsPhotonFalling(false);
-  };
+  }, []);
 
-  const vibratePhoton = () => {
+  const vibratePhoton = useCallback(() => {
     setIsPhotonVibrating(true);
-  };
+  }, []);
 
-  const stopVibratingPhoton = () => {
+  const stopVibratingPhoton = useCallback(() => {
     setIsPhotonVibrating(false);
-  };
+  }, []);
 
-  const fallPhoton = () => {
+  const fallPhoton = useCallback(() => {
     setIsPhotonFalling(true);
-  };
+  }, []);
 
-  const animatePhotonTransmission = async () => {
-    // Show the photon and animate it across the channel
+  const animatePhotonTransmission = useCallback(async () => {
+    // Reset photon position and show it
+    setPhotonPosition(0);
     showPhoton();
     
-    // Animate photon from left to right
-    for (let pos = 0; pos <= 100; pos += 10) {
-      setPhotonPosition(pos);
-      await new Promise(resolve => setTimeout(resolve, 50));
+    // Use CSS animation for smoother transmission
+    const photonElement = document.querySelector('.photon-particle') as HTMLElement;
+    if (photonElement) {
+      photonElement.classList.add('animate-photon-transmission');
     }
     
-    // Optionally hide the photon after transmission
-    // hidePhoton();
-  };
+    // Animate photon from left to right with smoother steps
+    for (let pos = 0; pos <= 100; pos += 2) {
+      setPhotonPosition(pos);
+      await new Promise(resolve => setTimeout(resolve, 30));
+    }
+    
+    // Clean up animation class
+    if (photonElement) {
+      photonElement.classList.remove('animate-photon-transmission');
+    }
+  }, [showPhoton]);
 
   const updateStatusInfo = (text: string) => {
     setStatusInfo(text);
@@ -447,6 +496,16 @@ export const SimulationSection = () => {
 
       return newBits;
     });
+
+    // Update animation state for current bit
+    if (bitIndex < stepByStepBits.length) {
+      const currentBit = stepByStepBits[bitIndex];
+      if (currentBit) {
+        updateAliceInfo(currentBit.aliceBit, currentBit.aliceBasis);
+        updateBobInfo(currentBit.bobBasis, currentBit.aliceBit, currentBit.bobMeasurement);
+        updatePolarizers(currentBit.aliceBasis, currentBit.bobBasis);
+      }
+    }
   };
 
   const startStepByStepMode = () => {
@@ -470,9 +529,15 @@ export const SimulationSection = () => {
         // Only increment step after animation completes
         setBitStep(bitStep + 1);
       } else {
-        setBitStep(bitStep + 1);
-        if (bitStep === 3) {
-          processBitStep(currentBitIndex, bitStep + 1);
+        const newBitStep = bitStep + 1;
+        setBitStep(newBitStep);
+        
+        // Process bit step after state update
+        if (newBitStep === 3) {
+          // Use setTimeout to ensure state is updated before processing
+          setTimeout(() => {
+            processBitStep(currentBitIndex, newBitStep);
+          }, 0);
         }
       }
     } else if (currentBitIndex < stepByStepBits.length - 1) {
@@ -509,12 +574,8 @@ export const SimulationSection = () => {
       setCurrentStep(step);
 
       if (step === 1) {
-        // Animate photon transmission
-        for (let pos = 0; pos <= 100; pos += 5) {
-          setPhotonPositionAnimated(pos);
-          showPhoton();
-          await new Promise((resolve) => setTimeout(resolve, 50));
-        }
+        // Animate photon transmission with improved animation
+        await animatePhotonTransmission();
         hidePhoton();
       }
 
@@ -603,6 +664,12 @@ export const SimulationSection = () => {
     hidePhoton();
     hideStatusInfo();
     setActiveEve(null);
+
+    // Clean up any running animations
+    const photonElement = document.querySelector('.photon-particle') as HTMLElement;
+    if (photonElement) {
+      photonElement.classList.remove('animate-photon-transmission', 'animate-vibrate', 'animate-fall');
+    }
   };
 
   return (
@@ -641,12 +708,13 @@ export const SimulationSection = () => {
               style={{ boxShadow: "0 0 15px rgba(52, 152, 219, 0.4)" }}
             >
               <div
-                className={`absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-gray-800 shadow-lg transition-all duration-300 ${
+                className={`photon-particle absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-gray-800 shadow-lg transition-all duration-300 ${
                   isPhotonVisible ? "opacity-100" : "opacity-0"
                 } ${isPhotonVibrating ? "animate-vibrate" : ""} ${isPhotonFalling ? "animate-fall" : ""}`}
                 style={{
                   left: `${photonPosition}%`,
                   boxShadow: "0 0 20px rgba(241, 196, 15, 0.7)",
+                  transform: `translateX(${photonPosition}%)`,
                 }}
               >
                 →
