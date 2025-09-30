@@ -29,6 +29,7 @@ const WithoutEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onS
     const resultWithoutEve = simulateBB84(qubits, 0, noise);
     experimentData.push({
       run: 1, // Adding a run property for the chart
+      qber: resultWithoutEve.errorRate,  // Store as qber for proper charting
       errorRate: resultWithoutEve.errorRate,
       keyRate: resultWithoutEve.keyRate,
       security: resultWithoutEve.errorRate < 11 ? "Secure" : "Insecure"

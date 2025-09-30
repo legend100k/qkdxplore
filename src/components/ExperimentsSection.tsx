@@ -9,6 +9,7 @@ import WithEavesdropperExperiment from "./experiments/WithEavesdropper/WithEaves
 import EffectOfDistanceExperiment from "./experiments/EffectOfDistance/EffectOfDistanceExperiment";
 import OverallAnalysisExperiment from "./experiments/OverallAnalysis/OverallAnalysisExperiment";
 import { ExperimentResult } from "./experiments/common/types";
+export type { ExperimentResult };
 
 const experimentConfigs = [
   {
@@ -23,35 +24,28 @@ const experimentConfigs = [
     name: "Effect of Channel Noise",
     description: "Analyze how quantum channel noise impacts the success rate and error rate of the BB84 protocol",
     icon: Beaker,
-    color: "quantum-purple",
-  },
-  {
-    id: "without-eavesdropper",
-    name: "Without Eavesdropper",
-    description: "Baseline experiment showing BB84 protocol performance without any eavesdropping attempt",
-    icon: Shield,
-    color: "primary",
+    color: "quantum-blue",
   },
   {
     id: "with-eavesdropper", 
     name: "With Eavesdropper",
     description: "Simulate BB84 protocol with an eavesdropper using random basis selection",
     icon: Eye,
-    color: "quantum-glow",
+    color: "quantum-blue",
   },
   {
     id: "effect-of-distance",
     name: "Effect of Distance",
     description: "Study how transmission distance affects the fidelity and success rate of quantum key distribution",
     icon: Zap,
-    color: "accent",
+    color: "quantum-blue",
   },
   {
     id: "overall",
     name: "Overall Analysis",
     description: "Comprehensive analysis combining all factors and their cumulative effects on BB84 protocol",
     icon: FileText,
-    color: "secondary",
+    color: "quantum-blue",
   }
 ];
 
@@ -64,8 +58,6 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
         return <EffectOfQubitsExperiment onSaveExperiment={onSaveExperiment} />;
       case "effect-of-channel-noise":
         return <EffectOfChannelNoiseExperiment onSaveExperiment={onSaveExperiment} />;
-      case "without-eavesdropper":
-        return <WithoutEavesdropperExperiment onSaveExperiment={onSaveExperiment} />;
       case "with-eavesdropper":
         return <WithEavesdropperExperiment onSaveExperiment={onSaveExperiment} />;
       case "effect-of-distance":
@@ -83,9 +75,9 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
 
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-glow/30">
+      <Card className="border-quantum-glow">
         <CardHeader>
-          <CardTitle className="text-quantum-glow flex items-center gap-2">
+          <CardTitle className="text-quantum-blue flex items-center gap-2">
             <Beaker className="w-6 h-6" />
             Quantum Cryptography Experiments
           </CardTitle>

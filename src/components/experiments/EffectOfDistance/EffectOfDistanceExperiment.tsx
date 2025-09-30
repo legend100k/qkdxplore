@@ -49,6 +49,7 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
       const result = simulateBB84(qubits, 0, distanceNoise);
       experimentData.push({
         distance,
+        qber: result.errorRate,  // Store as qber for proper charting
         photonLoss: (1 - Math.exp(-distance / 50)) * 100, // Simulate photon loss based on distance
         errorRate: result.errorRate,
         keyRate: result.keyRate

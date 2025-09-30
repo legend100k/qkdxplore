@@ -18,19 +18,15 @@ export const AboutUs = () => {
         {/* About Us section */}
         <Card className="border-quantum-blue/30">
           <CardHeader>
-            <CardTitle className="text-quantum-blue">About Us</CardTitle>
+            <CardTitle className="text-quantum-blue">About QkdXplore</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <p className="text-muted-foreground">
-                This Quantum Key Distribution (QKD) E-Laboratory is developed as part of the Virtual Labs
-                initiative by the Ministry of Education, Government of India. The lab provides an interactive
+                This Quantum Key Distribution (QKD) E-Laboratory is developed as part of project for
+                the Amravati Quantum Valley Hackathon (AQVH) 2025, IIC Andhra Pradesh by Team QuSec. The lab provides an interactive
                 platform to understand and experiment with the BB84 protocol, a fundamental quantum cryptography
                 protocol developed by Charles Bennett and Gilles Brassard in 1984.
-              </p>
-              <p className="text-muted-foreground">
-                The simulation allows users to explore the principles of quantum key distribution, understand
-                the impact of eavesdropping, and analyze the security aspects of quantum communication.
               </p>
             </div>
           </CardContent>
@@ -39,25 +35,27 @@ export const AboutUs = () => {
         {/* Credits section */}
         <Card className="border-quantum-purple/30">
           <CardHeader>
-            <CardTitle className="text-quantum-purple">Credits</CardTitle>
+            <CardTitle className="text-quantum-purple">About Us</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
-                <h4 className="font-semibold mb-2">Project Team</h4>
-                <p className="text-sm text-muted-foreground">
-                  Team Members:<br />
-                  {teamMembers.map((member, index) => (
-                    <span key={index}>
-                      {member}<br />
-                    </span>
-                  ))}
-                  <br />
-                  Mentor: Mrs.Anuradha Jadiya<br />
-                  Mentor: Dr. Ranjan Bala Jain<br />
+                <h4 className="font-bold mb-2">Developed under guidance of:</h4>
+                 <p className="text-sm text-muted-foreground"></p>
+                  Dr. Ranjan Bala Jain<br />
+                  Mrs.Anuradha Jadiya<br />
                   Department of Electronics and Telecommunication<br />
                   Vivekanand Education Society's Institute of Technology<br />
-                </p>
+                <h5 className="font-bold mb-2">Team Members:</h5>
+                <p className="text-sm text-muted-foreground"></p>
+                  Aniruddha Gharat<br/>
+                  Arundhati Nair<br/>
+                  Harsh Mhadgut<br/>
+                  Shantaram Chari<br/>
+                  Sharavani Kale<br/>
+                  Tejas Naringrekar<br/>
+                 
+
               </div>
 
               <div>

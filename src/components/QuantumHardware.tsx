@@ -1,251 +1,48 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-
 export const QuantumHardware = () => {
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent mb-4">
-          Quantum Hardware
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-          Explore the physical components and technologies that make quantum key distribution possible
-        </p>
-      </div>
+    <div className="prose max-w-none p-8">
+      <h1 className="text-3xl font-bold text-center mb-6">The Complete Hardware Stack for a BB84 System</h1>
+      <p className="text-lg mb-6">Imagine Alice wants to send a secret key to Bob using light particles (photons). Here's the hardware they need and the simple job of each part.</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quantum Sources */}
-        <Card className="quantum-glow border-quantum-blue/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-quantum-blue rounded-full"></div>
-              Quantum Light Sources
-            </CardTitle>
-            <CardDescription>
-              Devices that generate quantum states of light
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-quantum-blue mb-2">Single Photon Sources</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Quantum dots for deterministic photon generation</li>
-                <li>• Spontaneous parametric down-conversion (SPDC)</li>
-                <li>• Weak coherent pulses with decoy states</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-quantum-blue mb-2">Laser Diodes</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Semiconductor lasers for optical pumping</li>
-                <li>• Distributed feedback (DFB) lasers</li>
-                <li>• External cavity diode lasers (ECDL)</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">1. The Photon Source</h2>
 
-        {/* Quantum Detectors */}
-        <Card className="quantum-glow border-quantum-purple/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-quantum-purple rounded-full"></div>
-              Quantum Detectors
-            </CardTitle>
-            <CardDescription>
-              High-sensitivity devices for detecting single photons
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-quantum-purple mb-2">Single Photon Detectors</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Superconducting nanowire single-photon detectors (SNSPD)</li>
-                <li>• Avalanche photodiodes (APD)</li>
-                <li>• Transition edge sensors (TES)</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-quantum-purple mb-2">Performance Metrics</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Detection efficiency: 90%+ (SNSPD)</li>
-                <li>• Dark count rate: &lt; 1 Hz</li>
-                <li>• Timing jitter: &lt; 100 ps</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+      <p className="mb-2"><strong>Laser & Crystal:</strong> A special laser shines on a crystal. This crystal acts like a factory, taking one high-energy photon from the laser and splitting it into two lower-energy, entangled "twin" photons (Signal and Idler).</p>
+      <p className="mb-6"><strong>Job:</strong> Creates the pairs of photons that will carry the secret key.</p>
+      <img src="src/components/photon-source.webp" className="w-1/4 h-1/4 mx-auto flex justify-left"></img>
 
-        {/* Optical Components */}
-        <Card className="quantum-glow border-green-500/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              Optical Components
-            </CardTitle>
-            <CardDescription>
-              Precision optical elements for quantum state manipulation
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-green-500 mb-2">Polarization Control</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Half-wave plates (HWP) for polarization rotation</li>
-                <li>• Quarter-wave plates (QWP) for circular polarization</li>
-                <li>• Polarizing beam splitters (PBS)</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-500 mb-2">Beam Splitters</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• 50/50 beam splitters for random basis selection</li>
-                <li>• Variable beam splitters for intensity control</li>
-                <li>• Fiber optic couplers</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">2. Alice's Encoding Station</h2>
+      <p className="mb-2"><strong>Polarizers / Waveplates:</strong> These are like tiny filters that can change the photon's orientation (its polarization). Alice uses them to encode each photon as a 0 or a 1 in one of two different ways (e.g., horizontal/vertical or diagonal/anti-diagonal).</p>
+      <p className="mb-2"><strong>Beam Splitter:</strong> A simple glass element that randomly sends each photon down one of two paths. This random choice decides which encoding method Alice uses for that photon.</p>
+      <p className="mb-6"><strong>Job:</strong> Encodes the secret key onto the photons and randomly chooses how to encode each bit.</p>
 
-        {/* Quantum Channels */}
-        <Card className="quantum-glow border-orange-500/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              Quantum Channels
-            </CardTitle>
-            <CardDescription>
-              Transmission media for quantum information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-orange-500 mb-2">Free Space</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Atmospheric transmission (up to 200 km)</li>
-                <li>• Satellite-based quantum communication</li>
-                <li>• Ground-to-satellite links</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-orange-500 mb-2">Fiber Optic</h4>
-              <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>• Single-mode optical fibers</li>
-                <li>• Low-loss fiber networks (up to 400 km)</li>
-                <li>• Quantum repeaters for long distances</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">3. The Quantum Channel</h2>
+      <p className="mb-2"><strong>Free Space or Fibre Optic Cable:</strong> This is the path the photons travel through from Alice to Bob. It could be the open air in a lab or a dedicated fibre optic cable.</p>
+      <p className="mb-6"><strong>Job:</strong> The "wire" that sends the photons to Bob.</p>
 
-      <Separator className="my-8" />
+      <h2 className="text-2xl font-semibold mt-8 mb-4">4. Bob's Decoding Station</h2>
+      <p className="mb-2"><strong>Beam Splitter:</strong> The first thing Bob's photon hits. It randomly sends the photon to one of two measurement setups. This random choice is his "guess" of which encoding method Alice used.</p>
+      <p className="mb-2"><strong>Polarizing Beam Splitters (PBS) & Detectors:</strong> Each measurement setup has a PBS that directs the photon to one of two detectors based on its polarization. The click from a detector tells Bob what bit (0 or 1) he measured.</p>
+      <p className="mb-6"><strong>Job:</strong> Measures the incoming photons and tries to decode the bits. Bob's random choice of measurement setup is crucial for security.</p>
 
-      {/* Hardware Specifications */}
-      <Card className="quantum-glow border-cyan-500/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-cyan-500 rounded-full"></div>
-            Typical QKD Hardware Specifications
-          </CardTitle>
-          <CardDescription>
-            Performance characteristics of commercial QKD systems
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-3">
-              <h4 className="font-semibold text-cyan-500">Key Generation Rate</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Short range (&lt; 10 km):</span>
-                  <Badge variant="secondary">1-10 Mbps</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Medium range (10-100 km):</span>
-                  <Badge variant="secondary">100 Kbps - 1 Mbps</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Long range (&gt; 100 km):</span>
-                  <Badge variant="secondary">1-100 Kbps</Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="font-semibold text-cyan-500">Security Features</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Quantum bit error rate:</span>
-                  <Badge variant="secondary">&lt; 2%</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Information leakage:</span>
-                  <Badge variant="secondary">Provably secure</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Attack resistance:</span>
-                  <Badge variant="secondary">PNS, intercept-resend</Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="font-semibold text-cyan-500">Environmental</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Operating temperature:</span>
-                  <Badge variant="secondary">-40°C to +70°C</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Power consumption:</span>
-                  <Badge variant="secondary">10-100 W</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Size/Weight:</span>
-                  <Badge variant="secondary">Rack-mountable</Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">5. The Detectors & Timer</h2>
+      <p className="mb-2"><strong>Single Photon Detectors (SPADs):</strong> These are super-sensitive cameras that can detect a single photon. They "click" when a photon arrives.</p>
+      <p className="mb-2"><strong>Time-Stamping Unit (TCSPC):</strong> An electronic clock that records the exact nanosecond when each detector clicks.</p>
+      <p className="mb-6"><strong>Job:</strong> See the photons and record when they arrive. The precise timing is used to match Bob's detections with Alice's transmissions later.</p>
 
-      {/* Future Technologies */}
-      <Card className="quantum-glow border-pink-500/30">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-            Emerging Technologies
-          </CardTitle>
-          <CardDescription>
-            Next-generation quantum hardware developments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-pink-500 mb-3">Integrated Photonics</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Silicon photonic chips for compact QKD systems</li>
-                <li>• Integrated quantum light sources and detectors</li>
-                <li>• On-chip polarization and phase modulators</li>
-                <li>• Mass production potential for cost reduction</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-pink-500 mb-3">Quantum Repeaters</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>• Quantum memory for entanglement storage</li>
-                <li>• Quantum error correction for long-distance QKD</li>
-                <li>• All-photonic quantum repeaters</li>
-                <li>• Global quantum communication networks</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <h2 className="text-2xl font-semibold mt-8 mb-4">6. The Classical Channel</h2>
+      <p className="mb-2"><strong>Internet / Radio Connection:</strong> A normal public communication channel (like a regular phone call or internet connection).</p>
+      <p className="mb-6"><strong>Job:</strong> After the quantum transmission, Alice and Bob use this channel to compare notes. They talk about when photons arrived, but never what the bit value was. This allows them to sift out the parts of the key where Bob guessed the right encoding method correctly.</p>
+
+      <h2 className="text-2xl font-semibold mt-8 mb-4">Simple Analogy:</h2>
+      <p className="mb-4">Think of it like this:</p>
+      <ul className="list-disc pl-6 mb-4">
+        <li><strong>Photon Source:</strong> A factory making identical pairs of magic coins.</li>
+        <li><strong>Alice:</strong> Flips each coin to be Heads or Tails (0 or 1) and sometimes uses a secret decoder ring that changes the meaning of Heads and Tails (different basis).</li>
+        <li><strong>Quantum Channel:</strong> She mails one coin from each pair to Bob in a sealed box.</li>
+        <li><strong>Bob:</strong> Guesses whether to use the decoder ring or not on each coin he receives.</li>
+        <li><strong>Classical Channel:</strong> Afterward, they get on the phone. Alice says "For the coin I sent at 1:05 PM, did you use the ring?" If Bob says yes, and she did too, they know that coin is part of their secret key. If Bob guessed wrong, they throw that coin's result away.</li>
+      </ul>
+      <p>The laws of quantum physics ensure that anyone trying to intercept and measure the coins in the mail will inevitably change them, leaving evidence of their eavesdropping.</p>
     </div>
   );
 };

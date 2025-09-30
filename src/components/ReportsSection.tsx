@@ -713,7 +713,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                   <Button
                     onClick={startNewReport}
                     disabled={!selectedExperiment}
-                    className="bg-quantum-glow hover:bg-quantum-glow/80 whitespace-nowrap"
+                    className="bg-quantum-blue hover:bg-quantum-blue/80 whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     New Report

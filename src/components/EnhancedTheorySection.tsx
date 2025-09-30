@@ -2,11 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const EnhancedTheorySection = () => {
   return (
-    <div className="space-y-6">
-      <Card className="border-quantum-purple/30">
-        <CardHeader>
-          <CardTitle className="text-quantum-blue flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-blue rounded-full"></div>
+    <div className="space-y-6 pb-0">
+      <Card className="border-quantum-blue/30 padding-bottom: 0px;">
+        <CardHeader >
+          <CardTitle className="blue text-quantum-blue flex items-center gap-2">
             What is BB84 Protocol?
           </CardTitle>
         </CardHeader>
@@ -18,11 +17,11 @@ export const EnhancedTheorySection = () => {
 
           </p>
           
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-quantum-purple">Aim And Objective</h3>
+          <div className="space-y-4">
+            <h3 className="blue font-semibold text-quantum-blue">Aim and Objective</h3>
             <div className="space-y-3">
               <p className="text-foreground/90">
-                Our mission is to bridge the gap between abstract quantum theory and practical, hands-on understanding.
+                Our mission is to bridge the gap between complex quantum theory and practical, hands-on understanding.
               </p>
               
               <p className="text-foreground/90"><span className="font-semibold">Aim:</span> To provide a comprehensive, web-based learning environment that demystifies Quantum Key Distribution (QKD) through interactive simulation.</p>
@@ -37,8 +36,8 @@ export const EnhancedTheorySection = () => {
             </div>
           </div>
           
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-red-500">The Quantum Threat is Real</h3>
+          <div className="space-y-4 mt-4">
+            <h3 className="blue font-semibold text-quantum-blue">The Quantum Threat is Real</h3>
             <p className="text-foreground/90">
               Today's encryption like RSA and AES relies on math problems too difficult for classical computers to solve quickly. But quantum computers change everything. Using algorithms like Shor's Algorithm, they can break these codes in minutes, not millennia.
             </p>
@@ -47,8 +46,8 @@ export const EnhancedTheorySection = () => {
             </p>
           </div>
           
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-quantum-blue">The Problem: Why Classical Encryption Fails</h3>
+          <div className="space-y-4 mt-4">
+            <h3 className="blue font-semibold text-quantum-blue">The Problem: Why Classical Encryption Fails</h3>
             <p className="text-foreground/90">
               Imagine sending a locked box with a key. In classical cryptography, a hacker (Eve) can intercept the key, make a perfect copy, and forward the original completely undetected. She now has unrestricted access to your messages.
             </p>
@@ -57,8 +56,8 @@ export const EnhancedTheorySection = () => {
             </p>
           </div>
           
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-green-600">The Quantum Solution: A Lock That Can't Be Picked</h3>
+          <div className="space-y-4 mt-4">
+            <h3 className="blue font-semibold text-quantum-blue">The Quantum Solution: A Lock That Can't Be Picked</h3>
             <p className="text-foreground/90">
               Quantum Key Distribution (QKD) doesn't rely on math. Instead, it harnesses the unbreakable laws of quantum physics:
             </p>
@@ -76,11 +75,11 @@ export const EnhancedTheorySection = () => {
             </p>
           </div>
           
-          <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-quantum-glow">Why is this a Revolution?</h3>
+          <div className="space-y-4 mt-4">
+            <h3 className="blue font-semibold text-quantum-blue">Why is this a Revolution?</h3>
             
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 mt-4">
+              <table className="w-full border-collapse border border-gray-300 mt-2">
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-gray-300 px-4 py-2 font-medium">Aspect</th>
@@ -108,8 +107,8 @@ export const EnhancedTheorySection = () => {
               </table>
             </div>
             
-            <div className="space-y-4 mt-6">
-              <h3 className="text-xl font-semibold text-quantum-purple">The Quantum Principles Behind the Magic</h3>
+            <div className="space-y-4 mt-4">
+              <h3 className="blue font-semibold text-quantum-blue">The Quantum Principles Behind the Magic</h3>
               <p className="text-foreground/90">
                 QKD leverages several fascinating and non-negotiable properties of quantum mechanics:
               </p>
@@ -121,12 +120,12 @@ export const EnhancedTheorySection = () => {
                 <li><span className="font-semibold">Complementarity:</span> Information can be encoded in different, "incompatible" ways. Measuring in the wrong way yields a random result.</li>
               </ul>
               
-              <div className="mt-4">
-                <h4 className="text-lg font-semibold text-quantum-blue">The Security Guardian: Quantum Bit Error Rate (QBER)</h4>
+              <div className="mt-2">
+                <h4 className="blue font-semibold text-quantum-blue">The Security Guardian: Quantum Bit Error Rate (QBER)</h4>
                 <p className="text-foreground/90">
                   This is the most critical metric. The QBER is the percentage of mismatched bits between Alice and Bob after they have compared a sample of their key.
                 </p>
-                <ul className="list-disc list-inside space-y-2 ml-4 text-foreground/90 mt-2">
+                <ul className="list-disc list-inside space-y-1 ml-4 text-foreground/90 mt-1">
                   <li>A low QBER indicates a clean, secure connection with only natural noise.</li>
                   <li>A high QBER is undeniable proof of eavesdropping. When Eve measures a qubit in the wrong basis, she causes it to collapse randomly, introducing a detectable 25% error rate on the bits she tampers with.</li>
                 </ul>
@@ -138,8 +137,8 @@ export const EnhancedTheorySection = () => {
 
       <Card className="border-quantum-blue/30">
         <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-purple rounded-full polarization-animation"></div>
+          <CardTitle className="text-quantum-blue flex items-center gap-2">
+            
             Types of QKD
           </CardTitle>
         </CardHeader>
@@ -158,8 +157,8 @@ export const EnhancedTheorySection = () => {
       
       <Card className="border-quantum-blue/30">
         <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-purple rounded-full polarization-animation"></div>
+          <CardTitle className="text-quantum-blue flex items-center gap-2">
+            
             The Quantum Magic Trick: It's All in the Basis
           </CardTitle>
         </CardHeader>
@@ -173,6 +172,38 @@ export const EnhancedTheorySection = () => {
             <li>The Diagonal Basis (X): A photon can be polarized 45-degrees (0) or 135-degrees (1)</li>
           </ul>
           
+          <div className="flex flex-wrap gap-8 justify-center mt-4">
+            <div className="flex flex-col items-center">
+              <div className="text-quantum-blue font-semibold mb-2">Rectilinear Basis (+)</div>
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className="absolute w-24 h-0.5 bg-quantum-blue"></div> {/* Horizontal line */}
+                <div className="absolute w-0.5 h-24 bg-quantum-blue"></div> {/* Vertical line */}
+                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-white flex items-center justify-center">
+                  <svg className="w-6 h-6 text-quantum-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="6" y1="12" x2="18" y2="12" strokeWidth="2"></line>
+                    <polygon points="16,9 20,12 16,15" fill="currentColor"></polygon>
+                  </svg>
+                </div>
+              </div>
+              <div className="text-sm text-center mt-2">Horizontal (0) or Vertical (1)</div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="text-quantum-blue font-semibold mb-2">Diagonal Basis (X)</div>
+              <div className="relative w-32 h-32 flex items-center justify-center">
+                <div className="absolute w-24 h-0.5 bg-quantum-blue transform -rotate-45 origin-center"></div> {/* Diagonal line 1 */}
+                <div className="absolute w-24 h-0.5 bg-quantum-blue transform rotate-45 origin-center"></div> {/* Diagonal line 2 */}
+                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-white flex items-center justify-center">
+                  <svg className="w-6 h-6 text-quantum-blue transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="3" y1="12" x2="21" y2="12" strokeWidth="2" transform="rotate(-45 12 12)"></line>
+                    <polygon points="18,8 22,12 18,16" fill="currentColor" transform="rotate(-45 12 12)"></polygon>
+                  </svg>
+                </div>
+              </div>
+              <div className="text-sm text-center mt-2">45° (0) or 135° (1)</div>
+            </div>
+          </div>
+          
           <p className="text-foreground/90">
             Here's the crucial part: If Bob uses the wrong basis to measure a photon, his result is completely random. He has only a 50% chance of guessing the correct bit. This randomness is the core of the protocol's security.
           </p>
@@ -181,22 +212,18 @@ export const EnhancedTheorySection = () => {
       
       <Card className="border-quantum-blue/30">
         <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-purple rounded-full polarization-animation"></div>
-            The Pioneer: The BB84 Protocol- BB84 TAB
+          <CardTitle className="text-quantum-blue flex items-center gap-2">
+            The BB84 Protocol Block Diagram
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-foreground/90">
-            The protocol you will master in our lab is BB84, named after its creators, Charles Bennett and Gilles Brassard, and the year of its invention—1984. Their groundbreaking work was the first to propose using the laws of quantum mechanics not for computation, but for creating mathematically provable security. The name forever marks their pivotal contribution to the field.
-          </p>
+          <img src="/src/Working-process-of-the-bb84-upscaled.png" alt="BB84 Protocol Block Diagram" className="w-3/4 h-auto mx-auto" />
         </CardContent>
       </Card>
       
       <Card className="border-quantum-blue/30">
         <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-purple rounded-full polarization-animation"></div>
+          <CardTitle className="text-quantum-blue flex items-center gap-2">
             A Step-by-Step Walkthrough: How BB84 Creates a Key
           </CardTitle>
         </CardHeader>
@@ -212,28 +239,22 @@ export const EnhancedTheorySection = () => {
             <li><span className="font-semibold">The Sifting Process (Over a Public Channel):</span> Alice and Bob now talk publicly. They only reveal the sequence of bases they each used. They never reveal the actual bit values. They then discard all the bits where their bases did not match. The remaining bits form the "Sifted Key."</li>
             <li><span className="font-semibold">Catching the evesdropper: The Quantum Bit Error Rate (QBER)</span> This is the most important step. To check for Eve, Alice and Bob sacrifice a random portion of their sifted key by publicly comparing the bits. They calculate the Quantum Bit Error Rate (QBER) the percentage of bits that don't match. A low QBER (~0-11%) is due to natural system noise and means the channel is secure. A high QBER (more than 25%) is proof of eavesdropping. Why?</li>
           </ol>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-quantum-blue/30">
-        <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <div className="w-6 h-6 bg-quantum-purple rounded-full polarization-animation"></div>
-            The Ultimate Test: Activate Eve
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-foreground/90">
-            This is where the magic happens. In our simulation, you can switch on the evesdropper.
-            Watch in real-time as Eve's desperate guesses corrupt the quantum states. She doesn't know the basis, so she guesses randomly, just like Bob.
-            See the QBER spike from near-zero to over 25%, providing irrefutable proof she was there. This error rate is the direct mathematical result of her interference.
-          </p>
-          <p className="text-foreground/90">
-            Understand, visually and intuitively, why this system is provably secure. The laws of physics themselves become your security guard.
-          </p>
-          <p className="text-foreground/90">
-            <span className="font-semibold">6. Privacy Amplification & The Final Key:</span> If the QBER is low, Alice and Bob perform final steps (like error correction) on the remaining unrevealed bits to produce an identical, perfectly secret key.
-          </p>
+          
+          <div className="mt-4">
+            <h3 className="blue font-semibold text-quantum-blue">The Ultimate Test: Activate Eve</h3>
+            
+            <p className="text-foreground/90">
+              This is where the magic happens. In our simulation, you can switch on the evesdropper.
+              Watch in real-time as Eve's desperate guesses corrupt the quantum states. She doesn't know the basis, so she guesses randomly, just like Bob.
+              See the QBER spike from near-zero to over 25%, providing irrefutable proof she was there. This error rate is the direct mathematical result of her interference.
+            </p>
+            <p className="text-foreground/90">
+              Understand, visually and intuitively, why this system is provably secure. The laws of physics themselves become your security guard.
+            </p>
+            <p className="text-foreground/90">
+              <span className="font-semibold">Privacy Amplification & The Final Key:</span> If the QBER is low, Alice and Bob perform final steps (like error correction) on the remaining unrevealed bits to produce an identical, perfectly secret key.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

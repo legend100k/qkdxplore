@@ -42,12 +42,12 @@ const questions: Question[] = [
     id: 3,
     question: "Which of these is an example of classical encryption?",
     options: [
-      "RSA",
+      
       "AES",
       "Quantum Key Distribution",
       "Blockchain"
     ],
-    correct: 1,
+    correct: 0,
     explanation: "AES (Advanced Encryption Standard) is a widely used classical encryption algorithm that uses mathematical operations to secure data."
   },
   {

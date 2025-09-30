@@ -4,6 +4,9 @@ import { toast } from "sonner";
 import { ExperimentResult, ExperimentComponentProps } from "../common/types";
 import { simulateBB84, generateAnalysis } from "../common/utils";
 import { ExperimentUI } from "../common/ExperimentUI";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 
 const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveExperiment }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -13,6 +16,12 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
   const [currentBits, setCurrentBits] = useState<any[]>([]);
   const [showBitsSimulation, setShowBitsSimulation] = useState(false);
   const [finalExperimentBits, setFinalExperimentBits] = useState<any[]>([]);
+  
+  // State for experiment parameters
+  const [qubitRange, setQubitRange] = useState<[number, number]>([10, 100]);
+  const [step, setStep] = useState(10);
+  const [noise, setNoise] = useState(5);
+  const [eavesdropRate, setEavesdropRate] = useState(10);
 
   const runExperiment = async () => {
     setIsRunning(true);
@@ -36,18 +45,15 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
     // Start photon animation
     animatePhoton();
 
-    // Define experiment parameters
-    const qubitRange: [number, number] = [10, 100];
-    const step = 10;
-    const noise = 5;
-
-    totalSteps = (qubitRange[1] - qubitRange[0]) / step + 1;
+    // Use the parameter values
+    totalSteps = Math.floor((qubitRange[1] - qubitRange[0]) / step) + 1;
     for (let qubits = qubitRange[0]; qubits <= qubitRange[1]; qubits += step) {
-      const result = simulateBB84(qubits, 10, noise);
+      const result = simulateBB84(qubits, eavesdropRate, noise);
       experimentData.push({
         qubits,
-        keyLength: result.keyLength,
+        qber: result.errorRate,  // Store as qber for proper charting
         errorRate: result.errorRate,
+        keyLength: result.keyLength,
         statisticalSecurity: Math.min(100, (qubits / 50) * 100)
       });
       currentStep++;
@@ -78,6 +84,61 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
 
   const experimentResult = results["effect-of-qubits"];
 
+  // Parameter controls JSX
+  const parameterControls = (
+    <Card className="border-quantum-blue/30 p-4">
+      <CardContent className="space-y-4 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="qubit-start">Number of Qubits: {qubitRange[0]}</Label>
+            <Slider
+              id="qubit-start"
+              min={1}
+              max={100}
+              value={[qubitRange[0]]}
+              onValueChange={(value) => setQubitRange([value[0], qubitRange[1]])}
+              disabled={isRunning}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="step">Step Size: {step}</Label>
+            <Slider
+              id="step"
+              min={1}
+              max={20}
+              value={[step]}
+              onValueChange={(value) => setStep(value[0])}
+              disabled={isRunning}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="noise">Noise Level: {noise}%</Label>
+            <Slider
+              id="noise"
+              min={0}
+              max={20}
+              value={[noise]}
+              onValueChange={(value) => setNoise(value[0])}
+              disabled={isRunning}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="eavesdrop">Eavesdropping Rate: {eavesdropRate}%</Label>
+            <Slider
+              id="eavesdrop"
+              min={0}
+              max={100}
+              value={[eavesdropRate]}
+              onValueChange={(value) => setEavesdropRate(value[0])}
+              disabled={isRunning}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <ExperimentUI
@@ -96,6 +157,7 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
         usedBits={experimentResult?.usedBits}
         xAxisDataKey="qubits"
         colorScheme="quantum-blue"
+        experimentControls={parameterControls}
       />
     </div>
   );
