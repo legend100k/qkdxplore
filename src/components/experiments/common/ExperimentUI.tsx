@@ -71,143 +71,50 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
 
     // Wait for Google Charts to be loaded
     const drawChart = () => {
-      // Prepare data for the chart based on experiment type
+      // Prepare data for the chart based on experiment type - only plot QBER
       let chartData: any[];
       let title = '';
       let yTitle = '';
       let seriesOptions: any = {};
 
-      // Determine the experiment type and configure accordingly
+      // For all experiments, only plot QBER values as requested
+      chartData = [[xAxisDataKey, 'QBER']];
+      data.forEach(item => {
+        chartData.push([
+          item[xAxisDataKey] || 0, 
+          item.qber || item.errorRate || 0
+        ]);
+      });
+      
+      // Set title based on experiment type
       switch(selectedExpId) {
         case 'effect-of-qubits':
-          // Plot Qubit count vs QBER and Statistical Security
-          chartData = [[xAxisDataKey, 'QBER', 'Statistical Security']];
-          data.forEach(item => {
-            chartData.push([
-              item[xAxisDataKey] || 0, 
-              item.qber || item.errorRate || 0, 
-              item.statisticalSecurity || 0
-            ]);
-          });
-          title = 'Effect of Qubits: QBER and Statistical Security';
-          yTitle = 'Value (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }, // Red for QBER
-            1: { color: '#22c55e' }  // Green for Statistical Security
-          };
+          title = 'Effect of Qubits: QBER vs Number of Qubits';
           break;
-          
         case 'effect-of-channel-noise':
-          // Plot Noise Level vs QBER and Key Rate
-          chartData = [[xAxisDataKey, 'QBER', 'Key Rate']];
-          data.forEach(item => {
-            chartData.push([
-              item[xAxisDataKey] || 0, 
-              item.qber || item.errorRate || 0, 
-              item.keyRate || 0
-            ]);
-          });
-          title = 'Effect of Channel Noise: QBER and Key Rate';
-          yTitle = 'Value (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }, // Red for QBER
-            1: { color: '#3b82f6' }  // Blue for Key Rate
-          };
+          title = 'Effect of Channel Noise: QBER vs Noise Level';
           break;
-          
         case 'without-eavesdropper':
-          // Shows QBER baseline (simple bar/line)
-          chartData = [[xAxisDataKey, 'QBER']];
-          data.forEach(item => {
-            chartData.push([item[xAxisDataKey] || 0, item.qber || item.errorRate || 0]);
-          });
           title = 'Without Eavesdropper: QBER Baseline';
-          yTitle = 'QBER (%)';
-          seriesOptions = {
-            0: { color: '#22c55e' }  // Green for baseline
-          };
           break;
-          
         case 'with-eavesdropper':
-          // Plots Interception Rate vs QBER and Detection Probability
-          chartData = [[xAxisDataKey, 'QBER', 'Detection Probability']];
-          data.forEach(item => {
-            chartData.push([
-              item[xAxisDataKey] || 0, 
-              item.qber || item.errorRate || 0, 
-              item.detectionProbability || 0
-            ]);
-          });
-          title = 'With Eavesdropper: QBER and Detection Probability';
-          yTitle = 'Value (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }, // Red for QBER
-            1: { color: '#8b5cf6' }  // Purple for Detection Probability
-          };
+          title = 'With Eavesdropper: QBER vs Eavesdropping Rate';
           break;
-          
         case 'effect-of-distance':
-          // Plots Distance vs QBER and Photon Loss
-          chartData = [[xAxisDataKey, 'QBER', 'Photon Loss']];
-          data.forEach(item => {
-            chartData.push([
-              item[xAxisDataKey] || 0, 
-              item.qber || item.errorRate || 0, 
-              item.photonLoss || 0
-            ]);
-          });
-          title = 'Effect of Distance: QBER and Photon Loss';
-          yTitle = 'Value (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }, // Red for QBER
-            1: { color: '#f97316' }  // Orange for Photon Loss
-          };
+          title = 'Effect of Distance: QBER vs Distance';
           break;
-          
-        case 'basis-mismatch':
-          // Plots Basis Match Rate vs QBER and Key Rate
-          chartData = [[xAxisDataKey, 'QBER', 'Key Rate']];
-          data.forEach(item => {
-            chartData.push([
-              item[xAxisDataKey] || 0, 
-              item.qber || item.errorRate || 0, 
-              item.keyRate || 0
-            ]);
-          });
-          title = 'Basis Mismatch: QBER and Key Rate';
-          yTitle = 'Value (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }, // Red for QBER
-            1: { color: '#06b6d4' }  // Cyan for Key Rate
-          };
-          break;
-          
         case 'overall':
-          // Plots Bit Number vs cumulative QBER
-          chartData = [[xAxisDataKey, 'QBER']];
-          data.forEach(item => {
-            chartData.push([item[xAxisDataKey] || 0, item.qber || item.errorRate || 0]);
-          });
           title = 'Overall Analysis: QBER vs Bit Number';
-          yTitle = 'QBER (%)';
-          seriesOptions = {
-            0: { color: '#ef4444' }  // Red for QBER
-          };
           break;
-          
         default:
-          // For unknown experiment types, use a general approach
-          chartData = [[xAxisDataKey, 'Error Rate']];
-          data.forEach(item => {
-            chartData.push([item[xAxisDataKey] || 0, item.errorRate || 0]);
-          });
-          title = 'Experiment Results';
-          yTitle = 'Error Rate (%)';
-          seriesOptions = {
-            0: { color: '#64748b' }  // Gray for default
-          };
+          title = 'Experiment Results: QBER';
           break;
       }
+      
+      yTitle = 'QBER (%)';
+      seriesOptions = {
+        0: { color: '#ef4444' }  // Red for QBER
+      };
 
       // Add security threshold line (11% for active experiments)
       if (selectedExpId !== 'without-eavesdropper') {
@@ -221,10 +128,10 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
         
         // Add series configuration for threshold
         seriesOptions = {
-          ...seriesOptions,
-          [Object.keys(seriesOptions).length]: { 
+          0: { color: '#ef4444' }, // Red for QBER
+          1: { 
             color: '#f59e0b', 
-            lineDashStyle: [4, 4], // Dashed line
+            lineDashStyle: [4, 4], // Dashed line for threshold
             visibleInLegend: true
           }
         };
@@ -235,11 +142,13 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       const options: any = {
         title: title,
         hAxis: {
-          title: selectedExpId === 'overall' ? 'Bit Number' : xAxisDataKey || 'X Axis'
+          title: selectedExpId === 'overall' ? 'Bit Number' : xAxisDataKey || 'X Axis',
+          gridlines: { color: '#e0e0e0' }
         },
         vAxis: {
           title: yTitle,
-          viewWindow: { min: 0 } // Start Y-axis at 0 for better visualization
+          viewWindow: { min: 0 },
+          gridlines: { count: 10 }
         },
         series: seriesOptions,
         legend: { position: 'top' },
@@ -251,16 +160,6 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
           backgroundColor: 'transparent',
           width: '80%',
           height: '80%'
-        },
-        // Add grid lines
-        hAxis: {
-          title: selectedExpId === 'overall' ? 'Bit Number' : xAxisDataKey || 'X Axis',
-          gridlines: { color: '#e0e0e0' }
-        },
-        vAxis: {
-          title: yTitle,
-          viewWindow: { min: 0 }, // Start Y-axis at 0 for better visualization
-          gridlines: { count: 10 }
         }
       };
 
@@ -525,42 +424,38 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
               )}
             </div>
 
-            <div className="space-y-6">
-              <Card className="bg-secondary/30">
-                <CardHeader>
-                  <CardTitle className="text-sm">Experiment Results</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedResult.data.length === 1 && selectedExpId === "without-eavesdropper" ? (
-                    <Card className="h-64 flex items-center justify-center bg-secondary/20">
-                      <div className="text-center p-6">
-                        <h4 className="text-lg font-semibold mb-4">Single Run Results</h4>
-                        <div className="space-y-2">
-                          <p>Key Rate: <span className="font-mono">{typeof selectedResult.data[0].keyRate === 'number' ? selectedResult.data[0].keyRate.toFixed(2) : String(selectedResult.data[0].keyRate)}%</span></p>
-                          <p>Error Rate: <span className="font-mono">{typeof selectedResult.data[0].errorRate === 'number' ? selectedResult.data[0].errorRate.toFixed(2) : String(selectedResult.data[0].errorRate)}%</span></p>
-                          <p className={`font-semibold mt-4 ${selectedResult.data[0].security === 'Secure' ? 'text-green-500' : 'text-destructive'}`}>
-                            Security: {String(selectedResult.data[0].security)}
-                          </p>
-                        </div>
-                      </div>
-                    </Card>
-                  ) : (
-                    <div className="mb-4">
-                      <div id="experiment-chart" className="h-64 w-full">
-                        {/* Google Chart will be rendered here */}
+            <Card className="bg-secondary/30">
+              <CardHeader>
+                <CardTitle className="text-sm">Experiment Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {selectedResult.data.length === 1 && selectedExpId === "without-eavesdropper" ? (
+                  <div className="h-64 flex items-center justify-center bg-secondary/20 rounded-lg">
+                    <div className="text-center p-6">
+                      <h4 className="text-lg font-semibold mb-4">Single Run Results</h4>
+                      <div className="space-y-2">
+                        <p>Key Rate: <span className="font-mono">{typeof selectedResult.data[0].keyRate === 'number' ? selectedResult.data[0].keyRate.toFixed(2) : String(selectedResult.data[0].keyRate)}%</span></p>
+                        <p>Error Rate: <span className="font-mono">{typeof selectedResult.data[0].errorRate === 'number' ? selectedResult.data[0].errorRate.toFixed(2) : String(selectedResult.data[0].errorRate)}%</span></p>
+                        <p className={`font-semibold mt-4 ${selectedResult.data[0].security === 'Secure' ? 'text-green-500' : 'text-destructive'}`}>
+                          Security: {String(selectedResult.data[0].security)}
+                        </p>
                       </div>
                     </div>
-                  )}
-                  
-                  <Card className="bg-cyan-500/10 border-cyan-500/30">
-                    <CardContent className="p-4">
-                      <h4 className="font-semibold text-cyan-400 mb-2">Analysis</h4>
-                      <p className="text-sm">{selectedResult.analysis}</p>
-                    </CardContent>
-                  </Card>
-                </CardContent>
-              </Card>
-            </div>
+                  </div>
+                ) : (
+                  <div id="experiment-chart" className="h-96 w-full">
+                    {/* Google Chart will be rendered here */}
+                  </div>
+                )}
+                
+                {selectedResult?.analysis && (
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 mt-4">
+                    <h4 className="font-semibold text-cyan-400 mb-2">Analysis</h4>
+                    <p className="text-sm">{selectedResult.analysis}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </CardContent>
