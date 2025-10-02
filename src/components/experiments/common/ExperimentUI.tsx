@@ -142,12 +142,13 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       const options: any = {
         title: title,
         hAxis: {
-          title: selectedExpId === 'overall' ? 'Bit Number' : xAxisDataKey || 'X Axis',
+          title: selectedExpId === 'overall' ? 'Bit Number' : 
+                (selectedExpId === 'effect-of-distance' ? 'Distance (km)' : xAxisDataKey || 'X Axis'),
           gridlines: { color: '#e0e0e0' }
         },
         vAxis: {
           title: yTitle,
-          viewWindow: { min: 0 },
+          viewWindow: { min: 0 }, // Start Y-axis at 0 for better visualization
           gridlines: { count: 10 }
         },
         series: seriesOptions,
@@ -199,6 +200,39 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       <CardContent className="space-y-6">
         {!isRunning && !selectedResult && (
           <>
+            {selectedExpId === 'effect-of-qubits' && (
+              <Card className="bg-secondary/20 border-cyan-500/20">
+                <CardHeader>
+                  <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Experiment Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="text-xs space-y-2 bg-background/50 p-3 rounded max-h-80 overflow-y-auto">
+                    <p><strong>Experiment 1: Effect of Qubits</strong></p>
+                    <p><strong>Aim:</strong> To study the fundamental role of qubits and their quantum properties in the BB84 protocol.</p>
+                    <p><strong>Objective:</strong> To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).</p>
+                    <p><strong>Apparatus:</strong> Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)</p>
+                    <p className="font-semibold">Theory:</p>
+                    <p>The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).</p>
+                    <p>In BB84, information is encoded onto qubits using two non-orthogonal bases:</p>
+                    <p>The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)</p>
+                    <p>The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)</p>
+                    <p>The protocol's security is not mathematical but physical, relying on three core principles:</p>
+                    <p>Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.</p>
+                    <p>No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.</p>
+                    <p>Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.</p>
+                    <p>These properties ensure that any attempt to gain information about the key introduces detectable anomalies.</p>
+                    <p className="font-semibold">Procedure:</p>
+                    <p>Go to the Q-Xplore Virtual Lab simulator.</p>
+                    <p>Run the BB84 simulation without any evesdropper and with low channel noise.</p>
+                    <p>Note the QBER and the successful generation of a secure key.</p>
+                    <p>Take a screenshot of the results screen showing the low QBER.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {experimentControls && (
               <div className="space-y-4">
                 {experimentControls}
@@ -338,23 +372,25 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                         )}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-blue-400">Experiment Data:</h4>
-                      <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded max-h-32 overflow-y-auto">
-                        {selectedResult.data.slice(0, 5).map((dataPoint, idx) => (
-                          <div key={idx} className="text-xs">
-                            {Object.entries(dataPoint).map(([key, value]) => (
-                              <span key={key} className="mr-2">
-                                {key}: {typeof value === 'number' ? value.toFixed(1) : String(value)}
-                              </span>
-                            ))}
-                          </div>
-                        ))}
-                        {selectedResult.data.length > 5 && (
-                          <div className="text-muted-foreground">...and {selectedResult.data.length - 5} more data points</div>
-                        )}
+                    {selectedResult && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-blue-400">Experiment Data:</h4>
+                        <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded max-h-32 overflow-y-auto">
+                          {selectedResult.data.slice(0, 5).map((dataPoint, idx) => (
+                            <div key={idx} className="text-xs">
+                              {Object.entries(dataPoint).map(([key, value]) => (
+                                <span key={key} className="mr-2">
+                                  {key}: {typeof value === 'number' ? value.toFixed(1) : String(value)}
+                                </span>
+                              ))}
+                            </div>
+                          ))}
+                          {selectedResult.data.length > 5 && (
+                            <div className="text-muted-foreground">...and {selectedResult.data.length - 5} more data points</div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -77,7 +77,28 @@ export const generateAnalysis = (experimentId: string, data: Record<string, unkn
     case "effect-of-qubits": {
       const maxQubits = Math.max(...data.map(d => Number(d.qubits)));
       const keyAtMax = data.find(d => Number(d.qubits) === maxQubits)?.keyLength || 0;
-      return `Qubit scaling demonstrates improved statistical security. With ${maxQubits} qubits, ${keyAtMax} key bits generated. Higher qubit counts provide better eavesdropping detection confidence.`;
+      const experimentText = `Experiment 1: Effect of Qubits
+Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.
+Objective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).
+Apparatus: Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)
+Theory:
+The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+In BB84, information is encoded onto qubits using two non-orthogonal bases:
+The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
+The protocol's security is not mathematical but physical, relying on three core principles:
+Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.
+These properties ensure that any attempt to gain information about the key introduces detectable anomalies.
+Procedure:
+Go to the Q-Xplore Virtual Lab simulator.
+Run the BB84 simulation without any evesdropper and with low channel noise.
+Note the QBER and the successful generation of a secure key.
+Take a screenshot of the results screen showing the low QBER.
+
+Qubit scaling demonstrates improved statistical security. With ${maxQubits} qubits, ${keyAtMax} key bits generated. Higher qubit counts provide better eavesdropping detection confidence.`;
+      return experimentText;
     }
     
     case "effect-of-channel-noise": {

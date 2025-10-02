@@ -8,6 +8,12 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import html2canvas from "html2canvas";
 import ChartJsImage from "chartjs-to-image";
+import { 
+  noiseAnalysisReportText, 
+  eavesdroppingDetectionReportText, 
+  qubitScalingReportText, 
+  realWorldComparisonReportText 
+} from "./experiments/reports/index";
 
 interface ExperimentResult {
   id: string;
@@ -50,7 +56,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     if (!experiment) return;
 
     // Auto-fill aim, theory, and procedure based on experiment type
-    const aim = `To analyze and document the results of the "${experiment.name}" experiment conducted using the QKD_Xplore quantum key distribution simulator.`;
+    const aim = getAimText(experiment.id);
     
     const theory = getDefaultTheory(experiment.id);
     
@@ -322,24 +328,49 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
   };
 
+  const getAimText = (experimentId: string) => {
+    switch (experimentId) {
+      case "noise-analysis":
+        return "To analyze and document the results of the \"Effect of Channel Noise on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "eavesdropping-detection":
+        return "To analyze and document the results of the \"Eavesdropping Detection in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "qubit-scaling":
+        return "To analyze and document the results of the \"Effect of Qubit Scaling on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "real-world-comparison":
+        return "To analyze and document the results of the \"Real-World Conditions Comparison in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      default:
+        return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+    }
+  };
+
   const getDefaultProcedure = (experimentId: string) => {
-    const procedures = {
-      "noise-analysis": "1. Set up BB84 simulation with varying noise levels from 0% to 20%\n2. Run simulation with 30 qubits for each noise level\n3. Record error rates and key generation rates\n4. Analyze the relationship between noise and protocol performance\n5. Generate graphs and statistical analysis",
-      "eavesdropping-detection": "1. Configure BB84 simulation with varying eavesdropping rates\n2. Run experiments with different interception probabilities\n3. Measure error rate changes and detection capabilities\n4. Analyze security implications and detection thresholds",
-      "qubit-scaling": "1. Run BB84 simulations with different numbers of qubits (10-50)\n2. Maintain constant noise and eavesdropping parameters\n3. Measure key length and statistical security improvements\n4. Analyze scalability and practical implementation considerations",
-      "real-world-comparison": "1. Configure BB84 simulation with various real-world conditions\n2. Run experiments with different combinations of noise and eavesdropping\n3. Compare performance across all conditions\n4. Analyze trade-offs and practical deployment considerations"
-    };
-    return procedures[experimentId as keyof typeof procedures] || "Detailed experimental procedure to be documented.";
+    switch (experimentId) {
+      case "noise-analysis":
+        return noiseAnalysisReportText.procedure;
+      case "eavesdropping-detection":
+        return eavesdroppingDetectionReportText.procedure;
+      case "qubit-scaling":
+        return qubitScalingReportText.procedure;
+      case "real-world-comparison":
+        return realWorldComparisonReportText.procedure;
+      default:
+        return "Detailed experimental procedure to be documented.";
+    }
   };
 
   const getDefaultTheory = (experimentId: string) => {
-    const theories = {
-      "noise-analysis": "Quantum channels in practical implementations suffer from various noise sources including photon loss, detector dark counts, and environmental interference. The BB84 protocol's security relies on the assumption of a quantum channel, but real-world implementations must account for noise effects. This experiment examines how channel noise affects error rates and key generation efficiency.",
-      "eavesdropping-detection": "The fundamental principle of quantum mechanics that measurement disturbs quantum states forms the basis of eavesdropping detection in BB84. When Eve intercepts and measures photons, she inevitably introduces errors that Alice and Bob can detect through basis comparison and error rate analysis. This experiment quantifies the relationship between eavesdropping attempts and detectable errors.",
-      "qubit-scaling": "Statistical security in quantum cryptography improves with larger sample sizes. More qubits provide better statistical confidence in detecting anomalies and eavesdropping attempts. This experiment explores how the number of transmitted qubits affects the overall security and practical implementation of the BB84 protocol.",
-      "real-world-comparison": "Real-world quantum key distribution systems must contend with both environmental noise and potential eavesdropping. This experiment compares protocol performance under various realistic conditions to understand practical limitations and deployment strategies."
-    };
-    return theories[experimentId as keyof typeof theories] || "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+    switch (experimentId) {
+      case "noise-analysis":
+        return noiseAnalysisReportText.theory;
+      case "eavesdropping-detection":
+        return eavesdroppingDetectionReportText.theory;
+      case "qubit-scaling":
+        return qubitScalingReportText.theory;
+      case "real-world-comparison":
+        return realWorldComparisonReportText.theory;
+      default:
+        return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+    }
   };
 
   const getXAxisLabel = (experimentId: string) => {
