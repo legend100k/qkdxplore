@@ -66,10 +66,10 @@ const OverallAnalysisExperiment: React.FC<ExperimentComponentProps> = ({ onSaveE
       const calculatedQBER = result.errorRate || 0;
       
       experimentData.push({
-        bit: bitIndex + 1,
+        bit: i + 1,
         qber: result.errorRate,  // Already correctly stored as qber
         errorRate: result.errorRate, // Also include errorRate for compatibility
-        noise,
+        noise: currentNoise,
         eavesdropping,
         numEves
       });
@@ -82,7 +82,7 @@ const OverallAnalysisExperiment: React.FC<ExperimentComponentProps> = ({ onSaveE
     const experimentResult: ExperimentResult = {
       id: "overall",
       name: "Overall Analysis",
-      parameters: { iterations, qubits, noise, distance },
+      parameters: { qubits, noise, numEves },
       data: experimentData,
       analysis: generateAnalysis("overall", experimentData),
       completed: true,

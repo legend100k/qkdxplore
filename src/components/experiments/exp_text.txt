@@ -1,81 +1,4 @@
-import { QuantumBit } from "./types";
-
-export const simulateBB84 = (qubits: number, eavesdropping: number, noise: number) => {
-  let matchingBases = 0;
-  let errors = 0;
-  let keyBits = 0;
-  const simulationBits: QuantumBit[] = [];
-
-  for (let i = 0; i < qubits; i++) {
-    const aliceBasis = Math.random() > 0.5;
-    const aliceBit = Math.random() > 0.5 ? 1 : 0;
-    const isEavesdropped = Math.random() < eavesdropping / 100;
-
-    // If eavesdropped, Eve measures with her random basis
-    let evesMeasurement: number | null = null;
-    let evesBasis: boolean | null = null;
-    if (isEavesdropped) {
-      evesBasis = Math.random() > 0.5; // Eve's random basis selection
-      // Eve measures the qubit in her basis
-      evesMeasurement = aliceBit; // Initially same as Alice's bit
-      // If Eve's basis doesn't match Alice's, she has a 50% chance of getting the wrong result
-      if (evesBasis !== aliceBasis) {
-        evesMeasurement = Math.random() > 0.5 ? 1 - aliceBit : aliceBit;
-      }
-    }
-
-    // Bob receives the possibly tampered qubit
-    let bobResult = isEavesdropped ? (evesMeasurement !== null ? evesMeasurement : aliceBit) : aliceBit;
-
-    // Bob measures in his basis
-    const bobBasis = Math.random() > 0.5;
-    // If Bob's basis doesn't match Alice's (original) basis, we have a measurement issue
-    // In a real quantum system, only the basis matching matters, so we'll keep the bit value
-    // but account for potential measurement differences if Eve interfered
-
-    let hasError = false;
-
-    // Apply noise
-    if (Math.random() < noise / 100) {
-      bobResult = 1 - bobResult;
-      hasError = true;
-    }
-
-    const basisMatch = aliceBasis === bobBasis;
-    const kept = basisMatch;
-
-    if (basisMatch) {
-      matchingBases++;
-      keyBits++;
-      if (bobResult !== aliceBit) {
-        errors++;
-      }
-    }
-
-    simulationBits.push({
-      id: i,
-      aliceBit,
-      aliceBasis: aliceBasis ? "Diagonal" : "Rectilinear",
-      bobBasis: bobBasis ? "Diagonal" : "Rectilinear", 
-      bobMeasurement: bobResult,
-      match: basisMatch,
-      kept: kept && bobResult === aliceBit,
-      eavesdropped: isEavesdropped
-    });
-  }
-
-  return {
-    errorRate: keyBits > 0 ? (errors / keyBits) * 100 : 0,  // QBER is calculated on the sifted key bits
-    keyRate: (keyBits / qubits) * 100,
-    keyLength: keyBits,
-    basisMatchRate: (matchingBases / qubits) * 100
-  };
-};
-
-export const generateAnalysis = (experimentId: string, data: Record<string, unknown>[]) => {
-  switch (experimentId) {
-    case "effect-of-qubits": {
-      return `Experiment 1: Effect of Qubits
+Experiment 1: Effect of Qubits
 Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.
 Objective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).
 Apparatus: Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)
@@ -99,67 +22,8 @@ Observation:
 Screenshot of Experiment 1:
 [Paste Your Screenshot Here]
 Conclusion:
-[Based on your observation and results, write what you learned about the effect of qubits.]`;
-    }
-    
-    case "effect-of-channel-noise": {
-      if (data.length === 0) {
-        return `Experiment 4: Effect of Channel Noise
-Aim: To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).
-Objective: To isolate and observe the impact of channel noise on the QBER.
-Apparatus: Q-Xplore Virtual Lab
-
-Theory: Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.
-Procedure:
-Set evesdropper = OFF, Distance = SHORT (to minimize other effects).
-Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
-Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
-Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.
-Observation:
-[Note: The QBER should increase significantly with higher noise levels, while the Final Key Length decreases only slightly. This proves noise creates errors.]
-                                                       Screenshot: [Paste screenshot for High Noise setting here]
-Conclusion:
-[Explain that channel noise directly increases the QBER, which threatens the security of the key by making it indistinguishable from an eavesdropped channel.]`;
-      }
-      
-      // Calculate statistics for the analysis
-      const noiseLevels = data.map(d => Number(d.noise));
-      const qberValues = data.map(d => Number(d.qber));
-      const maxNoise = Math.max(...noiseLevels);
-      const minNoise = Math.min(...noiseLevels);
-      const maxQBER = Math.max(...qberValues);
-      const minQBER = Math.min(...qberValues);
-      
-      // Calculate average QBER
-      const avgQBER = qberValues.reduce((sum, val) => sum + val, 0) / qberValues.length;
-      
-      // Check if the relationship is as expected (higher noise -> higher QBER)
-      const isMonotonic = qberValues.every((qber, i) => 
-        i === 0 || qber >= qberValues[i - 1]
-      );
-      
-      return `Experiment 4: Effect of Channel Noise - Analysis
-
-Key Findings:
-- Noise range tested: ${minNoise}% to ${maxNoise}%
-- QBER range observed: ${minQBER.toFixed(2)}% to ${maxQBER.toFixed(2)}%
-- Average QBER: ${avgQBER.toFixed(2)}%
-
-Interpretation:
-${isMonotonic ? 
-  "✓ The QBER increases monotonically with channel noise, confirming that noise directly affects the error rate." :
-  "⚠ The QBER does not increase monotonically with channel noise. This might indicate other factors influencing the results."
-}
-
-Security Implications:
-- Low noise (${minNoise}%): QBER = ${minQBER.toFixed(2)}% - Secure key generation possible
-- High noise (${maxNoise}%): QBER = ${maxQBER.toFixed(2)}% - Security compromised, key should not be used
-
-The relationship demonstrates that channel noise is a significant factor in QBER, which can make it difficult to distinguish between legitimate errors and eavesdropping attempts. In real-world QKD systems, maintaining low channel noise is crucial for security.`;
-    }
-    
-    case "without-eavesdropper": {
-      return `Experiment 2: BB84 Without an Evesdropper
+[Based on your observation and results, write what you learned about the effect of qubits.]
+Experiment 2: BB84 Without an Evesdropper
 Aim: To establish a baseline for the BB84 protocol's performance under ideal, secure conditions.
 Objective: To observe the key generation process and resulting QBER when the quantum channel is secure.
 Apparatus: Q-Xplore Virtual Lab
@@ -182,11 +46,8 @@ Observation:
 Screenshot of Experiment 3:
 [Paste Your Screenshot Here]
 Conclusion :
-[Based on your observation and results, write what you learned.]`;
-    }
-    
-    case "with-eavesdropper": {
-      return `Experiment 3: With an Evesdropper
+[Based on your observation and results, write what you learned.]
+Experiment 3: With an Evesdropper
 Aim: To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.
 Objective: To observe how Eve's interception attempts disturb the quantum states and significantly increase the QBER.
 Apparatus: Q-Xplore Virtual Lab
@@ -211,11 +72,26 @@ Observation:
 Screenshot of Experiment 4:
 [Paste Your Screenshot Here]
 Conclusion :
-[Based on your observation and results, write what you learned.]`;
-    }
-    
-    case "effect-of-distance": {
-      return `Experiment 5: Effect of Distance
+[Based on your observation and results, write what you learned.]
+Experiment 4: Effect of Channel Noise
+Aim: To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).
+Objective: To isolate and observe the impact of channel noise on the QBER.
+Apparatus: Q-Xplore Virtual Lab
+
+Theory: Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.
+Procedure:
+Set evesdropper = OFF, Distance = SHORT (to minimize other effects).
+Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
+Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
+Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.
+Observation:
+[Note: The QBER should increase significantly with higher noise levels, while the Final Key Length decreases only slightly. This proves noise creates errors.]
+                                                       Screenshot: [Paste screenshot for High Noise setting here]
+Conclusion:
+[Explain that channel noise directly increases the QBER, which threatens the security of the key by making it indistinguishable from an eavesdropped channel.]
+
+
+Experiment 5: Effect of Distance
 Aim: To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.
 Objective: To observe the relationship between distance, photon loss (key rate), and error rate (QBER).
 Apparatus: Q-Xplore Virtual Lab
@@ -229,11 +105,10 @@ Observation:
 [Note: The Final Key Length should drop dramatically with distance. The QBER may also see a slight increase. This shows distance causes loss and can worsen errors.]
                                             Screenshot: [Paste screenshot for Long Distance setting here]
 Conclusion:
-[Explain that distance primarily causes photon loss, reducing key generation efficiency. It can also secondarily increase QBER, making it a critical practical limitation for QKD.]`;
-    }
-    
-    case "overall": {
-      return `Experiment 6: Effect of Photon Loss
+[Explain that distance primarily causes photon loss, reducing key generation efficiency. It can also secondarily increase QBER, making it a critical practical limitation for QKD.]
+
+
+Experiment 6: Effect of Photon Loss
 Aim: To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.
 Objective: To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.
 Theory: It is crucial to distinguish between Photon Loss and Bit Errors.
@@ -249,29 +124,4 @@ Observation:
 [Note: You should observe a very low Key Rate or failed key generation, but the QBER should remain LOW. This proves loss affects quantity, not quality.]
                                               Screenshot: [Paste screenshot showing high loss but low QBER here]
 Conclusion:
-[Explain that photon loss severely reduces the key rate and efficiency but, unlike noise or eavesdropping, does not by itself increase the QBER or compromise the security of the successfully received bits.]`;
-    }
-    
-    default:
-      return "Experiment completed successfully. Data shows expected quantum behavior patterns.";
-  }
-};
-
-export const getXAxisLabel = (experimentId: string) => {
-  switch (experimentId) {
-    case "effect-of-qubits":
-      return "Number of Qubits";
-    case "effect-of-channel-noise":
-      return "Noise Level (%)";
-    case "without-eavesdropper":
-      return "Run";
-    case "with-eavesdropper":
-      return "Eavesdropping Rate (%)";
-    case "effect-of-distance":
-      return "Distance (km)";
-    case "overall":
-      return "Iteration";
-    default:
-      return "X-Axis";
-  }
-};
+[Explain that photon loss severely reduces the key rate and efficiency but, unlike noise or eavesdropping, does not by itself increase the QBER or compromise the security of the successfully received bits.]

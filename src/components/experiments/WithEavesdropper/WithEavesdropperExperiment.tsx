@@ -18,7 +18,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   const [finalExperimentBits, setFinalExperimentBits] = useState<any[]>([]);
   
   // State for experiment parameters
-  const [eavesDroppingRange, setEavesDroppingRange] = useState<[number, number]>([0, 100]);
+  const [eavesdroppingRange, setEavesdroppingRange] = useState<[number, number]>([0, 100]);
   const [step, setStep] = useState(10);
   const [qubits, setQubits] = useState(80);
   const [noise, setNoise] = useState(2);
@@ -45,8 +45,8 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
     // Start photon animation
     animatePhoton();
 
-    totalSteps = Math.floor((eavesDroppingRange[1] - eavesDroppingRange[0]) / step) + 1;
-    for (let eves = eavesDroppingRange[0]; eves <= eavesDroppingRange[1]; eves += step) {
+    totalSteps = Math.floor((eavesdroppingRange[1] - eavesdroppingRange[0]) / step) + 1;
+    for (let eves = eavesdroppingRange[0]; eves <= eavesdroppingRange[1]; eves += step) {
       const result = simulateBB84(qubits, eves, noise);
       experimentData.push({
         eavesdropping: eves,
@@ -63,7 +63,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
     const experimentResult: ExperimentResult = {
       id: "with-eavesdropper",
       name: "With Eavesdropper",
-      parameters: { eavesDroppingRange, step, qubits, basisSelection: "random" },
+      parameters: { eavesdroppingRange, step, qubits, noise, basisSelection: "random" },
       data: experimentData,
       analysis: generateAnalysis("with-eavesdropper", experimentData),
       completed: true,
@@ -87,24 +87,24 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
       <CardContent className="space-y-4 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="eavesdrop-start">Starting Eavesdrop Rate: {eavesDroppingRange[0]}%</Label>
+            <Label htmlFor="eavesdrop-start">Starting Eavesdropping Rate: {eavesdroppingRange[0]}%</Label>
             <Slider
               id="eavesdrop-start"
               min={0}
-              max={eavesDroppingRange[1]}
-              value={[eavesDroppingRange[0]]}
-              onValueChange={(value) => setEavesDroppingRange([value[0], eavesDroppingRange[1]])}
+              max={eavesdroppingRange[1]}
+              value={[eavesdroppingRange[0]]}
+              onValueChange={(value) => setEavesdroppingRange([value[0], eavesdroppingRange[1]])}
               disabled={isRunning}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="eavesdrop-end">Ending Eavesdrop Rate: {eavesDroppingRange[1]}%</Label>
+            <Label htmlFor="eavesdrop-end">Ending Eavesdropping Rate: {eavesdroppingRange[1]}%</Label>
             <Slider
               id="eavesdrop-end"
-              min={eavesDroppingRange[0]}
+              min={eavesdroppingRange[0]}
               max={100}
-              value={[eavesDroppingRange[1]]}
-              onValueChange={(value) => setEavesDroppingRange([eavesDroppingRange[0], value[0]])}
+              value={[eavesdroppingRange[1]]}
+              onValueChange={(value) => setEavesdroppingRange([eavesdroppingRange[0], value[0]])}
               disabled={isRunning}
             />
           </div>

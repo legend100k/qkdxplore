@@ -193,46 +193,174 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
     <Card className="border-blue-500/30">
       <CardHeader>
         <CardTitle className="text-blue-400 flex items-center gap-2">
-          <span className="w-6 h-6" />
+          <span className="w-6 h-6\" />
           {experimentName}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {!isRunning && !selectedResult && (
           <>
-            {selectedExpId === 'effect-of-qubits' && (
-              <Card className="bg-secondary/20 border-cyan-500/20">
-                <CardHeader>
-                  <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Experiment Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="text-xs space-y-2 bg-background/50 p-3 rounded max-h-80 overflow-y-auto">
-                    <p><strong>Experiment 1: Effect of Qubits</strong></p>
-                    <p><strong>Aim:</strong> To study the fundamental role of qubits and their quantum properties in the BB84 protocol.</p>
-                    <p><strong>Objective:</strong> To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).</p>
-                    <p><strong>Apparatus:</strong> Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)</p>
-                    <p className="font-semibold">Theory:</p>
-                    <p>The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).</p>
-                    <p>In BB84, information is encoded onto qubits using two non-orthogonal bases:</p>
-                    <p>The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)</p>
-                    <p>The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)</p>
-                    <p>The protocol's security is not mathematical but physical, relying on three core principles:</p>
-                    <p>Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.</p>
-                    <p>No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.</p>
-                    <p>Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.</p>
-                    <p>These properties ensure that any attempt to gain information about the key introduces detectable anomalies.</p>
-                    <p className="font-semibold">Procedure:</p>
-                    <p>Go to the Q-Xplore Virtual Lab simulator.</p>
-                    <p>Run the BB84 simulation without any evesdropper and with low channel noise.</p>
-                    <p>Note the QBER and the successful generation of a secure key.</p>
-                    <p>Take a screenshot of the results screen showing the low QBER.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <Card className="bg-secondary/20 border-cyan-500/20">
+              <CardHeader>
+                <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
+                  <FileText className="w-4 h-4\" />
+                  Experiment Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="text-xs space-y-2 bg-background/50 p-3 rounded max-h-96 overflow-y-auto">
+                  {(() => {
+                    // Dynamically determine experiment based on selectedExpId
+                    const expTextMap: Record<string, string> = {
+                      'effect-of-qubits': 'Experiment 1: Effect of Qubits',
+                      'without-eavesdropper': 'Experiment 2: BB84 Without an Evesdropper',
+                      'with-eavesdropper': 'Experiment 3: With an Evesdropper',
+                      'effect-of-channel-noise': 'Experiment 4: Effect of Channel Noise',
+                      'effect-of-distance': 'Experiment 5: Effect of Distance',
+                      'overall': 'Experiment 6: Effect of Photon Loss'
+                    };
+                    
+                    const expName = expTextMap[selectedExpId] || experimentName;
+                    
+                    return (
+                      <>
+                        <p><strong>{expName}</strong></p>
+                        <p><strong>Aim:</strong> {selectedExpId === 'effect-of-qubits' 
+                          ? 'To study the fundamental role of qubits and their quantum properties in the BB84 protocol.'
+                          : selectedExpId === 'without-eavesdropper'
+                          ? 'To establish a baseline for the BB84 protocol\'s performance under ideal, secure conditions.'
+                          : selectedExpId === 'with-eavesdropper'
+                          ? 'To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.'
+                          : selectedExpId === 'effect-of-channel-noise'
+                          ? 'To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).'
+                          : selectedExpId === 'effect-of-distance'
+                          ? 'To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.'
+                          : 'To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.'}</p>
+                        <p><strong>Objective:</strong> {selectedExpId === 'effect-of-qubits'
+                          ? 'To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).'
+                          : selectedExpId === 'without-eavesdropper'
+                          ? 'To observe the key generation process and resulting QBER when the quantum channel is secure.'
+                          : selectedExpId === 'with-eavesdropper'
+                          ? 'To observe how Eve\'s interception attempts disturb the quantum states and significantly increase the QBER.'
+                          : selectedExpId === 'effect-of-channel-noise'
+                          ? 'To isolate and observe the impact of channel noise on the QBER.'
+                          : selectedExpId === 'effect-of-distance'
+                          ? 'To observe the relationship between distance, photon loss (key rate), and error rate (QBER).'
+                          : 'To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.'}</p>
+                        <p><strong>Apparatus:</strong> Q-Xplore Virtual Lab {(selectedExpId !== 'without-eavesdropper' && selectedExpId !== 'with-eavesdropper' && selectedExpId !== 'effect-of-channel-noise' && selectedExpId !== 'effect-of-distance') ? '(Web-based interface powered by Qiskit)' : ''}</p>
+                        <p className="font-semibold">Theory:</p>
+                        {selectedExpId === 'effect-of-qubits' && (
+                          <>
+                            <p>The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).</p>
+                            <p>In BB84, information is encoded onto qubits using two non-orthogonal bases:</p>
+                            <p>The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)</p>
+                            <p>The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)</p>
+                            <p>The protocol's security is not mathematical but physical, relying on three core principles:</p>
+                            <p>Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.</p>
+                            <p>No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.</p>
+                            <p>Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.</p>
+                            <p>These properties ensure that any attempt to gain information about the key introduces detectable anomalies.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'without-eavesdropper' && (
+                          <>
+                            <p>This experiment establishes the optimal operating conditions for the BB84 protocol. In the complete absence of an evesdropper, the only factors affecting the Quantum Bit Error Rate (QBER) are the inherent channel noise and system imperfections. Under well-controlled laboratory conditions with high-quality components, this intrinsic QBER can be very low, often below 2%.</p>
+                            <p>The process proceeds as follows:</p>
+                            <p>Quantum Transmission: Alice sends a sequence of qubits, each randomly prepared in one of the two bases.</p>
+                            <p>Quantum Measurement: Bob independently and randomly chooses a basis for each incoming qubit and measures it.</p>
+                            <p>Sifting: Alice and Bob publicly communicate the bases they used for each qubit (but not the bit values) over a classical channel. They discard all bits where their bases did not match. The remaining bits form the sifted key.</p>
+                            <p>Error Estimation: They compare a random subset of the sifted key to calculate the QBER. A low QBER confirms the channel is secure.</p>
+                            <p>Key Finalization: The remaining portion of the sifted key is then processed through error correction (to fix the few remaining errors) and privacy amplification (to reduce any partial information a potential evesdropper might have) to produce a final, identical, and perfectly secret key.</p>
+                            <p>This scenario demonstrates the protocol's maximum efficiency and serves as a control to identify the disruptive effects of an evesdropper.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'with-eavesdropper' && (
+                          <>
+                            <p>This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:</p>
+                            <p>Interception: Eve intercepts the qubit sent by Alice.</p>
+                            <p>Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.</p>
+                            <p>Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.</p>
+                            <p>Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.</p>
+                            <p>This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:</p>
+                            <p>P(Eve chooses wrong basis) = 1/2</p>
+                            <p>P(Bob gets wrong bit | Eve was wrong) = 1/2</p>
+                            <p>Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%</p>
+                            <p>Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of evesdropping, forcing Alice and Bob to discard the compromised key.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'effect-of-channel-noise' && (
+                          <>
+                            <p>Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'effect-of-distance' && (
+                          <>
+                            <p>The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'overall' && (
+                          <>
+                            <p>It is crucial to distinguish between Photon Loss and Bit Errors.</p>
+                            <p>Photon Loss: A photon is sent but not detected. This reduces the raw number of bits, lowering the key rate, but it does not increase the QBER (a lost photon isn't an error; it's just missing data).</p>
+                            <p>Bit Errors: A photon is detected but its value is wrong. This increases the QBER and compromises security.</p>
+                            <p>An evesdropper causes errors. Channel noise causes errors. Distance causes loss (which can lead to errors indirectly). This experiment isolates the pure effect of loss.</p>
+                          </>
+                        )}
+                        <p className="font-semibold">Procedure:</p>
+                        {selectedExpId === 'effect-of-qubits' && (
+                          <>
+                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
+                            <p>Run the BB84 simulation without any evesdropper and with low channel noise.</p>
+                            <p>Note the QBER and the successful generation of a secure key.</p>
+                            <p>Take a screenshot of the results screen showing the low QBER.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'without-eavesdropper' && (
+                          <>
+                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
+                            <p>Set the \"evesdropper\" parameter to OFF and \"Channel Noise\" to LOW.</p>
+                            <p>Run the simulation and note the low QBER and efficient key generation.</p>
+                            <p>Take a screenshot of the successful results.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'with-eavesdropper' && (
+                          <>
+                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
+                            <p>Set the \"evesdropper\" parameter to ON.</p>
+                            <p>Run the simulation and observe the QBER.</p>
+                            <p>Take a screenshot of the results showing the high (~25%) QBER.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'effect-of-channel-noise' && (
+                          <>
+                            <p>Set evesdropper = OFF, Distance = SHORT (to minimize other effects).</p>
+                            <p>Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.</p>
+                            <p>Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.</p>
+                            <p>Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'effect-of-distance' && (
+                          <>
+                            <p>Set evesdropper = OFF, Channel Noise = LOW.</p>
+                            <p>Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.</p>
+                            <p>Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.</p>
+                            <p>Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length.</p>
+                          </>
+                        )}
+                        {selectedExpId === 'overall' && (
+                          <>
+                            <p>Set evesdropper = OFF, Channel Noise = LOW (to ensure no errors are introduced).</p>
+                            <p>Find a \"Photon Loss\" or \"Attenuation\" parameter. If not available, use Distance = LONG.</p>
+                            <p>Set loss to HIGH (or use max distance). Run the simulation.</p>
+                            <p>Record the very short (or zero) Final Key Length and the QBER.</p>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
             {experimentControls && (
               <div className="space-y-4">
                 {experimentControls}
@@ -241,9 +369,9 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
             <div className="text-center">
               <Button
                 onClick={runExperiment}
-                className="bg-blue-500 hover:bg-blue-600 flex items-center justify-center"
+                className="bg-blue-500 hover:bg-blue-600 flex items-center justify-center\"
               >
-                <Play className="w-4 h-4 mr-2" />
+                <Play className="w-4 h-4 mr-2\" />
                 Run Experiment
               </Button>
             </div>
@@ -479,8 +607,39 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div id="experiment-chart" className="h-96 w-full">
-                    {/* Google Chart will be rendered here */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">QBER vs {selectedExpId === 'effect-of-qubits' ? 'Number of Qubits' : 
+                        selectedExpId === 'effect-of-channel-noise' ? 'Noise Level (%)' : 
+                        selectedExpId === 'with-eavesdropper' ? 'Eavesdropping Rate (%)' : 
+                        selectedExpId === 'effect-of-distance' ? 'Distance (km)' : 'Parameter'}</h3>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setTimeout(() => renderChart(selectedResult.data, xAxisDataKey, selectedExpId, colorScheme), 100)}
+                        className="text-xs"
+                      >
+                        Reset View
+                      </Button>
+                    </div>
+                    <div id="experiment-chart" className="h-96 w-full">
+                      {/* Google Chart will be rendered here */}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {selectedExpId === 'effect-of-qubits' && (
+                        <p>• Higher number of qubits generally increases statistical security</p>
+                      )}
+                      {selectedExpId === 'effect-of-channel-noise' && (
+                        <p>• QBER should increase with higher noise levels; values above 11% indicate potential security issues</p>
+                      )}
+                      {selectedExpId === 'with-eavesdropper' && (
+                        <p>• QBER should increase significantly with eavesdropping; ~25% expected for random eavesdropping</p>
+                      )}
+                      {selectedExpId === 'effect-of-distance' && (
+                        <p>• Distance primarily causes photon loss; slight QBER increase possible with longer distances</p>
+                      )}
+                      <p>• Red line shows QBER; Yellow dashed line shows 11% security threshold</p>
+                    </div>
                   </div>
                 )}
                 

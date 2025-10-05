@@ -34,7 +34,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-r from-quantum-blue to-quantum-purple rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm"><img src="qkd_temp_logo.png"></img></span>
+              <span className="text-white font-bold text-sm"><img src="/qkd_temp_logo.png" alt="QKD Logo" /></span>
             </div>
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent">

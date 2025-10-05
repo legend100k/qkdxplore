@@ -21,7 +21,7 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
   const [noiseRange, setNoiseRange] = useState<[number, number]>([0, 20]);
   const [step, setStep] = useState(2);
   const [qubits, setQubits] = useState(50);
-  const [eavesdropRate, setEavesdropRate] = useState(10);
+  const [eavesdropRate, setEavesdropRate] = useState(0); // Set to 0 to match procedure (evesdropper OFF)
 
   const runExperiment = async () => {
     setIsRunning(true);

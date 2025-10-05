@@ -20,8 +20,8 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
   // State for experiment parameters
   const [qubitRange, setQubitRange] = useState<[number, number]>([10, 100]);
   const [step, setStep] = useState(10);
-  const [noise, setNoise] = useState(5);
-  const [eavesdropRate, setEavesdropRate] = useState(10);
+  const [noise, setNoise] = useState(2); // Set to low noise as per procedure
+  const [eavesdropRate, setEavesdropRate] = useState(0); // Set to no eavesdropping as per procedure
 
   const runExperiment = async () => {
     setIsRunning(true);

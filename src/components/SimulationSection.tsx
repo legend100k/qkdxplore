@@ -999,6 +999,85 @@ export const SimulationSection = () => {
                         />
                         <span className="text-sm w-8">{noiseLevel[0]}%</span>
                       </div>
+                      
+                      {/* Simulation Presets based on experimental procedures */}
+                      <div className="pt-4 border-t border-border">
+                        <h3 className="text-sm font-medium mb-3">Experiment Presets</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([16]);
+                              setEavesdroppingRate([0]);
+                              setNoiseLevel([2]);
+                            }}
+                            className="text-xs"
+                          >
+                            No Eavesdropper
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([16]);
+                              setEavesdroppingRate([50]);
+                              setNoiseLevel([2]);
+                            }}
+                            className="text-xs"
+                          >
+                            With Eavesdropper
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([16]);
+                              setEavesdroppingRate([0]);
+                              setNoiseLevel([10]);
+                            }}
+                            className="text-xs"
+                          >
+                            High Noise
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([50]);
+                              setEavesdroppingRate([0]);
+                              setNoiseLevel([2]);
+                            }}
+                            className="text-xs"
+                          >
+                            More Qubits
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([16]);
+                              setEavesdroppingRate([30]);
+                              setNoiseLevel([5]);
+                            }}
+                            className="text-xs"
+                          >
+                            Mixed Conditions
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setNumQubits([16]);
+                              setEavesdroppingRate([0]);
+                              setNoiseLevel([0]);
+                            }}
+                            className="text-xs"
+                          >
+                            Ideal
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

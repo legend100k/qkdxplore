@@ -217,7 +217,7 @@ export const EnhancedTheorySection = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <img src="/src/Working-process-of-the-bb84-upscaled.png" alt="BB84 Protocol Block Diagram" className="w-3/4 h-auto mx-auto" />
+          <img src="/Working-process-of-the-bb84-upscaled.png" alt="BB84 Protocol Block Diagram" className="w-3/4 h-auto mx-auto" />
         </CardContent>
       </Card>
       

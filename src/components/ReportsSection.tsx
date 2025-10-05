@@ -14,6 +14,7 @@ import {
   qubitScalingReportText, 
   realWorldComparisonReportText 
 } from "./experiments/reports/index";
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel } from "docx";
 
 interface ExperimentResult {
   id: string;
@@ -263,7 +264,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 
   
 
-  const downloadReport = async (report: Report, format: 'html' | 'pdf' = 'html') => {
+  const downloadReport = async (report: Report, format: 'html' | 'pdf' | 'docx' = 'html') => {
     // NOTE: 'pdf' format now downloads an image file (png) instead of a PDF due to jsPDF removal
     if (format === 'pdf') {
       try {
@@ -313,6 +314,156 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
         console.error("Error generating report image:", error);
         toast.error("Error generating report image. Please try again or use HTML format.");
       }
+    } else if (format === 'docx') {
+      try {
+        // Create a DOCX document
+        const doc = new Document({
+          sections: [{
+            properties: {},
+            children: [
+              // Title
+              new Paragraph({
+                text: report.title,
+                heading: HeadingLevel.HEADING_1,
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                text: `Date: ${new Date(report.timestamp).toLocaleDateString()}`,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: `Experiment: ${report.experimentName}`,
+                spacing: { after: 200 },
+              }),
+              
+              // Aim section
+              new Paragraph({
+                text: "Aim",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: report.aim,
+                spacing: { after: 200 },
+              }),
+              
+              // Theory section
+              new Paragraph({
+                text: "Theory",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: report.experimentId === 'with-eavesdropper' || report.experimentId === 'eavesdropping-detection' 
+                  ? report.theory.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper")
+                  : report.theory,
+                spacing: { after: 200 },
+              }),
+              
+              // Procedure section
+              new Paragraph({
+                text: "Procedure",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: report.experimentId === 'with-eavesdropper' || report.experimentId === 'eavesdropping-detection' 
+                  ? report.procedure.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper")
+                  : report.procedure,
+                spacing: { after: 200 },
+              }),
+        
+              // Results section
+              new Paragraph({
+                text: "Results and Data Visualization",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: "Charts and visualizations are not automatically included in the DOCX format. To include plots in your report:",
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ bold: true, text: "• " }),
+                  new TextRun("Run the experiment in the web application"),
+                  new TextRun({ break: 1 }),
+                  new TextRun({ bold: true, text: "• " }),
+                  new TextRun("Take screenshots of the generated plots"),
+                  new TextRun({ break: 1 }),
+                  new TextRun({ bold: true, text: "• " }),
+                  new TextRun("Manually insert the screenshots into this DOCX file after download"),
+                ],
+                spacing: { after: 200 },
+              }),
+              
+              // Numerical Results section with data
+              new Paragraph({
+                text: "Numerical Results",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              // Create a table for the data if it exists
+              ...(report.data && report.data.length > 0 ? [
+                new Table({
+                  rows: [
+                    // Header row - only if there are keys
+                    ...(report.data[0] && Object.keys(report.data[0]).length > 0 ? [
+                      new TableRow({
+                        children: Object.keys(report.data[0]).map(key => 
+                          new TableCell({
+                            children: [new Paragraph(key)],
+                            width: { size: 2000, type: WidthType.DXA },
+                          })
+                        ),
+                      })
+                    ] : []),
+                    // Data rows
+                    ...report.data.map(row => 
+                      new TableRow({
+                        children: Object.keys(row).map(key => 
+                          new TableCell({
+                            children: [new Paragraph(typeof row[key] === 'number' ? row[key].toFixed(2) : String(row[key]))],
+                            width: { size: 2000, type: WidthType.DXA },
+                          })
+                        ),
+                      })
+                    ),
+                  ],
+                }),
+                new Paragraph({ spacing: { after: 200 } }),
+              ] : [new Paragraph("No numerical results available.")]),
+        
+              // Conclusion section
+              new Paragraph({
+                text: "Conclusion",
+                heading: HeadingLevel.HEADING_2,
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                text: report.conclusion,
+                spacing: { after: 200 },
+              }),
+            ],
+          }],
+        });
+
+        // Generate DOCX file and trigger download
+        const blob = await Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast.success("DOCX Report downloaded!");
+      } catch (error) {
+        console.error("Error generating DOCX report:", error);
+        toast.error("Error generating DOCX report. Please try again.");
+      }
     } else {
       const htmlContent = generateReportHTML(report);
       const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -349,7 +500,8 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
       case "noise-analysis":
         return noiseAnalysisReportText.procedure;
       case "eavesdropping-detection":
-        return eavesdroppingDetectionReportText.procedure;
+        // Replace percentage references with number of eavesdropper where appropriate
+        return eavesdroppingDetectionReportText.procedure.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper");
       case "qubit-scaling":
         return qubitScalingReportText.procedure;
       case "real-world-comparison":
@@ -364,7 +516,8 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
       case "noise-analysis":
         return noiseAnalysisReportText.theory;
       case "eavesdropping-detection":
-        return eavesdroppingDetectionReportText.theory;
+        // Replace percentage references with number of eavesdropper where appropriate
+        return eavesdroppingDetectionReportText.theory.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper");
       case "qubit-scaling":
         return qubitScalingReportText.theory;
       case "real-world-comparison":
@@ -515,15 +668,15 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Aim</h2>
-                  <p className="text-foreground/90">{viewingReport.aim}</p>
-                </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-quantum-purple mb-2">Aim</h2>
+                    <p className="text-foreground/90">{viewingReport.aim}</p>
+                  </div>
 
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Theory</h2>
-                  <p className="text-foreground/90 whitespace-pre-line">{viewingReport.theory}</p>
-                </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-quantum-purple mb-2">Theory</h2>
+                    <p className="text-foreground/90 whitespace-pre-line">{viewingReport.theory}</p>
+                  </div>
 
                 <div>
                   <h2 className="text-xl font-semibold text-quantum-purple mb-2">Procedure</h2>
@@ -577,13 +730,20 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
               </div>
             </div>
 
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-6 gap-2 flex-wrap">
               <Button
                 onClick={() => downloadReport(viewingReport, 'html')}
-                className="bg-quantum-blue hover:bg-quantum-blue/80 mr-2"
+                className="bg-quantum-blue hover:bg-quantum-blue/80"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download HTML Report
+              </Button>
+              <Button
+                onClick={() => downloadReport(viewingReport, 'docx')}
+                className="bg-quantum-purple hover:bg-quantum-purple/80"
+              >
+                <File className="w-4 h-4 mr-2" />
+                Download DOCX Report
               </Button>
               {/*<Button
                 onClick={() => downloadReport(viewingReport, 'pdf')}
@@ -787,6 +947,15 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                           >
                             <Download className="w-4 h-4 mr-1" />
                             HTML
+                          </Button>
+                          <Button
+                            onClick={() => downloadReport(report, 'docx')}
+                            variant="outline"
+                            size="sm"
+                            className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+                          >
+                            <File className="w-4 h-4 mr-1" />
+                            DOCX
                           </Button>
                           {/*<Button
                             onClick={() => downloadReport(report, 'pdf')}
