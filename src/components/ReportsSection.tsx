@@ -3,17 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus, Activity, File } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import html2canvas from "html2canvas";
-import { MatlabPlot } from "@/components/MatlabPlot";
+import ChartJsImage from "chartjs-to-image";
+import { 
+  noiseAnalysisReportText, 
+  eavesdroppingDetectionReportText, 
+  qubitScalingReportText, 
+  realWorldComparisonReportText 
+} from "./experiments/reports/index";
 
 interface ExperimentResult {
   id: string;
   name: string;
-  parameters: Record<string, unknown>;
-  data: Record<string, unknown>[];
+  parameters: any;
+  data: any[];
   analysis: string;
   completed: boolean;
   timestamp: string;
@@ -29,7 +35,7 @@ interface Report {
   theory: string;
   conclusion: string;
   timestamp: string;
-  data: Record<string, unknown>[];
+  data: any[];
 }
 
 export const ReportsSection = ({ availableExperiments = [] }: { availableExperiments?: ExperimentResult[] }) => {
@@ -50,7 +56,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     if (!experiment) return;
 
     // Auto-fill aim, theory, and procedure based on experiment type
-    const aim = `To analyze and document the results of the "${experiment.name}" experiment conducted using the QKD_Xplore quantum key distribution simulator.`;
+    const aim = getAimText(experiment.id);
     
     const theory = getDefaultTheory(experiment.id);
     
@@ -255,93 +261,58 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 </html>`;
   };
 
-  const generateReportPDF = async (report: Report) => {
-    try {
-      // Create a new jsPDF instance
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+  
 
-      // Add title
-      doc.setFontSize(22);
-      doc.setTextColor(0, 102, 204);
-      doc.text(report.title, 105, 20, { align: "center" });
-
-      // Add metadata
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Date: ${new Date(report.timestamp).toLocaleDateString()}`, 20, 30);
-      doc.text(`Experiment: ${report.experimentName}`, 20, 37);
-
-      // Add Aim section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Aim", 20, 47);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const aimLines = doc.splitTextToSize(report.aim, 170);
-      doc.text(aimLines, 20, 54);
-
-      // Add Theory section
-      let currentY = 54 + (aimLines.length * 5);
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Theory", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const theoryLines = doc.splitTextToSize(report.theory, 170);
-      doc.text(theoryLines, 20, currentY + 7);
-      currentY += 7 + (theoryLines.length * 5);
-
-      // Add Procedure section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Procedure", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const procedureLines = doc.splitTextToSize(report.procedure, 170);
-      doc.text(procedureLines, 20, currentY + 7);
-      currentY += 7 + (procedureLines.length * 5);
-
-      // Add Results and Data Visualization section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Results and Data Visualization", 20, currentY);
-      currentY += 10;
-
-      // Add a note about charts being available in HTML report
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Charts are available in the HTML report. For PDF with charts, please use the HTML version.", 20, currentY);
-      currentY += 10;
-
-      // Add Conclusion section
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Conclusion", 20, currentY);
-      doc.setFontSize(12);
-      doc.setTextColor(50, 50, 50);
-      const conclusionLines = doc.splitTextToSize(report.conclusion, 170);
-      doc.text(conclusionLines, 20, currentY + 7);
-
-      return doc;
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      throw error;
-    }
-  };
-
-  const downloadReport = (report: Report, format: 'html' | 'pdf' = 'html') => {
+  const downloadReport = async (report: Report, format: 'html' | 'pdf' = 'html') => {
+    // NOTE: 'pdf' format now downloads an image file (png) instead of a PDF due to jsPDF removal
     if (format === 'pdf') {
-      generateReportPDF(report).then(doc => {
-        doc.save(`${report.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
-        toast.success("PDF Report downloaded!");
-      }).catch(error => {
-        console.error("Error generating PDF:", error);
-        toast.error("Error generating PDF report. Please try again.");
-      });
+      try {
+        // Create a temporary container for the report content
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = generateReportHTML(report);
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '-9999px';
+        tempContainer.style.width = '210mm'; // A4 width
+        tempContainer.style.height = '297mm'; // A4 height
+        tempContainer.style.backgroundColor = 'white';
+        tempContainer.style.padding = '20px';
+        tempContainer.style.boxSizing = 'border-box';
+        tempContainer.style.zIndex = '-1';
+        
+        document.body.appendChild(tempContainer);
+        
+        // Wait for any potential content to load
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Use html2canvas to capture the HTML content as an image
+        const canvas = await html2canvas(tempContainer, {
+          scale: 2, // Higher resolution
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        // Remove the temporary container
+        document.body.removeChild(tempContainer);
+        
+        // Convert canvas to image data
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Create a link to download the image as PNG
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success("Report image downloaded!");
+      } catch (error) {
+        console.error("Error generating report image:", error);
+        toast.error("Error generating report image. Please try again or use HTML format.");
+      }
     } else {
       const htmlContent = generateReportHTML(report);
       const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -357,24 +328,50 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
   };
 
+  const getAimText = (experimentId: string) => {
+    switch (experimentId) {
+      case "noise-analysis":
+        return "To analyze and document the results of the \"Effect of Channel Noise on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "eavesdropping-detection":
+        return "To analyze and document the results of the \"Eavesdropping Detection in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "qubit-scaling":
+        return "To analyze and document the results of the \"Effect of Qubit Scaling on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+      case "real-world-comparison":
+        return "To analyze and document the results of the \"Real-World Conditions Comparison in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+
+        default:
+        return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+    }
+  };
+
   const getDefaultProcedure = (experimentId: string) => {
-    const procedures = {
-      "noise-analysis": "1. Set up BB84 simulation with varying noise levels from 0% to 20%\n2. Run simulation with 30 qubits for each noise level\n3. Record error rates and key generation rates\n4. Analyze the relationship between noise and protocol performance\n5. Generate graphs and statistical analysis",
-      "eavesdropping-detection": "1. Configure BB84 simulation with varying eavesdropping rates\n2. Run experiments with different interception probabilities\n3. Measure error rate changes and detection capabilities\n4. Analyze security implications and detection thresholds",
-      "qubit-scaling": "1. Run BB84 simulations with different numbers of qubits (10-50)\n2. Maintain constant noise and eavesdropping parameters\n3. Measure key length and statistical security improvements\n4. Analyze scalability and practical implementation considerations",
-      "real-world-comparison": "1. Configure BB84 simulation with various real-world conditions\n2. Run experiments with different combinations of noise and eavesdropping\n3. Compare performance across all conditions\n4. Analyze trade-offs and practical deployment considerations"
-    };
-    return procedures[experimentId as keyof typeof procedures] || "Detailed experimental procedure to be documented.";
+    switch (experimentId) {
+      case "noise-analysis":
+        return noiseAnalysisReportText.procedure;
+      case "eavesdropping-detection":
+        return eavesdroppingDetectionReportText.procedure;
+      case "qubit-scaling":
+        return qubitScalingReportText.procedure;
+      case "real-world-comparison":
+        return realWorldComparisonReportText.procedure;
+      default:
+        return "Detailed experimental procedure to be documented.";
+    }
   };
 
   const getDefaultTheory = (experimentId: string) => {
-    const theories = {
-      "noise-analysis": "Quantum channels in practical implementations suffer from various noise sources including photon loss, detector dark counts, and environmental interference. The BB84 protocol's security relies on the assumption of a quantum channel, but real-world implementations must account for noise effects. This experiment examines how channel noise affects error rates and key generation efficiency.",
-      "eavesdropping-detection": "The fundamental principle of quantum mechanics that measurement disturbs quantum states forms the basis of eavesdropping detection in BB84. When Eve intercepts and measures photons, she inevitably introduces errors that Alice and Bob can detect through basis comparison and error rate analysis. This experiment quantifies the relationship between eavesdropping attempts and detectable errors.",
-      "qubit-scaling": "Statistical security in quantum cryptography improves with larger sample sizes. More qubits provide better statistical confidence in detecting anomalies and eavesdropping attempts. This experiment explores how the number of transmitted qubits affects the overall security and practical implementation of the BB84 protocol.",
-      "real-world-comparison": "Real-world quantum key distribution systems must contend with both environmental noise and potential eavesdropping. This experiment compares protocol performance under various realistic conditions to understand practical limitations and deployment strategies."
-    };
-    return theories[experimentId as keyof typeof theories] || "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+    switch (experimentId) {
+      case "noise-analysis":
+        return noiseAnalysisReportText.theory;
+      case "eavesdropping-detection":
+        return eavesdroppingDetectionReportText.theory;
+      case "qubit-scaling":
+        return qubitScalingReportText.theory;
+      case "real-world-comparison":
+        return realWorldComparisonReportText.theory;
+      default:
+        return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+    }
   };
 
   const getXAxisLabel = (experimentId: string) => {
@@ -400,7 +397,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
   };
 
-  const renderExperimentChart = (data: Record<string, unknown>[], experimentId: string) => {
+  const renderExperimentChart = (data: any[], experimentId: string) => {
     // Determine chart configuration based on experiment type
     let xAxisKey, series1, series2;
     if (experimentId === "noise-analysis") {
@@ -423,17 +420,69 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
 
     return (
-      <div className="flex justify-center">
-        <MatlabPlot
-          data={data}
-          xAxisKey={xAxisKey}
-          seriesKeys={[series1, series2]}
-          xAxisLabel={getXAxisLabel(experimentId)}
-          yAxisLabel="Values"
-          title={`${experimentId} Results`}
-          width={600}
-          height={400}
-        />
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
+            <XAxis 
+              dataKey={xAxisKey}
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12}
+              label={{ 
+                value: getXAxisLabel(experimentId), 
+                position: "insideBottom", 
+                offset: -5 
+              }}
+            />
+            <YAxis 
+              yAxisId="left" 
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12}
+              label={{ 
+                value: "Error Rate (%)", 
+                angle: -90, 
+                position: "insideLeft" 
+              }}
+            />
+            <YAxis 
+              yAxisId="right" 
+              orientation="right" 
+              stroke="hsl(var(--quantum-glow))" 
+              fontSize={12}
+              label={{ 
+                value: getYAxisLabel(experimentId, series2), 
+                angle: 90, 
+                position: "insideRight" 
+              }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--background))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '6px'
+              }} 
+            />
+            <Legend />
+            <Line 
+              yAxisId="left"
+              type="monotone" 
+              dataKey={series1} 
+              stroke="hsl(var(--destructive))" 
+              strokeWidth={2}
+              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
+              activeDot={{ r: 8 }}
+            />
+            <Line 
+              yAxisId="right"
+              type="monotone" 
+              dataKey={series2} 
+              stroke="hsl(var(--quantum-glow))" 
+              strokeWidth={2}
+              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     );
   };
@@ -483,7 +532,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 
                 <div>
                   <h2 className="text-xl font-semibold text-quantum-purple mb-2 flex items-center gap-2">
-                    <Activity className="w-5 h-5" />
+                    <BarChart3 className="w-5 h-5" />
                     Results and Data Visualization
                   </h2>
                   <Card className="bg-secondary/20">
@@ -536,13 +585,13 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 <Download className="w-4 h-4 mr-2" />
                 Download HTML Report
               </Button>
-              <Button
+              {/*<Button
                 onClick={() => downloadReport(viewingReport, 'pdf')}
                 className="bg-quantum-purple hover:bg-quantum-purple/80"
               >
                 <File className="w-4 h-4 mr-2" />
-                Download PDF Report
-              </Button>
+                Download Image Report
+              </Button>*/}
             </div>
           </CardContent>
         </Card>
@@ -623,7 +672,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
               <Card className="bg-secondary/20">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Activity className="w-4 h-4" />
+                    <BarChart3 className="w-4 h-4" />
                     Experimental Data Visualization
                   </CardTitle>
                 </CardHeader>
@@ -696,7 +745,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                   <Button
                     onClick={startNewReport}
                     disabled={!selectedExperiment}
-                    className="bg-quantum-glow hover:bg-quantum-glow/80 whitespace-nowrap"
+                    className="bg-quantum-blue hover:bg-quantum-blue/80 whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     New Report
@@ -739,15 +788,15 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                             <Download className="w-4 h-4 mr-1" />
                             HTML
                           </Button>
-                          <Button
+                          {/*<Button
                             onClick={() => downloadReport(report, 'pdf')}
                             variant="outline"
                             size="sm"
                             className="border-quantum-purple/50 hover:bg-quantum-purple/10"
                           >
                             <File className="w-4 h-4 mr-1" />
-                            PDF
-                          </Button>
+                            Image
+                          </Button>*/}
                           <Button
                             onClick={() => deleteReport(report.id)}
                             variant="outline"

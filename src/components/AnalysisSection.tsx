@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PieChart, Pie, Cell } from "recharts";
-import { MatlabPlot } from "@/components/MatlabPlot";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Shield, AlertTriangle, TrendingUp, Calculator } from "lucide-react";
 
 export const AnalysisSection = () => {
@@ -125,18 +124,36 @@ export const AnalysisSection = () => {
                 <Progress value={metrics.efficiency} className="h-3" />
               </div>
 
-              <div className="flex justify-center">
-                <MatlabPlot
-                  data={efficiencyData}
-                  xAxisKey="basis"
-                  seriesKeys={["efficiency"]}
-                  xAxisLabel="Basis Type"
-                  yAxisLabel="Efficiency (%)"
-                  title="Basis Efficiency Analysis"
-                  width={500}
-                  height={300}
-                />
-              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={efficiencyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    dataKey="basis" 
+                    stroke="hsl(var(--foreground))" 
+                    label={{ 
+                      value: "Basis Type", 
+                      position: "insideBottom", 
+                      offset: -5 
+                    }}
+                  />
+                  <YAxis 
+                    stroke="hsl(var(--foreground))" 
+                    label={{ 
+                      value: "Efficiency (%)", 
+                      angle: -90, 
+                      position: "insideLeft" 
+                    }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "hsl(var(--card))", 
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "6px"
+                    }} 
+                  />
+                  <Bar dataKey="efficiency" fill="hsl(var(--quantum-blue))" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

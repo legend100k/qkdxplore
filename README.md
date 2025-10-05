@@ -187,32 +187,6 @@ The application includes several pre-built experiments to analyze the BB84 proto
 - Shows additive effects of noise and eavesdropping
 - Demonstrates practical deployment challenges
 
-## Deployment
-
-### Local Development
-
-1. Start the frontend:
-```bash
-npm run dev
-```
-
-2. In a separate terminal, start the backend:
-```bash
-python start_backend.py
-```
-
-The application will be available at http://localhost:3000
-
-### Production Deployment
-
-For deployment to platforms like Vercel, Netlify, or similar:
-
-1. Deploy the backend as a separate service (e.g., Render, Heroku, or your own server)
-2. Set the `BACKEND_URL` environment variable in your deployment platform
-3. Configure API proxying if needed (see `DEPLOYMENT.md` for detailed instructions)
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
-
 ## Contributing
 
 Contributions are welcome! Here's how you can contribute:
