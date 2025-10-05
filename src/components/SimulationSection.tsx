@@ -659,15 +659,18 @@ export const SimulationSection = () => {
     });
   };
 
-  // Function to render the simulation metrics chart
+  // Function to render the simulation metrics chart (counts only)
   const renderSimulationMetricsChart = (data: Array<{name: string, value: number | string}>) => {
     loadGoogleCharts().then(() => {
-      // Prepare data for the chart
+      const totalBits = Number(data[0]?.value || 0);
+      const matchingBases = Number(data[1]?.value || 0);
+      const keyBits = Number(data[2]?.value || 0);
+
       const chartData = [
         ['Metric', 'Value'],
-        [data[0]?.name || 'Total Bits', data[0]?.value || 0],
-        [data[1]?.name || 'Matching Bases', data[1]?.value || 0],
-        [data[2]?.name || 'Key Bits', data[2]?.value || 0]
+        [data[0]?.name || 'Total Bits', totalBits],
+        [data[1]?.name || 'Matching Bases', matchingBases],
+        [data[2]?.name || 'Key Bits', keyBits],
       ];
 
       const dataTable = window.google.visualization.arrayToDataTable(chartData);
@@ -682,7 +685,8 @@ export const SimulationSection = () => {
         vAxis: {
           title: 'Metrics',
         },
-        colors: ['#3b82f6'], // Using a quantum blue color
+        colors: ['#3b82f6'],
+        legend: { position: 'none' },
       };
 
       const chart = new window.google.visualization.BarChart(
@@ -691,13 +695,14 @@ export const SimulationSection = () => {
       chart.draw(dataTable, options);
     }).catch(error => {
       console.error('Error loading Google Charts:', error);
-      // Fallback to show text if chart fails to load
       const chartDiv = document.getElementById('simulation-metrics-chart');
       if (chartDiv) {
         chartDiv.innerHTML = '<p>Chart failed to load. Metrics: ' + JSON.stringify(data) + '</p>';
       }
     });
   };
+
+  // (Reverted) No separate QBER gauge chart
 
   const resetSimulation = () => {
     setCurrentStep(0);
@@ -1436,7 +1441,7 @@ export const SimulationSection = () => {
                       <Card className="bg-secondary/20">
                         <CardHeader>
                           <CardTitle className="text-sm">
-                            Simulation Metrics
+                          Simulation Metrics
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -1449,76 +1454,76 @@ export const SimulationSection = () => {
                       <Card className="bg-secondary/20">
                         <CardHeader>
                           <CardTitle className="text-sm">
-                            Error Rate (QBER)
+                          Error Rate (QBER)
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="space-y-4">
-                            {simulationData.slice(3).map((item, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between p-3 bg-background/50 rounded"
+                        <div className="space-y-4">
+                          {simulationData.slice(3).map((item, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-background/50 rounded"
+                            >
+                              <span className="text-sm font-medium">
+                                {item.name}
+                              </span>
+                              <span
+                                className={`text-lg font-bold ${
+                                  item.name.includes("Error") || item.name.includes("QBER")
+                                    ? "text-red-400"
+                                    : "text-green-400"
+                                }`}
                               >
-                                <span className="text-sm font-medium">
-                                  {item.name}
-                                </span>
-                                <span
-                                  className={`text-lg font-bold ${
-                                    item.name.includes("Error") || item.name.includes("QBER")
-                                      ? "text-red-400"
-                                      : "text-green-400"
-                                  }`}
-                                >
-                                  {item.value}%
-                                </span>
-                              </div>
-                            ))}
+                                {item.value}%
+                              </span>
+                            </div>
+                          ))}
 
-                            <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
-                              <h4 className="font-semibold text-quantum-glow text-sm mb-2">
-                                Security Assessment
-                              </h4>
-                              <p className="text-xs">
-                                {parseFloat(
-                                  String(simulationData[3]?.value || "0"),
-                                ) > 10
-                                  ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
-                                  : "✅ Error rate within acceptable limits for secure communication."}
+                          <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
+                            <h4 className="font-semibold text-quantum-glow text-sm mb-2">
+                              Security Assessment
+                            </h4>
+                            <p className="text-xs">
+                              {parseFloat(
+                                String(simulationData[3]?.value || "0"),
+                              ) > 10
+                                ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
+                                : "✅ Error rate within acceptable limits for secure communication."}
+                            </p>
+                            <div className="mt-2 text-xs">
+                              <p className="font-medium">
+                                Key Security Status:
                               </p>
-                              <div className="mt-2 text-xs">
-                                <p className="font-medium">
-                                  Key Security Status:
-                                </p>
-                                <p
-                                  className={
-                                    parseFloat(
-                                      String(simulationData[3]?.value || "0"),
-                                    ) > 10
-                                      ? "text-destructive"
-                                      : parseFloat(
-                                            String(
-                                              simulationData[3]?.value || "0",
-                                            ),
-                                          ) > 5
-                                        ? "text-yellow-500"
-                                        : "text-green-400"
-                                  }
-                                >
-                                  {parseFloat(
+                              <p
+                                className={
+                                  parseFloat(
                                     String(simulationData[3]?.value || "0"),
                                   ) > 10
-                                    ? "Key may be compromised! Discard and restart."
+                                    ? "text-destructive"
                                     : parseFloat(
                                           String(
                                             simulationData[3]?.value || "0",
                                           ),
                                         ) > 5
-                                      ? "Possible eavesdropping detected. Review key."
-                                      : "Key appears secure for communication."}
-                                </p>
-                              </div>
+                                      ? "text-yellow-500"
+                                      : "text-green-400"
+                                }
+                              >
+                                {parseFloat(
+                                  String(simulationData[3]?.value || "0"),
+                                ) > 10
+                                  ? "Key may be compromised! Discard and restart."
+                                  : parseFloat(
+                                        String(
+                                          simulationData[3]?.value || "0",
+                                        ),
+                                      ) > 5
+                                    ? "Possible eavesdropping detected. Review key."
+                                    : "Key appears secure for communication."}
+                              </p>
                             </div>
                           </div>
+                        </div>
                         </CardContent>
                       </Card>
                       
