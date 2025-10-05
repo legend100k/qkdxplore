@@ -3,17 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
+import { FileText, Download, Eye, Trash2, Plus, Activity, File } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import ChartJsImage from "chartjs-to-image";
+import { MatlabPlot } from "@/components/MatlabPlot";
 
 interface ExperimentResult {
   id: string;
   name: string;
-  parameters: any;
-  data: any[];
+  parameters: Record<string, unknown>;
+  data: Record<string, unknown>[];
   analysis: string;
   completed: boolean;
   timestamp: string;
@@ -29,7 +29,7 @@ interface Report {
   theory: string;
   conclusion: string;
   timestamp: string;
-  data: any[];
+  data: Record<string, unknown>[];
 }
 
 export const ReportsSection = ({ availableExperiments = [] }: { availableExperiments?: ExperimentResult[] }) => {
@@ -255,58 +255,93 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 </html>`;
   };
 
-  
+  const generateReportPDF = async (report: Report) => {
+    try {
+      // Create a new jsPDF instance
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-  const downloadReport = async (report: Report, format: 'html' | 'pdf' = 'html') => {
-    // NOTE: 'pdf' format now downloads an image file (png) instead of a PDF due to jsPDF removal
+      // Add title
+      doc.setFontSize(22);
+      doc.setTextColor(0, 102, 204);
+      doc.text(report.title, 105, 20, { align: "center" });
+
+      // Add metadata
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Date: ${new Date(report.timestamp).toLocaleDateString()}`, 20, 30);
+      doc.text(`Experiment: ${report.experimentName}`, 20, 37);
+
+      // Add Aim section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Aim", 20, 47);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const aimLines = doc.splitTextToSize(report.aim, 170);
+      doc.text(aimLines, 20, 54);
+
+      // Add Theory section
+      let currentY = 54 + (aimLines.length * 5);
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Theory", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const theoryLines = doc.splitTextToSize(report.theory, 170);
+      doc.text(theoryLines, 20, currentY + 7);
+      currentY += 7 + (theoryLines.length * 5);
+
+      // Add Procedure section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Procedure", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const procedureLines = doc.splitTextToSize(report.procedure, 170);
+      doc.text(procedureLines, 20, currentY + 7);
+      currentY += 7 + (procedureLines.length * 5);
+
+      // Add Results and Data Visualization section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Results and Data Visualization", 20, currentY);
+      currentY += 10;
+
+      // Add a note about charts being available in HTML report
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Charts are available in the HTML report. For PDF with charts, please use the HTML version.", 20, currentY);
+      currentY += 10;
+
+      // Add Conclusion section
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Conclusion", 20, currentY);
+      doc.setFontSize(12);
+      doc.setTextColor(50, 50, 50);
+      const conclusionLines = doc.splitTextToSize(report.conclusion, 170);
+      doc.text(conclusionLines, 20, currentY + 7);
+
+      return doc;
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      throw error;
+    }
+  };
+
+  const downloadReport = (report: Report, format: 'html' | 'pdf' = 'html') => {
     if (format === 'pdf') {
-      try {
-        // Create a temporary container for the report content
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = generateReportHTML(report);
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.top = '-9999px';
-        tempContainer.style.width = '210mm'; // A4 width
-        tempContainer.style.height = '297mm'; // A4 height
-        tempContainer.style.backgroundColor = 'white';
-        tempContainer.style.padding = '20px';
-        tempContainer.style.boxSizing = 'border-box';
-        tempContainer.style.zIndex = '-1';
-        
-        document.body.appendChild(tempContainer);
-        
-        // Wait for any potential content to load
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Use html2canvas to capture the HTML content as an image
-        const canvas = await html2canvas(tempContainer, {
-          scale: 2, // Higher resolution
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        });
-        
-        // Remove the temporary container
-        document.body.removeChild(tempContainer);
-        
-        // Convert canvas to image data
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Create a link to download the image as PNG
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success("Report image downloaded!");
-      } catch (error) {
-        console.error("Error generating report image:", error);
-        toast.error("Error generating report image. Please try again or use HTML format.");
-      }
+      generateReportPDF(report).then(doc => {
+        doc.save(`${report.title.replace(/[^a-z0-9]/gi, '_')}.pdf`);
+        toast.success("PDF Report downloaded!");
+      }).catch(error => {
+        console.error("Error generating PDF:", error);
+        toast.error("Error generating PDF report. Please try again.");
+      });
     } else {
       const htmlContent = generateReportHTML(report);
       const blob = new Blob([htmlContent], { type: 'text/html' });
@@ -365,7 +400,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
   };
 
-  const renderExperimentChart = (data: any[], experimentId: string) => {
+  const renderExperimentChart = (data: Record<string, unknown>[], experimentId: string) => {
     // Determine chart configuration based on experiment type
     let xAxisKey, series1, series2;
     if (experimentId === "noise-analysis") {
@@ -388,69 +423,17 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     }
 
     return (
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-            <XAxis 
-              dataKey={xAxisKey}
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: getXAxisLabel(experimentId), 
-                position: "insideBottom", 
-                offset: -5 
-              }}
-            />
-            <YAxis 
-              yAxisId="left" 
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: "Error Rate (%)", 
-                angle: -90, 
-                position: "insideLeft" 
-              }}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              stroke="hsl(var(--quantum-glow))" 
-              fontSize={12}
-              label={{ 
-                value: getYAxisLabel(experimentId, series2), 
-                angle: 90, 
-                position: "insideRight" 
-              }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px'
-              }} 
-            />
-            <Legend />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey={series1} 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={2}
-              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
-              activeDot={{ r: 8 }}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey={series2} 
-              stroke="hsl(var(--quantum-glow))" 
-              strokeWidth={2}
-              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="flex justify-center">
+        <MatlabPlot
+          data={data}
+          xAxisKey={xAxisKey}
+          seriesKeys={[series1, series2]}
+          xAxisLabel={getXAxisLabel(experimentId)}
+          yAxisLabel="Values"
+          title={`${experimentId} Results`}
+          width={600}
+          height={400}
+        />
       </div>
     );
   };
@@ -500,7 +483,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
 
                 <div>
                   <h2 className="text-xl font-semibold text-quantum-purple mb-2 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
+                    <Activity className="w-5 h-5" />
                     Results and Data Visualization
                   </h2>
                   <Card className="bg-secondary/20">
@@ -553,13 +536,13 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 <Download className="w-4 h-4 mr-2" />
                 Download HTML Report
               </Button>
-              {/*<Button
+              <Button
                 onClick={() => downloadReport(viewingReport, 'pdf')}
                 className="bg-quantum-purple hover:bg-quantum-purple/80"
               >
                 <File className="w-4 h-4 mr-2" />
-                Download Image Report
-              </Button>*/}
+                Download PDF Report
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -640,7 +623,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
               <Card className="bg-secondary/20">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
+                    <Activity className="w-4 h-4" />
                     Experimental Data Visualization
                   </CardTitle>
                 </CardHeader>
@@ -713,7 +696,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                   <Button
                     onClick={startNewReport}
                     disabled={!selectedExperiment}
-                    className="bg-quantum-blue hover:bg-quantum-blue/80 whitespace-nowrap"
+                    className="bg-quantum-glow hover:bg-quantum-glow/80 whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     New Report
@@ -756,15 +739,15 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                             <Download className="w-4 h-4 mr-1" />
                             HTML
                           </Button>
-                          {/*<Button
+                          <Button
                             onClick={() => downloadReport(report, 'pdf')}
                             variant="outline"
                             size="sm"
                             className="border-quantum-purple/50 hover:bg-quantum-purple/10"
                           >
                             <File className="w-4 h-4 mr-1" />
-                            Image
-                          </Button>*/}
+                            PDF
+                          </Button>
                           <Button
                             onClick={() => deleteReport(report.id)}
                             variant="outline"

@@ -110,7 +110,7 @@ export const Certificate = ({ postQuizScore = 0 }: CertificateProps) => {
       doc.text(`${postQuizScore}%`, 148, 118, { align: "center" });
 
       // Details table with enhanced styling
-      (doc as any).autoTable({
+      (doc as jsPDF).autoTable({
         startY: 130,
         head: [['', '']],
         body: [

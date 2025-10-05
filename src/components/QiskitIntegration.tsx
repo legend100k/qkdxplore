@@ -6,9 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import { Loader2, Play, RefreshCw, CheckCircle, XCircle } from "lucide-react";
-import { PhotonTransmissionAnimation } from "@/components/PhotonTransmissionAnimation";
+import { apiFetch } from "@/lib/api";
 
 interface BB84Result {
   alice_bits: number[];
@@ -33,34 +32,18 @@ export const QiskitIntegration = () => {
   const [nBits, setNBits] = useState(4);
   const [seed, setSeed] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [photonPosition, setPhotonPosition] = useState(0);
   const [result, setResult] = useState<BB84Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [useSimulation, setUseSimulation] = useState(true);
 
   const runBB84 = async () => {
     setIsLoading(true);
-    setProgress(0);
-    setPhotonPosition(0);
     setError(null);
     setResult(null);
 
-    // Animate photon transmission
-    const animatePhoton = async () => {
-      for (let pos = 0; pos <= 100; pos += 2) {
-        setPhotonPosition(pos);
-        setProgress(pos);
-        await new Promise(resolve => setTimeout(resolve, 30));
-      }
-    };
-
-    // Start photon animation
-    const animationPromise = animatePhoton();
-
     try {
       const endpoint = useSimulation ? '/api/bb84/simulate' : '/api/bb84';
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await apiFetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,9 +54,6 @@ export const QiskitIntegration = () => {
         })
       });
 
-      // Wait for animation to complete if it's still running
-      await animationPromise;
-
       const data: APIResponse = await response.json();
 
       if (data.success && data.data) {
@@ -82,11 +62,21 @@ export const QiskitIntegration = () => {
         setError(data.error || 'Unknown error occurred');
       }
     } catch (err) {
-      setError(`Failed to connect to backend: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      let errorMsg = 'Failed to connect to backend.';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('fetch') || err.message.includes('Failed to connect')) {
+          errorMsg += ' Please ensure the backend service is running. In local development, run `python start_backend.py`.';
+        } else {
+          errorMsg += ` ${err.message}`;
+        }
+      } else {
+        errorMsg += ' Unknown error occurred.';
+      }
+      
+      setError(errorMsg);
     } finally {
       setIsLoading(false);
-      setProgress(100);
-      setPhotonPosition(100);
     }
   };
 
@@ -170,23 +160,6 @@ export const QiskitIntegration = () => {
           </Button>
         </CardContent>
       </Card>
-
-      {/* Progress and Photon Animation */}
-      {isLoading && (
-        <Card className="border-quantum-glow/30">
-          <CardHeader>
-            <CardTitle className="text-sm">Photon Transmission</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="font-semibold">Progress:</span>
-              <Progress value={progress} className="flex-1" />
-              <span className="text-sm text-muted-foreground">{Math.round(progress)}%</span>
-            </div>
-            <PhotonTransmissionAnimation photonPosition={photonPosition} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Error Display */}
       {error && (

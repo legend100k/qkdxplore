@@ -5,4 +5,3 @@ qiskit-ibm-runtime>=0.15.0
 qiskit-aer>=0.13.0
 numpy>=1.21.0
 matplotlib>=3.5.0
-weasyprint>=60.0
