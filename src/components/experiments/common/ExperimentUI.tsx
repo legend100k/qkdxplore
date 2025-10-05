@@ -56,7 +56,7 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
     script.src = 'https://www.gstatic.com/charts/loader.js';
     script.async = true;
     script.onload = () => {
-      window.google.charts.load('current', { packages: ['corechart', 'line'] });
+      window.google.charts.load('current', { packages: ['corechart', 'line', 'bar'] });
     };
     document.head.appendChild(script);
 
@@ -98,7 +98,7 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
           title = 'Without Eavesdropper: QBER Baseline';
           break;
         case 'with-eavesdropper':
-          title = 'With Eavesdropper: QBER vs Eavesdropping Rate';
+          title = 'With Eavesdropper: QBER vs Number of Eavesdroppers';
           break;
         case 'effect-of-distance':
           title = 'Effect of Distance: QBER vs Distance';
@@ -164,9 +164,19 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
         }
       };
 
-      const chart = new window.google.visualization.LineChart(
-        document.getElementById('experiment-chart') as HTMLElement
-      );
+      // Choose chart type based on experiment
+      let chart;
+      if (selectedExpId === 'with-eavesdropper') {
+        // Use BarChart for eavesdropper experiment
+        chart = new window.google.visualization.ColumnChart(
+          document.getElementById('experiment-chart') as HTMLElement
+        );
+      } else {
+        // Use LineChart for other experiments
+        chart = new window.google.visualization.LineChart(
+          document.getElementById('experiment-chart') as HTMLElement
+        );
+      }
       chart.draw(dataTable, options);
     };
 
@@ -175,7 +185,7 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       drawChart();
     } else {
       // Wait for Google Charts to be loaded
-      window.google.charts.load('current', { packages: ['corechart', 'line'] });
+      window.google.charts.load('current', { packages: ['corechart', 'line', 'bar'] });
       window.google.charts.setOnLoadCallback(drawChart);
     }
   };

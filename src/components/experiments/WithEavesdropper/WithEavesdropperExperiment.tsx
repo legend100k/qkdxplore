@@ -18,8 +18,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   const [finalExperimentBits, setFinalExperimentBits] = useState<any[]>([]);
   
   // State for experiment parameters
-  const [eavesdroppingRange, setEavesdroppingRange] = useState<[number, number]>([0, 100]);
-  const [step, setStep] = useState(10);
+  const [numEavesdroppers, setNumEavesdroppers] = useState(0);
   const [qubits, setQubits] = useState(80);
   const [noise, setNoise] = useState(2);
 
@@ -45,25 +44,22 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
     // Start photon animation
     animatePhoton();
 
-    totalSteps = Math.floor((eavesdroppingRange[1] - eavesdroppingRange[0]) / step) + 1;
-    for (let eves = eavesdroppingRange[0]; eves <= eavesdroppingRange[1]; eves += step) {
-      const result = simulateBB84(qubits, eves, noise);
-      experimentData.push({
-        eavesdropping: eves,
-        qber: result.errorRate,  // Store as qber for proper charting
-        errorRate: result.errorRate,
-        detectionProbability: Math.min(100, result.errorRate * 4),
-        keyRate: result.keyRate
-      });
-      currentStep++;
-      setProgress((currentStep / totalSteps) * 100);
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
+    // Run single experiment with specified number of eavesdroppers
+    const result = simulateBB84(qubits, numEavesdroppers, noise);
+    experimentData.push({
+      eavesdroppers: numEavesdroppers,
+      qber: result.errorRate,  // Store as qber for proper charting
+      errorRate: result.errorRate,
+      detectionProbability: Math.min(100, result.errorRate * 4),
+      keyRate: result.keyRate
+    });
+    setProgress(100);
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     const experimentResult: ExperimentResult = {
       id: "with-eavesdropper",
       name: "With Eavesdropper",
-      parameters: { eavesdroppingRange, step, qubits, noise, basisSelection: "random" },
+      parameters: { numEavesdroppers, qubits, noise, basisSelection: "random" },
       data: experimentData,
       analysis: generateAnalysis("with-eavesdropper", experimentData),
       completed: true,
@@ -87,35 +83,13 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
       <CardContent className="space-y-4 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="eavesdrop-start">Starting Eavesdropping Rate: {eavesdroppingRange[0]}%</Label>
+            <Label htmlFor="num-eavesdroppers">Number of Eavesdroppers: {numEavesdroppers}</Label>
             <Slider
-              id="eavesdrop-start"
+              id="num-eavesdroppers"
               min={0}
-              max={eavesdroppingRange[1]}
-              value={[eavesdroppingRange[0]]}
-              onValueChange={(value) => setEavesdroppingRange([value[0], eavesdroppingRange[1]])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="eavesdrop-end">Ending Eavesdropping Rate: {eavesdroppingRange[1]}%</Label>
-            <Slider
-              id="eavesdrop-end"
-              min={eavesdroppingRange[0]}
-              max={100}
-              value={[eavesdroppingRange[1]]}
-              onValueChange={(value) => setEavesdroppingRange([eavesdroppingRange[0], value[0]])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="step">Step Size: {step}%</Label>
-            <Slider
-              id="step"
-              min={1}
-              max={20}
-              value={[step]}
-              onValueChange={(value) => setStep(value[0])}
+              max={5}
+              value={[numEavesdroppers]}
+              onValueChange={(value) => setNumEavesdroppers(value[0])}
               disabled={isRunning}
             />
           </div>
@@ -162,7 +136,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
         experimentData={experimentResult?.data}
         analysis={experimentResult?.analysis}
         usedBits={experimentResult?.usedBits}
-        xAxisDataKey="eavesdropping"
+        xAxisDataKey="eavesdroppers"
         colorScheme="quantum-glow"
         experimentControls={parameterControls}
       />
