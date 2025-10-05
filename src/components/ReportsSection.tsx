@@ -338,7 +338,8 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
         return "To analyze and document the results of the \"Effect of Qubit Scaling on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
       case "real-world-comparison":
         return "To analyze and document the results of the \"Real-World Conditions Comparison in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
-      default:
+
+        default:
         return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
     }
   };
