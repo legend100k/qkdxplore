@@ -198,7 +198,33 @@
             margin-bottom: 8px;
             font-size: 18px;
         }
+Please follow the instructions below to check and fix the Quantum Bit Error Rate (QBER) calculation, presentation, threshold, and the report download function within the experiment section.
 
+1. QBER Calculation and Threshold Check
+
+    Verify the QBER Calculation: Check the current implementation for calculating the QBER to ensure it is mathematically correct for the specific quantum key distribution (QKD) protocol used (e.g., BB84, sifting and error checking steps).
+
+    Confirm QBER Threshold: Review and confirm the established security threshold for the QBER. Ensure this threshold (typically around 11% for the BB84 protocol) is correctly applied to determine the safety of the established key.
+
+2. Experiment Section Plot Fixes
+
+Implement the following fixes for the plots in the experiment section:
+
+    Variable/QBER Plot:
+
+        Create a new plot or modify the existing one to clearly show the relationship between a significant experimental variable (e.g., distance, sifted key length, or coincidence window) and the calculated QBER.
+
+        The plot must include a prominent line or region indicating the security QBER threshold for clear visual comparison.
+
+    Uncombined Plots with Complete Legend and Labels:
+
+        Ensure all individual, uncombined plots (i.e., not a subplot within a larger figure unless necessary) are displayed.
+
+        Every plot must have a clear, descriptive title, appropriately labeled x-axis and y-axis with units, and a complete legend that distinguishes all plotted datasets or lines. All font sizes must be legible.
+
+3. Report Section Download Function Fix
+
+    Change Download Format: Modify the existing functionality in the report section so that the "Download Report" button saves the complete report file as a DOCX (.docx) file format instead of the current HTML format. The DOCX file should maintain proper formatting, tables, and include all generated plots.
         .person-info {
             background: #f8f9fa;
             padding: 12px;
@@ -783,7 +809,33 @@
                     <tr>
                         <th>#</th>
                         <th>A-Bit</th>
-                        <th>A-Base</th>
+         Please follow the instructions below to check and fix the Quantum Bit Error Rate (QBER) calculation, presentation, threshold, and the report download function within the experiment section.
+
+1. QBER Calculation and Threshold Check
+
+    Verify the QBER Calculation: Check the current implementation for calculating the QBER to ensure it is mathematically correct for the specific quantum key distribution (QKD) protocol used (e.g., BB84, sifting and error checking steps).
+
+    Confirm QBER Threshold: Review and confirm the established security threshold for the QBER. Ensure this threshold (typically around 11% for the BB84 protocol) is correctly applied to determine the safety of the established key.
+
+2. Experiment Section Plot Fixes
+
+Implement the following fixes for the plots in the experiment section:
+
+    Variable/QBER Plot:
+
+        Create a new plot or modify the existing one to clearly show the relationship between a significant experimental variable (e.g., distance, sifted key length, or coincidence window) and the calculated QBER.
+
+        The plot must include a prominent line or region indicating the security QBER threshold for clear visual comparison.
+
+    Uncombined Plots with Complete Legend and Labels:
+
+        Ensure all individual, uncombined plots (i.e., not a subplot within a larger figure unless necessary) are displayed.
+
+        Every plot must have a clear, descriptive title, appropriately labeled x-axis and y-axis with units, and a complete legend that distinguishes all plotted datasets or lines. All font sizes must be legible.
+
+3. Report Section Download Function Fix
+
+    Change Download Format: Modify the existing functionality in the report section so that the "Download Report" button saves the complete report file as a DOCX (.docx) file format instead of the current HTML format. The DOCX file should maintain proper formatting, tables, and include all generated plots.               <th>A-Base</th>
                         <th>E1-Base</th>
                         <th>E2-Base</th>
                         <th>E3-Base</th>
