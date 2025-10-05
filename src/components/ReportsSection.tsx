@@ -61,11 +61,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
     
     const theory = getDefaultTheory(experiment.id);
     
-    const procedure = `This experiment was performed using the QKD_Xplore web-based quantum key distribution simulator. The experiment "${experiment.name}" was conducted with the following parameters:\n\n` +
-      Object.entries(experiment.parameters || {}).map(([key, value]) => 
-        `- ${key}: ${JSON.stringify(value)}`
-      ).join('\n') + 
-      `\n\nThe simulation was run multiple times with varying parameters to collect statistical data. The results were automatically recorded and analyzed by the system to generate the data visualization and statistical findings presented in this report.`;
+    const procedure = getDefaultProcedure(experiment.id);
 
     setCurrentReport({
       id: Date.now().toString(),
@@ -354,9 +350,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 spacing: { after: 100 },
               }),
               new Paragraph({
-                text: report.experimentId === 'with-eavesdropper' || report.experimentId === 'eavesdropping-detection' 
-                  ? report.theory.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper")
-                  : report.theory,
+                text: report.theory,
                 spacing: { after: 200 },
               }),
               
@@ -367,9 +361,7 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 spacing: { after: 100 },
               }),
               new Paragraph({
-                text: report.experimentId === 'with-eavesdropper' || report.experimentId === 'eavesdropping-detection' 
-                  ? report.procedure.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper")
-                  : report.procedure,
+                text: report.procedure,
                 spacing: { after: 200 },
               }),
         
@@ -482,15 +474,14 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
   const getAimText = (experimentId: string) => {
     switch (experimentId) {
       case "noise-analysis":
-        return "To analyze and document the results of the \"Effect of Channel Noise on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+        return "To investigate the impact of channel noise on quantum key distribution (QKD) performance and understand how various noise sources affect the quantum bit error rate (QBER).";
       case "eavesdropping-detection":
-        return "To analyze and document the results of the \"Eavesdropping Detection in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+        return "To demonstrate and verify the eavesdropping detection capability of the BB84 protocol by observing the characteristic increase in QBER when an eavesdropper intercepts quantum transmissions.";
       case "qubit-scaling":
-        return "To analyze and document the results of the \"Effect of Qubit Scaling on QKD Performance\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
+        return "To study how the number of qubits affects the efficiency and statistical properties of the BB84 QKD protocol.";
       case "real-world-comparison":
-        return "To analyze and document the results of the \"Real-World Conditions Comparison in QKD Systems\" experiment conducted using the QKD_Xplore quantum key distribution simulator.";
-
-        default:
+        return "To compare the idealized theoretical models of QKD with real-world implementations, taking into account practical limitations and channel imperfections.";
+      default:
         return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
     }
   };
@@ -498,14 +489,30 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
   const getDefaultProcedure = (experimentId: string) => {
     switch (experimentId) {
       case "noise-analysis":
-        return noiseAnalysisReportText.procedure;
+        return `1. Set up the QKD system with minimal channel noise initially.
+2. Gradually increase the channel noise parameter in the simulation.
+3. Record the resulting QBER and key rate at each noise level.
+4. Analyze the trend showing how noise directly affects error rates.
+5. Compare results against theoretical predictions for channel noise effects.`;
       case "eavesdropping-detection":
-        // Replace percentage references with number of eavesdropper where appropriate
-        return eavesdroppingDetectionReportText.procedure.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper");
+        return `1. Configure the QKD system with no eavesdropping initially.
+2. Record the baseline QBER and security parameters.
+3. Introduce an eavesdropper (Eve) with varying levels of interference.
+4. Monitor the QBER and detect the significant increase indicating eavesdropping.
+5. Verify that the QBER approaches the theoretical 25% for random eavesdropping.
+6. Document the effectiveness of eavesdropping detection mechanisms.`;
       case "qubit-scaling":
-        return qubitScalingReportText.procedure;
+        return `1. Initialize the BB84 protocol with a small number of qubits.
+2. Gradually increase the number of transmitted qubits in the simulation.
+3. Monitor how key generation rate and error rates scale with qubit count.
+4. Record the relationship between qubit number and protocol efficiency.
+5. Analyze the impact of statistical fluctuations at different qubit scales.`;
       case "real-world-comparison":
-        return realWorldComparisonReportText.procedure;
+        return `1. Configure the QKD system under ideal laboratory conditions.
+2. Introduce realistic channel imperfections (loss, noise, etc.).
+3. Measure performance under various realistic conditions.
+4. Compare the results with idealized theoretical models.
+5. Document the differences between theory and real-world performance.`;
       default:
         return "Detailed experimental procedure to be documented.";
     }
@@ -514,14 +521,35 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
   const getDefaultTheory = (experimentId: string) => {
     switch (experimentId) {
       case "noise-analysis":
-        return noiseAnalysisReportText.theory;
+        return `Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an eavesdropper, as it becomes impossible to distinguish these errors from a malicious attack.`;
       case "eavesdropping-detection":
-        // Replace percentage references with number of eavesdropper where appropriate
-        return eavesdroppingDetectionReportText.theory.replace(/percentage of evesdropper/gi, "number of eavesdropper").replace(/eavesdropping percentage/gi, "number of eavesdropper").replace(/% eavesdropper/gi, "number of eavesdropper");
+        return `This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
+
+Interception: Eve intercepts the qubit sent by Alice.
+Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.
+Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.
+Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.
+
+This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:
+
+P(Eve chooses wrong basis) = 1/2
+P(Bob gets wrong bit | Eve was wrong) = 1/2
+Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%
+
+Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.`;
       case "qubit-scaling":
-        return qubitScalingReportText.theory;
+        return `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+
+In BB84, information is encoded onto qubits using two non-orthogonal bases:
+The Rectilinear Basis (+): |0⟩₊ = |↑⟩ (Horizontal polarization), |1⟩₊ = |→⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|↑⟩ + |→⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|↑⟩ - |→⟩)/√2 (135° polarization)
+
+The protocol's security is not mathematical but physical, relying on three core principles:
+Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An eavesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.`;
       case "real-world-comparison":
-        return realWorldComparisonReportText.theory;
+        return `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`;
       default:
         return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
     }
