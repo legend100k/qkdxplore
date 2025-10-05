@@ -17,6 +17,7 @@ export const QuantumHardware = () => {
         <img src="/beamSpliiter.png" alt="Beam Splitter" className="w-1/3 h-auto" />
       </div>
       <p className="mb-6"><strong>Job:</strong> Encodes the secret key onto the photons and randomly chooses how to encode each bit.</p>
+      <img src="src/components/photon-encoder.jpg" className="w-1/4 h-1/4 mx-auto flex justify-left" alt="Photon Encoder" />
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">3. The Quantum Channel</h2>
       <p className="mb-2"><strong>Free Space or Fibre Optic Cable:</strong> This is the path the photons travel through from Alice to Bob. It could be the open air in a lab or a dedicated fibre optic cable.</p>
@@ -24,11 +25,13 @@ export const QuantumHardware = () => {
         <img src="/quantumChannelPhoto.jpeg" alt="Quantum Channel" className="w-1/3 h-auto" />
       </div>
       <p className="mb-6"><strong>Job:</strong> The "wire" that sends the photons to Bob.</p>
+      <img src="src/components/quantumChannelPhoto.jpeg" className="w-1/4 h-1/4 mx-auto flex justify-left" alt="Quantum Channel" />
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">4. Bob's Decoding Station</h2>
       <p className="mb-2"><strong>Beam Splitter:</strong> The first thing Bob's photon hits. It randomly sends the photon to one of two measurement setups. This random choice is his "guess" of which encoding method Alice used.</p>
       <p className="mb-2"><strong>Polarizing Beam Splitters (PBS) & Detectors:</strong> Each measurement setup has a PBS that directs the photon to one of two detectors based on its polarization. The click from a detector tells Bob what bit (0 or 1) he measured.</p>
       <p className="mb-6"><strong>Job:</strong> Measures the incoming photons and tries to decode the bits. Bob's random choice of measurement setup is crucial for security.</p>
+      <img src="src/components/beamSpliiter.png" className="w-1/4 h-1/4 mx-auto flex justify-left" alt="Beam Splitter" />
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">5. The Detectors & Timer</h2>
       <p className="mb-2"><strong>Single Photon Detectors (SPADs):</strong> These are super-sensitive cameras that can detect a single photon. They "click" when a photon arrives.</p>
@@ -37,6 +40,7 @@ export const QuantumHardware = () => {
       </div>
       <p className="mb-2"><strong>Time-Stamping Unit (TCSPC):</strong> An electronic clock that records the exact nanosecond when each detector clicks.</p>
       <p className="mb-6"><strong>Job:</strong> See the photons and record when they arrive. The precise timing is used to match Bob's detections with Alice's transmissions later.</p>
+      <img src="src/components/SPAD.jpeg" className="w-1/4 h-1/4 mx-auto flex justify-left" alt="SPAD Detector" />
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">6. The Classical Channel</h2>
       <p className="mb-2"><strong>Internet / Radio Connection:</strong> A normal public communication channel (like a regular phone call or internet connection).</p>
@@ -44,6 +48,7 @@ export const QuantumHardware = () => {
         <img src="/classicalChannel.jpeg" alt="Classical Channel" className="w-1/3 h-auto" />
       </div>
       <p className="mb-6"><strong>Job:</strong> After the quantum transmission, Alice and Bob use this channel to compare notes. They talk about when photons arrived, but never what the bit value was. This allows them to sift out the parts of the key where Bob guessed the right encoding method correctly.</p>
+      <img src="src/components/classicalChannel.jpeg" className="w-1/4 h-1/4 mx-auto flex justify-left" alt="Classical Channel" />
 
       <h2 className="text-2xl font-semibold mt-8 mb-4">Simple Analogy:</h2>
       <p className="mb-4">Think of it like this:</p>
