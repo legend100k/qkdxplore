@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
@@ -51,19 +51,114 @@ const experimentConfigs = [
 
 export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (result: ExperimentResult) => void }) => {
   const [selectedExperiment, setSelectedExperiment] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<ExperimentResult | null>(null);
+  const [metrics, setMetrics] = useState<Array<{ name: string; value: number }>>([]);
+
+  // Google Charts loader
+  const loadGoogleCharts = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).google) {
+        (window as any).google.load('visualization', '1', { packages: ['corechart', 'bar'] });
+        (window as any).google.setOnLoadCallback(() => resolve((window as any).google));
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.async = true;
+      script.onload = () => {
+        (window as any).google.charts.load('current', { packages: ['corechart', 'bar'] });
+        (window as any).google.charts.setOnLoadCallback(() => resolve((window as any).google));
+      };
+      script.onerror = () => reject(new Error('Failed to load Google Charts'));
+      document.head.appendChild(script);
+    });
+  }, []);
+
+  const renderMetricBarChart = useCallback((containerId: string, label: string, value: number, color: string, hAxisTitle: string) => {
+    const google = (window as any).google;
+    const container = document.getElementById(containerId);
+    if (!google || !container) return;
+
+    const dataTable = google.visualization.arrayToDataTable([
+      ['Metric', 'Value'],
+      [label, value],
+    ]);
+
+    const options = {
+      chartArea: { width: '75%', height: '70%' },
+      hAxis: {
+        title: hAxisTitle,
+        minValue: 0,
+      },
+      vAxis: {
+        textPosition: 'none',
+      },
+      colors: [color],
+      legend: { position: 'none' },
+    } as any;
+
+    const chart = new google.visualization.BarChart(container);
+    chart.draw(dataTable, options);
+  }, []);
+
+  const computeMetricsFromResult = useCallback((result: ExperimentResult) => {
+    const bits = result.usedBits || [];
+    if (bits.length === 0) {
+      setMetrics([]);
+      return;
+    }
+    const totalBits = bits.length;
+    const matchingBases = bits.filter(b => b.match).length;
+    const keyBits = bits.filter(b => b.kept).length;
+    const mismatches = bits.filter(b => typeof b.bobMeasurement === 'number' && b.aliceBit !== b.bobMeasurement).length;
+    const qber = totalBits > 0 ? (mismatches / totalBits) * 100 : 0;
+    setMetrics([
+      { name: 'Total Bits', value: totalBits },
+      { name: 'Matching Bases', value: matchingBases },
+      { name: 'Key Bits', value: keyBits },
+      { name: 'QBER (%)', value: Number(qber.toFixed(2)) },
+    ]);
+  }, []);
+
+  useEffect(() => {
+    if (!lastResult) return;
+    computeMetricsFromResult(lastResult);
+  }, [lastResult, computeMetricsFromResult]);
+
+  useEffect(() => {
+    if (metrics.length === 0) return;
+    loadGoogleCharts().then(() => {
+      const totalBits = Number(metrics[0]?.value || 0);
+      const matchingBases = Number(metrics[1]?.value || 0);
+      const keyBits = Number(metrics[2]?.value || 0);
+      const qber = Number(metrics[3]?.value || 0);
+
+      renderMetricBarChart('exp-chart-total-bits', 'Total Bits', totalBits, '#3b82f6', 'Count');
+      renderMetricBarChart('exp-chart-matching-bases', 'Matching Bases', matchingBases, '#2563eb', 'Count');
+      renderMetricBarChart('exp-chart-key-bits', 'Key Bits', keyBits, '#7c3aed', 'Count');
+      renderMetricBarChart('exp-chart-qber', 'QBER (%)', qber, '#f59e0b', 'Percentage');
+    }).catch(() => {
+      // no-op fallback
+    });
+  }, [metrics, loadGoogleCharts, renderMetricBarChart]);
+
+  const handleSaveExperiment = (result: ExperimentResult) => {
+    setLastResult(result);
+    if (onSaveExperiment) onSaveExperiment(result);
+  };
 
   const renderExperiment = () => {
     switch (selectedExperiment) {
       case "effect-of-qubits":
-        return <EffectOfQubitsExperiment onSaveExperiment={onSaveExperiment} />;
+        return <EffectOfQubitsExperiment onSaveExperiment={handleSaveExperiment} />;
       case "effect-of-channel-noise":
-        return <EffectOfChannelNoiseExperiment onSaveExperiment={onSaveExperiment} />;
+        return <EffectOfChannelNoiseExperiment onSaveExperiment={handleSaveExperiment} />;
       case "with-eavesdropper":
-        return <WithEavesdropperExperiment onSaveExperiment={onSaveExperiment} />;
+        return <WithEavesdropperExperiment onSaveExperiment={handleSaveExperiment} />;
       case "effect-of-distance":
-        return <EffectOfDistanceExperiment onSaveExperiment={onSaveExperiment} />;
+        return <EffectOfDistanceExperiment onSaveExperiment={handleSaveExperiment} />;
       case "overall":
-        return <OverallAnalysisExperiment onSaveExperiment={onSaveExperiment} />;
+        return <OverallAnalysisExperiment onSaveExperiment={handleSaveExperiment} />;
       default:
         return (
           <div className="text-center p-8 text-muted-foreground">
@@ -122,6 +217,56 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
 
       <div className="space-y-6">
         {selectedExperiment && renderExperiment()}
+
+        {lastResult && metrics.length === 4 && (
+          <Card className="border-quantum-glow mt-4">
+            <CardHeader>
+              <CardTitle className="text-quantum-glow">
+                Experiment Analysis
+              </CardTitle>
+              <p className="text-muted-foreground text-sm">Separate charts for each key metric</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="bg-secondary/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Total Bits</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64" id="exp-chart-total-bits"></div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-secondary/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Matching Bases</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64" id="exp-chart-matching-bases"></div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-secondary/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Key Bits</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64" id="exp-chart-key-bits"></div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-secondary/20">
+                  <CardHeader>
+                    <CardTitle className="text-sm">QBER (%)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64" id="exp-chart-qber"></div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
