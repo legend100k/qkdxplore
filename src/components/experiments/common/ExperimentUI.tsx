@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { FileText, Play } from "lucide-react";
-import { PhotonTransmissionAnimation } from "@/components/PhotonTransmissionAnimation";
 import { QuantumBit, ExperimentResult } from "./types";
 
 // Google Charts is loaded via script tag in index.html
@@ -191,6 +190,87 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
   };
 
   const selectedResult = results[selectedExpId];
+
+  const plotAnalysis = useMemo(() => {
+    if (!selectedResult?.data || selectedResult.data.length === 0) {
+      return '';
+    }
+
+    const qberKey = selectedResult.data.some((point) => typeof point.qber === 'number') ? 'qber' : 'errorRate';
+
+    const points = selectedResult.data
+      .map((entry, index) => {
+        const rawQber = entry[qberKey];
+        const numericQber = typeof rawQber === 'number' ? rawQber : Number(rawQber);
+        if (!Number.isFinite(numericQber)) {
+          return null;
+        }
+
+        const rawAxisValue = entry[xAxisDataKey];
+        const numericAxisValue = typeof rawAxisValue === 'number' ? rawAxisValue : Number(rawAxisValue);
+
+        return {
+          qber: Number(numericQber),
+          axisValue: Number.isFinite(numericAxisValue) ? numericAxisValue : rawAxisValue ?? index + 1,
+          axisLabel: rawAxisValue ?? index + 1,
+        };
+      })
+      .filter((point): point is { qber: number; axisValue: number | string; axisLabel: number | string } => point !== null);
+
+    if (points.length === 0) {
+      return '';
+    }
+
+    const minPoint = points.reduce((best, current) => (current.qber < best.qber ? current : best), points[0]);
+    const maxPoint = points.reduce((worst, current) => (current.qber > worst.qber ? current : worst), points[0]);
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    const thresholdCrossings = points.filter((point) => point.qber > 11).length;
+
+    const formatAxisValue = (value: number | string) => (typeof value === 'number' ? value.toString() : String(value));
+    const formatQber = (value: number) => value.toFixed(2);
+
+    const axisDescriptor = (() => {
+      switch (selectedExpId) {
+        case 'effect-of-qubits':
+          return 'number of qubits';
+        case 'effect-of-channel-noise':
+          return 'channel noise level';
+        case 'with-eavesdropper':
+          return 'eavesdropping rate';
+        case 'effect-of-distance':
+          return 'transmission distance';
+        case 'overall':
+          return 'bit index';
+        default:
+          return 'parameter';
+      }
+    })();
+
+    const trendDescriptor = (() => {
+      if (points.length < 2) {
+        return 'remains constant across the recorded sample.';
+      }
+      if (lastPoint.qber > firstPoint.qber) {
+        return `increases as the ${axisDescriptor} grows from ${formatAxisValue(firstPoint.axisLabel)} to ${formatAxisValue(lastPoint.axisLabel)}.`;
+      }
+      if (lastPoint.qber < firstPoint.qber) {
+        return `decreases as the ${axisDescriptor} moves from ${formatAxisValue(firstPoint.axisLabel)} to ${formatAxisValue(lastPoint.axisLabel)}.`;
+      }
+      return `stays steady while the ${axisDescriptor} varies between ${formatAxisValue(firstPoint.axisLabel)} and ${formatAxisValue(lastPoint.axisLabel)}.`;
+    })();
+
+    const thresholdMessage = thresholdCrossings > 0
+      ? `${thresholdCrossings === points.length ? 'All' : thresholdCrossings} run${thresholdCrossings === 1 ? '' : 's'} exceed the 11% security threshold, indicating a compromised channel.`
+      : 'All runs remain below the 11% security threshold, keeping the channel within acceptable limits.';
+
+    return [
+      `QBER spans ${formatQber(minPoint.qber)}% to ${formatQber(maxPoint.qber)}% across the sampled ${axisDescriptor}.`,
+      `The lowest error occurs at ${formatAxisValue(minPoint.axisLabel)}, while the highest appears at ${formatAxisValue(maxPoint.axisLabel)}.`,
+      `Overall, the error rate ${trendDescriptor}`,
+      thresholdMessage,
+    ].join(' ');
+  }, [selectedResult, selectedExpId, xAxisDataKey]);
   
   // If we have results, render the chart after the component mounts
   useEffect(() => {
@@ -396,14 +476,14 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
               <p className="text-xs text-muted-foreground mt-1">{progress.toFixed(0)}%</p>
             </div>
             
-            <Card className="border-cyan-500/30">
+            {/*<Card className="border-cyan-500/30">
               <CardHeader>
                 <CardTitle className="text-sm">Photon Transmission</CardTitle>
               </CardHeader>
               <CardContent>
                 <PhotonTransmissionAnimation photonPosition={photonPosition} />
               </CardContent>
-            </Card>
+            </Card>*/}
             
             {showBitsSimulation && currentBits.length > 0 && (
               <Card className="bg-secondary/20">
@@ -635,28 +715,23 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                     <div id="experiment-chart" className="h-96 w-full">
                       {/* Google Chart will be rendered here */}
                     </div>
-                    <div className="text-sm text-muted-foreground mt-2">
-                      {selectedExpId === 'effect-of-qubits' && (
-                        <p>• Higher number of qubits generally increases statistical security</p>
-                      )}
-                      {selectedExpId === 'effect-of-channel-noise' && (
-                        <p>• QBER should increase with higher noise levels; values above 11% indicate potential security issues</p>
-                      )}
-                      {selectedExpId === 'with-eavesdropper' && (
-                        <p>• QBER should increase significantly with eavesdropping; ~25% expected for random eavesdropping</p>
-                      )}
-                      {selectedExpId === 'effect-of-distance' && (
-                        <p>• Distance primarily causes photon loss; slight QBER increase possible with longer distances</p>
-                      )}
-                      <p>• Red line shows QBER; Yellow dashed line shows 11% security threshold</p>
-                    </div>
+                    {/*plotAnalysis && (
+                      <div className="text-sm text-muted-foreground mt-2">
+                        <p>{plotAnalysis}</p>
+                      </div>
+                    )*/}
                   </div>
                 )}
                 
-                {selectedResult?.analysis && (
+                {(plotAnalysis || selectedResult?.analysis) && (
                   <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 mt-4">
                     <h4 className="font-semibold text-cyan-400 mb-2">Analysis</h4>
-                    <p className="text-sm">{selectedResult.analysis}</p>
+                    {plotAnalysis && (
+                      <p className="text-sm">{plotAnalysis}</p>
+                    )}
+                    {selectedResult?.analysis && (
+                      <p className="text-sm mt-2 text-muted-foreground">{null}</p>
+                    )}
                   </div>
                 )}
               </CardContent>
