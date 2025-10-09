@@ -1410,7 +1410,7 @@ export const SimulationSection = () => {
               )}
 
               <div className="space-y-4">
-                {currentStep > 0 && !isStepByStep && (
+                {currentStep > 1 && !isStepByStep && (
                   <Card className="bg-quantum-blue/5 border-quantum-blue/20">
                     <CardContent className="p-3">
                       <p className="font-semibold text-quantum-blue">
@@ -1425,7 +1425,7 @@ export const SimulationSection = () => {
               <div className="flex flex-wrap items-center gap-2">
                 {false && (
                   <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive rounded">
-                    <Eye className="w-4 h-4 text-destructive" />
+                    
                     
                   </div>
                 )}
@@ -1448,27 +1448,16 @@ export const SimulationSection = () => {
                 <Card className="border-quantum-glow/30">
                   <CardHeader>
                     <CardTitle className="text-sm">
-                      Photon Transmission
+                      alice sends photon to bob
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="relative h-20 bg-muted rounded-lg overflow-hidden">
-                      <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-quantum-blue font-bold">
-                        Alice
-                      </div>
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-quantum-purple font-bold">
-                        Bob
-                      </div>
-                      <div
-                        className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-quantum-glow rounded-full transition-all duration-100"
-                        style={{ left: `${photonPosition}%` }}
-                      ></div>
+                    
                       {eavesdroppingRate[0] > 0 && (
                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-destructive font-bold">
                           <Eye className="w-6 h-6" />
                         </div>
                       )}
-                    </div>
                   </CardContent>
                 </Card>
               )}

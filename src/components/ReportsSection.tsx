@@ -7,7 +7,6 @@ import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-r
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import html2canvas from "html2canvas";
-import ChartJsImage from "chartjs-to-image";
 import { 
   noiseAnalysisReportText, 
   eavesdroppingDetectionReportText, 
@@ -396,35 +395,38 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
                 spacing: { after: 100 },
               }),
               // Create a table for the data if it exists
-              ...(report.data && report.data.length > 0 ? [
-                new Table({
-                  rows: [
-                    // Header row - only if there are keys
-                    ...(report.data[0] && Object.keys(report.data[0]).length > 0 ? [
+              ...(report.data && report.data.length > 0 && report.data[0] && Object.keys(report.data[0]).length > 0 ? (() => {
+                const tableKeys = Object.keys(report.data[0]);
+                const columnWidth = Math.floor(100 / tableKeys.length);
+                return [
+                  new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                      // Header row
                       new TableRow({
-                        children: Object.keys(report.data[0]).map(key => 
+                        children: tableKeys.map(key => 
                           new TableCell({
-                            children: [new Paragraph(key)],
-                            width: { size: 2000, type: WidthType.DXA },
+                            children: [new Paragraph({ text: key, bold: true })],
+                            width: { size: columnWidth, type: WidthType.PERCENTAGE },
                           })
                         ),
-                      })
-                    ] : []),
-                    // Data rows
-                    ...report.data.map(row => 
-                      new TableRow({
-                        children: Object.keys(row).map(key => 
-                          new TableCell({
-                            children: [new Paragraph(typeof row[key] === 'number' ? row[key].toFixed(2) : String(row[key]))],
-                            width: { size: 2000, type: WidthType.DXA },
-                          })
-                        ),
-                      })
-                    ),
-                  ],
-                }),
-                new Paragraph({ spacing: { after: 200 } }),
-              ] : [new Paragraph("No numerical results available.")]),
+                      }),
+                      // Data rows - use the same keys for consistent column order
+                      ...report.data.map(row => 
+                        new TableRow({
+                          children: tableKeys.map(key => 
+                            new TableCell({
+                              children: [new Paragraph(typeof row[key] === 'number' ? row[key].toFixed(2) : String(row[key] ?? ''))],
+                              width: { size: columnWidth, type: WidthType.PERCENTAGE },
+                            })
+                          ),
+                        })
+                      ),
+                    ],
+                  }),
+                  new Paragraph({ spacing: { after: 200 } }),
+                ];
+              })() : [new Paragraph("No numerical results available."), new Paragraph({ spacing: { after: 200 } })]),
         
               // Conclusion section
               new Paragraph({
@@ -474,13 +476,13 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
   const getAimText = (experimentId: string) => {
     switch (experimentId) {
       case "noise-analysis":
-        return "To investigate the impact of channel noise on quantum key distribution (QKD) performance and understand how various noise sources affect the quantum bit error rate (QBER).";
+        return "Aim: To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).\n\nObjective: To isolate and observe the impact of channel noise on the QBER.";
       case "eavesdropping-detection":
-        return "To demonstrate and verify the eavesdropping detection capability of the BB84 protocol by observing the characteristic increase in QBER when an eavesdropper intercepts quantum transmissions.";
+        return "Aim: To demonstrate the detection of an eavesdropper (Eve) using the BB84 protocol.\n\nObjective: To observe how Eve's interception attempts disturb the quantum states and significantly increase the QBER.";
       case "qubit-scaling":
-        return "To study how the number of qubits affects the efficiency and statistical properties of the BB84 QKD protocol.";
+        return "Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.\n\nObjective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).";
       case "real-world-comparison":
-        return "To compare the idealized theoretical models of QKD with real-world implementations, taking into account practical limitations and channel imperfections.";
+        return "Aim: To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.\n\nObjective: To observe the relationship between distance, photon loss (key rate), and error rate (QBER).";
       default:
         return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
     }
@@ -489,30 +491,29 @@ export const ReportsSection = ({ availableExperiments = [] }: { availableExperim
   const getDefaultProcedure = (experimentId: string) => {
     switch (experimentId) {
       case "noise-analysis":
-        return `1. Set up the QKD system with minimal channel noise initially.
-2. Gradually increase the channel noise parameter in the simulation.
-3. Record the resulting QBER and key rate at each noise level.
-4. Analyze the trend showing how noise directly affects error rates.
-5. Compare results against theoretical predictions for channel noise effects.`;
+        return `1. Set evesdropper = OFF, Distance = SHORT (to minimize other effects).
+2. Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
+3. Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
+4. Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.
+
+Note: The QBER should increase significantly with higher noise levels, while the Final Key Length decreases only slightly. This proves noise creates errors.`;
       case "eavesdropping-detection":
-        return `1. Configure the QKD system with no eavesdropping initially.
-2. Record the baseline QBER and security parameters.
-3. Introduce an eavesdropper (Eve) with varying levels of interference.
-4. Monitor the QBER and detect the significant increase indicating eavesdropping.
-5. Verify that the QBER approaches the theoretical 25% for random eavesdropping.
-6. Document the effectiveness of eavesdropping detection mechanisms.`;
+        return `1. Go to the Q-Xplore Virtual Lab simulator.
+2. Set the "evesdropper" parameter to ON.
+3. Run the simulation and observe the QBER.
+4. Take a screenshot of the results showing the high (~25%) QBER.`;
       case "qubit-scaling":
-        return `1. Initialize the BB84 protocol with a small number of qubits.
-2. Gradually increase the number of transmitted qubits in the simulation.
-3. Monitor how key generation rate and error rates scale with qubit count.
-4. Record the relationship between qubit number and protocol efficiency.
-5. Analyze the impact of statistical fluctuations at different qubit scales.`;
+        return `1. Go to the Q-Xplore Virtual Lab simulator.
+2. Run the BB84 simulation without any evesdropper and with low channel noise.
+3. Note the QBER and the successful generation of a secure key.
+4. Take a screenshot of the results screen showing the low QBER.`;
       case "real-world-comparison":
-        return `1. Configure the QKD system under ideal laboratory conditions.
-2. Introduce realistic channel imperfections (loss, noise, etc.).
-3. Measure performance under various realistic conditions.
-4. Compare the results with idealized theoretical models.
-5. Document the differences between theory and real-world performance.`;
+        return `1. Set evesdropper = OFF, Channel Noise = LOW.
+2. Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
+3. Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
+4. Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length.
+
+Note: The Final Key Length should drop dramatically with distance. The QBER may also see a slight increase. This shows distance causes loss and can worsen errors.`;
       default:
         return "Detailed experimental procedure to be documented.";
     }
@@ -541,12 +542,12 @@ Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 2
         return `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
 
 In BB84, information is encoded onto qubits using two non-orthogonal bases:
-The Rectilinear Basis (+): |0⟩₊ = |↑⟩ (Horizontal polarization), |1⟩₊ = |→⟩ (Vertical polarization)
-The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|↑⟩ + |→⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|↑⟩ - |→⟩)/√2 (135° polarization)
+The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
 
 The protocol's security is not mathematical but physical, relying on three core principles:
 Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
-No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An eavesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
 Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.`;
       case "real-world-comparison":
         return `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`;
@@ -817,7 +818,7 @@ Heisenberg Uncertainty Principle: Certain pairs of physical properties (like pol
                   <Textarea
                     value={currentReport.aim || ""}
                     onChange={(e) => setCurrentReport(prev => ({ ...prev, aim: e.target.value }))}
-                    placeholder="State the objective and purpose of this experiment..."
+                    placeholder="Aim: To [state the main goal of the experiment]\n\nObjective: To [describe the specific objective and what you aim to observe or demonstrate]..."
                     className="min-h-[100px] border-quantum-blue/30 focus:border-quantum-blue"
                   />
                 </div>
@@ -827,7 +828,7 @@ Heisenberg Uncertainty Principle: Certain pairs of physical properties (like pol
                   <Textarea
                     value={currentReport.theory || ""}
                     onChange={(e) => setCurrentReport(prev => ({ ...prev, theory: e.target.value }))}
-                    placeholder="Explain the theoretical background and principles..."
+                    placeholder="Theory: Explain the quantum mechanical principles, formulas, and theoretical background relevant to this experiment. Include key concepts like qubit properties, measurement disturbance, no-cloning theorem, QBER calculations, etc."
                     className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
                   />
                 </div>
@@ -839,7 +840,7 @@ Heisenberg Uncertainty Principle: Certain pairs of physical properties (like pol
                   <Textarea
                     value={currentReport.procedure || ""}
                     onChange={(e) => setCurrentReport(prev => ({ ...prev, procedure: e.target.value }))}
-                    placeholder="Describe the experimental methodology and steps..."
+                    placeholder="Procedure:\n1. Go to the Q-Xplore Virtual Lab simulator.\n2. Set the parameters (e.g., eavesdropper, channel noise, distance).\n3. Run the simulation.\n4. Record the QBER, Final Key Length, and other results.\n5. Take a screenshot of the results."
                     className="min-h-[120px] border-quantum-glow/30 focus:border-quantum-glow"
                   />
                 </div>
@@ -849,7 +850,7 @@ Heisenberg Uncertainty Principle: Certain pairs of physical properties (like pol
                   <Textarea
                     value={currentReport.conclusion || ""}
                     onChange={(e) => setCurrentReport(prev => ({ ...prev, conclusion: e.target.value }))}
-                    placeholder="Summarize your findings, analysis, and conclusions..."
+                    placeholder="Based on your observation and results, write what you learned from this experiment..."
                     className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
                   />
                 </div>

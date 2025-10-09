@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Beaker, Play, Eye, Zap, Shield, BarChart3, FileText } from "lucide-react";
@@ -120,6 +120,38 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
     ]);
   }, []);
 
+  const analysisSummary = useMemo(() => {
+    const totalBitsMetric = metrics.find((metric) => metric.name === 'Total Bits');
+    const matchingBasesMetric = metrics.find((metric) => metric.name === 'Matching Bases');
+    const keyBitsMetric = metrics.find((metric) => metric.name === 'Key Bits');
+    const qberMetric = metrics.find((metric) => metric.name === 'QBER (%)');
+
+    if (!totalBitsMetric || !matchingBasesMetric || !keyBitsMetric || !qberMetric) {
+      return '';
+    }
+
+    const totalBits = totalBitsMetric.value;
+    const matchingBases = matchingBasesMetric.value;
+    const keyBits = keyBitsMetric.value;
+    const qber = qberMetric.value;
+
+    if (totalBits === 0) {
+      return 'No bits were processed in this experiment run, so no key material was generated.';
+    }
+
+    const matchingRate = (matchingBases / totalBits) * 100;
+    const siftedRate = (keyBits / totalBits) * 100;
+
+    let channelAssessment = 'significant disturbance in the channel.';
+    if (qber < 5) {
+      channelAssessment = 'a high-fidelity quantum channel.';
+    } else if (qber < 15) {
+      channelAssessment = 'moderate noise that may require additional error correction.';
+    }
+
+    return `Out of ${totalBits} transmitted bits, ${matchingBases} (${matchingRate.toFixed(1)}%) bases matched and ${keyBits} (${siftedRate.toFixed(1)}%) bits were retained for the key. The QBER is ${qber.toFixed(2)}%, indicating ${channelAssessment}`;
+  }, [metrics]);
+
   useEffect(() => {
     if (!lastResult) return;
     computeMetricsFromResult(lastResult);
@@ -224,7 +256,9 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
               <CardTitle className="text-quantum-glow">
                 Experiment Analysis
               </CardTitle>
-              <p className="text-muted-foreground text-sm">Separate charts for each key metric</p>
+              {analysisSummary && (
+                <p className="text-muted-foreground text-sm">{analysisSummary}</p>
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-6">
