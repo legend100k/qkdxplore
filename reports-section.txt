@@ -1,0 +1,36 @@
+  const getDefaultTheory = (experimentId: string) => {
+    switch (experimentId) {
+      case "noise-analysis":
+        return `Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an eavesdropper, as it becomes impossible to distinguish these errors from a malicious attack.`;
+      case "eavesdropping-detection":
+        return `This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
+
+Interception: Eve intercepts the qubit sent by Alice.
+Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.
+Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.
+Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.
+
+This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:
+
+P(Eve chooses wrong basis) = 1/2
+P(Bob gets wrong bit | Eve was wrong) = 1/2
+Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%
+
+Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.`;
+      case "qubit-scaling":
+        return `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+
+In BB84, information is encoded onto qubits using two non-orthogonal bases:
+The Rectilinear Basis (+): |0⟩₊ = |↑⟩ (Horizontal polarization), |1⟩₊ = |→⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|↑⟩ + |→⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|↑⟩ - |→⟩)/√2 (135° polarization)
+
+The protocol's security is not mathematical but physical, relying on three core principles:
+Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An eavesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.`;
+      case "real-world-comparison":
+        return `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`;
+      default:
+        return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+    }
+  };

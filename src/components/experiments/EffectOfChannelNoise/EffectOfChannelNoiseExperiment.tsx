@@ -7,6 +7,7 @@ import { ExperimentUI } from "../common/ExperimentUI";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { OpticalNoiseParams, getAttenuationCoeff } from "@/lib/opticalNoise";
 
 const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ onSaveExperiment }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -47,7 +48,20 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
 
     totalSteps = Math.floor((noiseRange[1] - noiseRange[0]) / step) + 1;
     for (let noise = noiseRange[0]; noise <= noiseRange[1]; noise += step) {
-      const result = simulateBB84(qubits, eavesdropRate, noise);
+      // Create optical noise parameters - varying depolarization and phase damping
+      const normalizedNoise = noise / 100;
+      const opticalParams: OpticalNoiseParams = {
+        fiberLength: 10, // Fixed 10km distance
+        wavelength: 1550,
+        attenuationCoeff: getAttenuationCoeff(1550),
+        depolarization: normalizedNoise * 0.5,     // Depolarization is main contributor
+        phaseDamping: normalizedNoise * 0.3,       // Phase damping
+        amplitudeDamping: normalizedNoise * 0.1,   // Some photon loss
+        pmd: normalizedNoise * 1.5,                // PMD increases with noise
+        thermalNoise: normalizedNoise * 0.15       // Thermal noise
+      };
+      
+      const result = simulateBB84(qubits, eavesdropRate, noise, opticalParams);
       experimentData.push({
         noise,
         qber: result.errorRate,  // Store as qber for proper charting
@@ -82,6 +96,15 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
   };
 
   const experimentResult = results["effect-of-channel-noise"];
+
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
 
   // Parameter controls JSX
   const parameterControls = (
@@ -133,11 +156,12 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="eavesdrop">Eavesdropping Rate: {eavesdropRate}%</Label>
+            <Label htmlFor="eavesdrop">Eavesdroppers: {eavesdropRate}</Label>
             <Slider
               id="eavesdrop"
               min={0}
-              max={100}
+              max={5}
+              step={1}
               value={[eavesdropRate]}
               onValueChange={(value) => setEavesdropRate(value[0])}
               disabled={isRunning}
@@ -159,6 +183,7 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
         results={results}
         selectedExpId="effect-of-channel-noise"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="quantum-purple"
         experimentName="Effect of Channel Noise"
         experimentData={experimentResult?.data}

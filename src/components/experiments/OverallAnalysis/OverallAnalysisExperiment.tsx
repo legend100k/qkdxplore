@@ -100,6 +100,15 @@ const OverallAnalysisExperiment: React.FC<ExperimentComponentProps> = ({ onSaveE
 
   const experimentResult = results["overall"];
 
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
+
   // Parameter controls JSX
   const parameterControls = (
     <Card className="border-secondary/30 p-4">
@@ -154,6 +163,7 @@ const OverallAnalysisExperiment: React.FC<ExperimentComponentProps> = ({ onSaveE
         results={results}
         selectedExpId="overall"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="secondary"
         experimentName="Overall Analysis"
         experimentData={experimentResult?.data}

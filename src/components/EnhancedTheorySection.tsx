@@ -178,7 +178,7 @@ export const EnhancedTheorySection = () => {
               <div className="relative w-32 h-32 flex items-center justify-center">
                 <div className="absolute w-24 h-0.5 bg-quantum-blue"></div> {/* Horizontal line */}
                 <div className="absolute w-0.5 h-24 bg-quantum-blue"></div> {/* Vertical line */}
-                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-white flex items-center justify-center">
+                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-background flex items-center justify-center">
                   <svg className="w-6 h-6 text-quantum-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <line x1="6" y1="12" x2="18" y2="12" strokeWidth="2"></line>
                     <polygon points="16,9 20,12 16,15" fill="currentColor"></polygon>
@@ -193,7 +193,7 @@ export const EnhancedTheorySection = () => {
               <div className="relative w-32 h-32 flex items-center justify-center">
                 <div className="absolute w-24 h-0.5 bg-quantum-blue transform -rotate-45 origin-center"></div> {/* Diagonal line 1 */}
                 <div className="absolute w-24 h-0.5 bg-quantum-blue transform rotate-45 origin-center"></div> {/* Diagonal line 2 */}
-                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-white flex items-center justify-center">
+                <div className="absolute w-8 h-8 rounded-full border-2 border-quantum-blue bg-background flex items-center justify-center">
                   <svg className="w-6 h-6 text-quantum-blue transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <line x1="3" y1="12" x2="21" y2="12" strokeWidth="2" transform="rotate(-45 12 12)"></line>
                     <polygon points="18,8 22,12 18,16" fill="currentColor" transform="rotate(-45 12 12)"></polygon>

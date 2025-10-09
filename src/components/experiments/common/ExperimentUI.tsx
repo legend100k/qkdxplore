@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, Play } from "lucide-react";
 import { PhotonTransmissionAnimation } from "@/components/PhotonTransmissionAnimation";
 import { QuantumBit, ExperimentResult } from "./types";
+import QBERDistanceVisualization from "../QBERDistanceVisualization";
+import NoiseDecompositionVisualization from "../NoiseDecompositionVisualization";
 
 // Google Charts is loaded via script tag in index.html
 declare global {
@@ -22,6 +24,7 @@ interface SharedExperimentUIProps {
   results: { [key: string]: ExperimentResult };
   selectedExpId: string;
   runExperiment: () => void;
+  resetExperiment?: () => void;
   color: string;
   experimentName: string;
   experimentData?: any[];
@@ -41,6 +44,7 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
   results,
   selectedExpId,
   runExperiment,
+  resetExperiment,
   color,
   experimentName,
   experimentData,
@@ -626,10 +630,15 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setTimeout(() => renderChart(selectedResult.data, xAxisDataKey, selectedExpId, colorScheme), 100)}
+                        onClick={() => {
+                          if (resetExperiment) {
+                            resetExperiment();
+                          }
+                        }}
+                        disabled={isRunning}
                         className="text-xs"
                       >
-                        Reset View
+                        Reset & Rerun
                       </Button>
                     </div>
                     <div id="experiment-chart" className="h-96 w-full">
@@ -657,6 +666,29 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                   <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 mt-4">
                     <h4 className="font-semibold text-cyan-400 mb-2">Analysis</h4>
                     <p className="text-sm">{selectedResult.analysis}</p>
+                  </div>
+                )}
+                
+                {/* New visualizations for distance experiment */}
+                {selectedExpId === 'effect-of-distance' && selectedResult?.data && selectedResult.data.length > 0 && (
+                  <div className="mt-6 space-y-6">
+                    <QBERDistanceVisualization 
+                      data={selectedResult.data.map(item => ({
+                        distance: Number(item.distance),
+                        qber: Number(item.qber)
+                      }))}
+                      title="QBER vs Distance with Security Threshold"
+                    />
+                    
+                    <NoiseDecompositionVisualization 
+                      data={selectedResult.data.map(item => ({
+                        distance: Number(item.distance),
+                        eOpt: Number(item.intrinsicFloor || 1.5),      // Optical misalignment/intrinsic floor error
+                        eDark: Number(item.darkCountContribution || 0), // Dark count contribution
+                        totalQBER: Number(item.qber)
+                      }))}
+                      title="Noise Decomposition Analysis"
+                    />
                   </div>
                 )}
               </CardContent>

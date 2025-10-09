@@ -32,6 +32,13 @@ This application provides:
 ### Interactive Simulation
 - Real-time visualization of quantum key distribution between Alice and Bob
 - Configurable parameters (number of qubits, noise levels, eavesdropping rates)
+- **Physics-based optical noise model** simulating realistic photon transmission
+  - Depolarization (polarization randomization)
+  - Phase damping (coherence loss)
+  - Amplitude damping (photon loss)
+  - Polarization mode dispersion (PMD)
+  - Thermal detector noise
+  - Wavelength-dependent fiber attenuation (850nm, 1310nm, 1550nm)
 - Step-by-step mode to understand each phase of the protocol
 - Detailed results display showing bit values, basis choices, and key generation
 
@@ -42,10 +49,11 @@ This application provides:
 - Protocol steps breakdown with visual aids
 
 ### Experiments
-- Noise impact analysis on protocol performance
-- Eavesdropping detection capabilities
-- Qubit scaling effects on key generation
-- Real-world condition comparisons
+- **Effect of Channel Noise**: Analyze how optical noise (depolarization, phase damping) affects QBER
+- **Effect of Distance**: Study photon loss and PMD over various fiber lengths
+- **Eavesdropping Detection**: Demonstrate security through QBER increase
+- **Qubit Scaling**: Examine key rate vs. number of transmitted photons
+- **Real-world Comparisons**: Compare ideal vs. practical QKD implementations
 - Data visualization with interactive charts
 - Automated experiment iterations
 

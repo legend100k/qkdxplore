@@ -62,37 +62,70 @@ def run_bb84():
 
 @app.route('/api/bb84/simulate', methods=['POST'])
 def simulate_bb84():
-    """Run BB84 simulation without real quantum hardware"""
+    """Run BB84 simulation without real quantum hardware, with optical noise support"""
     try:
         data = request.get_json() or {}
         n_bits = data.get('n_bits', 4)
         seed = data.get('seed', 0)
         
+        # Optical noise parameters (optional)
+        optical_noise = data.get('optical_noise', {})
+        depolarization = optical_noise.get('depolarization', 0.01)
+        phase_damping = optical_noise.get('phase_damping', 0.01)
+        amplitude_damping = optical_noise.get('amplitude_damping', 0.05)
+        fiber_length = optical_noise.get('fiber_length', 10)
+        attenuation_coeff = optical_noise.get('attenuation_coeff', 0.20)
+        
         # Import numpy for simulation
         import numpy as np
         np.random.seed(seed)
+        
+        # Calculate photon loss from fiber attenuation (Beer-Lambert law)
+        photon_loss_prob = 1 - (10 ** (-(attenuation_coeff * fiber_length) / 10))
+        combined_amplitude_damping = min(amplitude_damping + photon_loss_prob, 1.0)
         
         # Generate random data
         alice_bits = np.random.randint(2, size=n_bits)
         alice_bases = np.random.randint(2, size=n_bits)
         bob_bases = np.random.randint(2, size=n_bits)
         
-        # Simulate Bob's measurements (with some noise)
+        # Simulate Bob's measurements with optical noise
         bob_results = []
-        for i in range(n_bits):
-            if alice_bases[i] == bob_bases[i]:  # Same basis
-                # 95% chance of correct measurement
-                if np.random.random() < 0.95:
-                    bob_results.append(alice_bits[i])
-                else:
-                    bob_results.append(1 - alice_bits[i])
-            else:  # Different basis
-                # Random result
-                bob_results.append(np.random.randint(2))
+        detected_indices = []  # Track which photons were detected (not lost)
         
-        # Generate sifted keys
-        alice_key = [bit for i, bit in enumerate(alice_bits) if alice_bases[i] == bob_bases[i]]
-        bob_key = [bit for i, bit in enumerate(bob_results) if alice_bases[i] == bob_bases[i]]
+        for i in range(n_bits):
+            # Apply amplitude damping (photon loss)
+            if np.random.random() < combined_amplitude_damping:
+                # Photon lost - skip this bit
+                continue
+            
+            detected_indices.append(i)
+            bit_value = alice_bits[i]
+            
+            # Apply depolarization (polarization flip)
+            if np.random.random() < depolarization:
+                bit_value = 1 - bit_value
+            
+            # Apply phase damping (for superposition states - affects diagonal basis)
+            if alice_bases[i] == 1 and np.random.random() < phase_damping:
+                # Phase errors manifest as bit flips in diagonal basis
+                bit_value = 1 - bit_value
+            
+            # Bob measures
+            if alice_bases[i] == bob_bases[i]:  # Same basis
+                # With optical noise, there's still a small chance of error
+                bob_results.append(int(bit_value))
+            else:  # Different basis
+                # Random result due to quantum measurement in wrong basis
+                bob_results.append(int(np.random.randint(2)))
+        
+        # Generate sifted keys (only from detected photons with matching bases)
+        alice_key = [int(alice_bits[detected_indices[j]]) 
+                     for j in range(len(detected_indices)) 
+                     if alice_bases[detected_indices[j]] == bob_bases[detected_indices[j]]]
+        bob_key = [int(bob_results[j]) 
+                   for j in range(len(detected_indices)) 
+                   if alice_bases[detected_indices[j]] == bob_bases[detected_indices[j]]]
         
         # Calculate QBER
         if alice_key and bob_key:
@@ -107,13 +140,15 @@ def simulate_bb84():
                 'alice_bits': [int(x) for x in alice_bits.tolist()],
                 'alice_bases': [int(x) for x in alice_bases.tolist()],
                 'bob_bases': [int(x) for x in bob_bases.tolist()],
-                'bob_results': [int(x) for x in bob_key],
+                'bob_results': [int(x) for x in bob_results],
                 'alice_key': [int(x) for x in alice_key],
                 'bob_key': [int(x) for x in bob_key],
                 'qber': float(qber),
                 'job_id': f'sim_{seed}_{n_bits}',
                 'key_length': int(len(alice_key)),
-                'keys_match': bool(alice_key == bob_key)
+                'keys_match': bool(alice_key == bob_key),
+                'photon_loss_rate': float(photon_loss_prob),
+                'detected_photons': len(detected_indices)
             }
         }
         

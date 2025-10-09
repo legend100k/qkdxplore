@@ -7,6 +7,9 @@ export interface QuantumBit {
   match: boolean;
   kept: boolean;
   eavesdropped: boolean;
+  eveMeasureBasis?: string | null;
+  eveMeasurement?: number | null;
+  eveResendBasis?: string | null;
 }
 
 export interface ExperimentResult {

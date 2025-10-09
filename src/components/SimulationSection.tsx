@@ -21,6 +21,11 @@ import {
   Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  PolarizationState,
+  applyOpticalNoise,
+  legacyNoiseToOptical,
+} from "@/lib/opticalNoise";
 // Google Charts is loaded via script tag in index.html
 // We'll implement type definitions for Google Charts
 declare global {
@@ -102,6 +107,10 @@ interface QuantumBit {
   bobMeasurement: number | null;
   isMatching: boolean | null;
   inKey: boolean;
+  intercepted: boolean;
+  eveMeasureBasis: string | null;
+  eveMeasurement: number | null;
+  eveResendBasis: string | null;
 }
 
 interface BB84Result {
@@ -194,8 +203,8 @@ export const SimulationSection = () => {
 
   // Calculate number of Eves based on eavesdropping rate
   useEffect(() => {
-    // Calculate number of Eves based on eavesdropping rate (0-100%)
-    const calculatedNumEves = Math.floor((eavesdroppingRate[0] / 100) * 5); // Max 5 Eves in the visualization
+    // Eavesdropping rate is now 0-5 (number of Eves)
+    const calculatedNumEves = eavesdroppingRate[0]; // Direct number of Eves (0-5)
     setNumEves(calculatedNumEves);
     
     // Randomize Eve polarizers when eavesdropping rate changes
@@ -253,40 +262,82 @@ export const SimulationSection = () => {
   const generateRandomBits = () => {
     const bits: QuantumBit[] = [];
     const totalBits = numQubits[0];
-    const eavesProbability = eavesdroppingRate[0] / 100;
-    const noise = noiseLevel[0] / 100;
+    // Convert eavesdropper count (0-5) to probability (0-5 Eves = 0-100% probability)
+    const eavesProbability = eavesdroppingRate[0] / 5;
+    
+    // Convert legacy noise slider to optical noise parameters
+    const opticalParams = legacyNoiseToOptical(noiseLevel[0], 10);
 
     for (let i = 0; i < totalBits; i++) {
       const aliceBit = Math.random() > 0.5 ? 1 : 0;
       const aliceBasis = Math.random() > 0.5 ? "+" : "×";
       const bobBasis = Math.random() > 0.5 ? "+" : "×";
 
+      // Create polarization state for the photon
+      let photonState: PolarizationState = {
+        basis: aliceBasis === "+" ? 'rectilinear' : 'diagonal',
+        bit: aliceBit,
+        amplitude: 1.0,
+        phase: 0
+      };
+
       const isMatching = aliceBasis === bobBasis;
       let bobMeasurement = null;
       let inKey = false;
+      let intercepted = false;
+      let eveMeasureBasis: string | null = null;
+      let eveMeasurement: number | null = null;
+      let eveResendBasis: string | null = null;
+
+      // Apply eavesdropping effect
+      if (eavesProbability > 0 && Math.random() < eavesProbability) {
+        intercepted = true;
+        
+        // Eve intercepts the photon and measures in a random basis
+        eveMeasureBasis = Math.random() > 0.5 ? "+" : "×";
+        eveMeasurement = aliceBit;
+        
+        // If Eve's basis doesn't match Alice's, she gets a random result
+        if (eveMeasureBasis !== aliceBasis) {
+          eveMeasurement = Math.random() > 0.5 ? 1 : 0;
+        }
+        
+        // Eve chooses a random basis to resend the photon
+        eveResendBasis = Math.random() > 0.5 ? "+" : "×";
+        
+        // Eve re-prepares the photon based on her measurement and resend basis
+        photonState = {
+          basis: eveResendBasis === "+" ? 'rectilinear' : 'diagonal',
+          bit: eveMeasurement,
+          amplitude: 0.9, // Eve's measurement reduces amplitude
+          phase: 0
+        };
+        
+        // Activate one of the Eves visually in the animation
+        const eveIndex = Math.floor(Math.random() * 5);
+        setTimeout(() => activateEve(eveIndex), 100);
+      }
+
+      // Apply optical noise to the photon during transmission
+      const noisyPhoton = applyOpticalNoise(photonState, opticalParams);
+      
+      // If photon is lost, Bob doesn't detect it - skip this bit
+      if (!noisyPhoton) {
+        continue;
+      }
 
       // Bob measures the photon
+      let bobResult = noisyPhoton.bit;
+      
+      // If Bob's basis doesn't match the photon's current basis, he gets a random result
+      const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
+      if (bobBasis !== photonBasisSymbol) {
+        bobResult = Math.random() > 0.5 ? 1 : 0;
+      }
+
       if (isMatching) {
-        // When bases match, Bob should get the same bit as Alice (in ideal conditions)
-        bobMeasurement = aliceBit;
+        bobMeasurement = bobResult;
         inKey = true;
-
-        // Apply eavesdropping effect
-        if (eavesProbability > 0 && Math.random() < eavesProbability) {
-          // Eve intercepts the photon and randomly changes the bit with 75% probability
-          // This simulates Eve measuring in a random basis and sending a new photon
-          if (Math.random() < 0.75) {
-            bobMeasurement = 1 - bobMeasurement;
-          }
-          // Activate one of the Eves visually in the animation
-          const eveIndex = Math.floor(Math.random() * 5); // Choose a random Eve to activate
-          setTimeout(() => activateEve(eveIndex), 100); // Delay activation for better visual effect
-        }
-
-        // Apply noise effect
-        if (noise > 0 && Math.random() < noise) {
-          bobMeasurement = 1 - bobMeasurement;
-        }
       } else {
         // When bases don't match, Bob gets a random result
         bobMeasurement = Math.random() > 0.5 ? 1 : 0;
@@ -301,6 +352,10 @@ export const SimulationSection = () => {
         bobMeasurement,
         isMatching,
         inKey,
+        intercepted,
+        eveMeasureBasis,
+        eveMeasurement,
+        eveResendBasis,
       });
     }
     return bits;
@@ -436,14 +491,19 @@ export const SimulationSection = () => {
         bobMeasurement: null,
         isMatching: null,
         inKey: false,
+        intercepted: false,
+        eveMeasureBasis: null,
+        eveMeasurement: null,
+        eveResendBasis: null,
       });
     }
     return bits;
   };
 
   const processBitStep = (bitIndex: number, step: number) => {
-    const eavesProbability = eavesdroppingRate[0] / 100;
-    const noise = noiseLevel[0] / 100;
+    // Convert eavesdropper count (0-5) to probability (0-5 Eves = 0-100% probability)
+    const eavesProbability = eavesdroppingRate[0] / 5;
+    const opticalParams = legacyNoiseToOptical(noiseLevel[0], 10);
 
     setStepByStepBits((prevBits) => {
       const newBits = [...prevBits];
@@ -454,40 +514,61 @@ export const SimulationSection = () => {
         const isMatching = bit.aliceBasis === bit.bobBasis;
         bit.isMatching = isMatching;
 
+        // Create polarization state for the photon
+        let photonState: PolarizationState = {
+          basis: bit.aliceBasis === "+" ? 'rectilinear' : 'diagonal',
+          bit: bit.aliceBit,
+          amplitude: 1.0,
+          phase: 0
+        };
+
+        // Apply eavesdropping effect - Eve intercepts the photon before Bob measures
+        if (eavesProbability > 0 && Math.random() < eavesProbability) {
+          bit.intercepted = true;
+          
+          // Eve chooses a random basis to measure the photon
+          bit.eveMeasureBasis = Math.random() > 0.5 ? "+" : "×";
+          bit.eveMeasurement = bit.aliceBit;
+
+          if (bit.eveMeasureBasis !== bit.aliceBasis) {
+            // If Eve's basis doesn't match Alice's, she gets a random result
+            bit.eveMeasurement = Math.random() > 0.5 ? 1 : 0;
+          }
+
+          // Eve chooses a random basis to resend the photon
+          bit.eveResendBasis = Math.random() > 0.5 ? "+" : "×";
+
+          // Eve re-prepares the photon based on her measurement and resend basis
+          photonState = {
+            basis: bit.eveResendBasis === "+" ? 'rectilinear' : 'diagonal',
+            bit: bit.eveMeasurement,
+            amplitude: 0.9,
+            phase: 0
+          };
+        }
+
+        // Apply optical noise to the photon
+        const noisyPhoton = applyOpticalNoise(photonState, opticalParams);
+
         if (isMatching) {
-          // When bases match, Bob should get the same bit as Alice (in ideal conditions)
-          let aliceBitToBob = bit.aliceBit;
           bit.inKey = true;
 
-          // Apply eavesdropping effect - Eve intercepts the photon before Bob measures
-          if (eavesProbability > 0 && Math.random() < eavesProbability) {
-            // Eve chooses a random basis to measure the photon
-            const eveBasis = Math.random() > 0.5 ? "+" : "×";
+          if (!noisyPhoton) {
+            // Photon lost - Bob gets no measurement
+            bit.bobMeasurement = null;
+            bit.inKey = false;
+          } else {
+            // Bob receives the noisy photon
+            let bobResult = noisyPhoton.bit;
 
-            if (eveBasis === bit.aliceBasis) {
-              // If Eve chooses the same basis as Alice, she gets the correct bit
-              // But if she forwards it in a different basis, there's a 50% chance it changes
-              if (eveBasis !== bit.bobBasis) {
-                // When Eve measures correctly but forwards in different basis, Bob has 50% chance of getting wrong result
-                if (Math.random() > 0.5) {
-                  aliceBitToBob = 1 - aliceBitToBob;
-                }
-              }
-            } else {
-              // If Eve chooses different basis than Alice, the quantum state collapses to Eve's measurement
-              // This means when Eve forwards it, Bob has a 50% chance of getting either value regardless of Alice's original bit
-              aliceBitToBob =
-                Math.random() > 0.5 ? aliceBitToBob : 1 - aliceBitToBob;
+            // If Bob's basis doesn't match the photon's current basis, he gets a random result
+            const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
+            if (bit.bobBasis !== photonBasisSymbol) {
+              bobResult = Math.random() > 0.5 ? 1 : 0;
             }
-          }
 
-          // Apply noise effect
-          if (noise > 0 && Math.random() < noise) {
-            aliceBitToBob = 1 - aliceBitToBob;
+            bit.bobMeasurement = bobResult;
           }
-
-          // Bob receives the possibly altered bit
-          bit.bobMeasurement = aliceBitToBob;
         } else {
           // When bases don't match, Bob gets a random result
           bit.bobMeasurement = Math.random() > 0.5 ? 1 : 0;
@@ -613,22 +694,97 @@ export const SimulationSection = () => {
     setIsRunning(false);
   };
 
+  // Calculate dark count probability and optical misalignment error floor
+  const calculateDarkCountContribution = (fiberLength: number): number => {
+    // Dark count rate typically 10-100 Hz for single photon detectors at 1550nm
+    // At high clock rates, this contributes to the error rate
+    const darkCountRate = 50; // Hz (example value)
+    const clockRate = 1e9; // 1 GHz clock rate
+    const darkCountProbability = darkCountRate / clockRate; // Probability per bit
+    
+    // With increasing distance, more photons are lost, so dark counts become a larger fraction
+    const lossProbability = 1 - Math.pow(10, -(0.2 * fiberLength) / 10); // Typical fiber at 1550nm
+    const relativeDarkCountContribution = darkCountProbability / (1 - lossProbability);
+    
+    // Limit to 50% max since dark counts are random
+    return Math.min(relativeDarkCountContribution * 100, 50) * 0.5; // 50% error contribution
+  };
+
+  // Calculate optical misalignment/intrinsic floor error
+  const calculateIntrinsicFloor = (): number => {
+    // Typical intrinsic errors: 1-3% from misalignment, reflections, imperfect components
+    // Add small random fluctuation to simulate varying alignment conditions
+    const baseFloor = 1.5;
+    const fluctuation = (Math.random() - 0.5) * 0.6; // ±0.3% variation
+    return Math.max(0.8, baseFloor + fluctuation); // Keep it between 0.8% and 2.1%
+  };
+
+  // Apply statistical security check using Hoeffding's bound
+  const applySecurityCheck = (measuredQBER: number, sampleSize: number, securityThreshold: number = 11): { isSecure: boolean, upperBound: number } => {
+    // Calculate statistical upper bound using Hoeffding's inequality
+    const statisticalDeviation = Math.sqrt(Math.log(2 / 0.05) / (2 * sampleSize)); // 95% confidence
+    const upperBound = measuredQBER + statisticalDeviation * 100; // Convert to percentage
+    
+    // Check against security threshold (typically 11% for BB84)
+    const isSecure = upperBound < securityThreshold;
+    
+    return { isSecure, upperBound };
+  };
+
   const generateAnalysisData = (bits: QuantumBit[]) => {
-    // Calculate QBER (Quantum Bit Error Rate) as: mismatched bits / total bits
-    // This counts the total number of mismatched bits between Alice and Bob over all bits
-    const mismatchedBits = bits.filter(
+    // Calculate sifted key bits (where bases match)
+    const siftedKeyBits = bits.filter((bit) => bit.inKey);
+    
+    // Calculate raw errors on sifted key (not total bits)
+    const rawErrors = siftedKeyBits.filter(
       (bit) => bit.bobMeasurement !== null && bit.aliceBit !== bit.bobMeasurement
     );
-    const qber = bits.length > 0
-      ? (mismatchedBits.length / bits.length) * 100
+    
+    // Calculate additive error model contributions
+    const fiberLength = 10; // Using default fiber length of 10km for simulation
+    const darkCountContribution = calculateDarkCountContribution(fiberLength);
+    const intrinsicFloor = calculateIntrinsicFloor();
+    
+    // Calculate total QBER as ratio of total errors to sifted key count
+    const totalErrors = rawErrors.length;
+    const siftedKeyCount = siftedKeyBits.length;
+    
+    const rawQBER = siftedKeyCount > 0 
+      ? (totalErrors / siftedKeyCount) * 100
       : 0;
-
+    
+    // Add quantum shot noise (statistical fluctuation) - decreases as 1/sqrt(N)
+    // This simulates the statistical uncertainty in quantum measurements
+    const shotNoiseStdDev = siftedKeyCount > 0 ? (1 / Math.sqrt(siftedKeyCount)) * 100 : 0;
+    const shotNoise = (Math.random() - 0.5) * 2 * shotNoiseStdDev; // Random fluctuation
+    
+    // Calculate realistic QBER with intrinsic error floor (QBER can never be zero in practice)
+    // Even with perfect conditions, there's always ~1-3% error from optical imperfections
+    const measuredQBER = Math.max(rawQBER + shotNoise, intrinsicFloor);
+    
+    // Add dark counts contribution (with 0.5 probability factor)
+    // Dark counts cause random detection, so they contribute 50% error rate
+    const darkCountErrorContribution = darkCountContribution;
+    
+    // Total QBER includes measured QBER plus dark count contributions
+    const totalQBER = measuredQBER + darkCountErrorContribution;
+    
+    // Apply statistical security check
+    const securityCheck = applySecurityCheck(totalQBER, siftedKeyCount);
+    const secureKeyRate = securityCheck.isSecure ? (siftedKeyCount / bits.length) * 100 : 0;
+    
     // Prepare data for display
     const data = [
       { name: "Total Bits", value: bits.length },
       { name: "Matching Bases", value: bits.filter((bit) => bit.isMatching).length },
-      { name: "Key Bits", value: bits.filter((bit) => bit.inKey).length },
-      { name: "QBER (%)", value: qber.toFixed(2) }, // Fixed to be QBER instead of error rate
+      { name: "Sifted Key Count", value: siftedKeyCount },
+      { name: "Raw QBER (%)", value: rawQBER.toFixed(2) },
+      { name: "Intrinsic Floor (%)", value: intrinsicFloor.toFixed(2) },
+      { name: "Dark Count Contribution (%)", value: darkCountErrorContribution.toFixed(2) },
+      { name: "Total QBER (%)", value: totalQBER.toFixed(2) },
+      { name: "Statistical Upper Bound (%)", value: securityCheck.upperBound.toFixed(2) },
+      { name: "Secure Key Rate (%)", value: secureKeyRate.toFixed(2) },
+      { name: "Security Status", value: securityCheck.isSecure ? "Secure" : "ABORT: Key compromised" }
     ];
 
     setSimulationData(data);
@@ -748,9 +904,9 @@ export const SimulationSection = () => {
   return (
     <div className="space-y-6">
       {/* Alice-Bob Animation Section */}
-      <div className="bg-white rounded-xl p-6 shadow-lg">
+      <div className="bg-card rounded-xl p-6 shadow-lg border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-800">
+          <h2 className="text-xl font-bold text-foreground">
             Quantum Transmission Animation
           </h2>
         </div>
@@ -760,16 +916,18 @@ export const SimulationSection = () => {
             <div className="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl border-4 border-pink-400 bg-gradient-to-r from-pink-200 to-pink-300 shadow-lg">
               👩‍🦰
             </div>
-            <div className="font-bold text-gray-800 mb-3">Alice</div>
-            <div className="bg-gray-100 p-3 rounded-lg text-sm w-full text-center border border-gray-200">
-              <div className="font-medium">
-                Bit: <strong>{aliceBit}</strong>
+            <div className="font-bold text-foreground mb-3">Alice</div>
+            {isStepByStep && (
+              <div className="bg-muted p-3 rounded-lg text-sm w-full text-center border border-border">
+                <div className="font-medium">
+                  Bit: <strong>{aliceBit}</strong>
+                </div>
+                <div className="font-medium">
+                  Basis: <strong>{aliceBasis}</strong>
+                </div>
+                
               </div>
-              <div className="font-medium">
-                Basis: <strong>{aliceBasis}</strong>
-              </div>
-              
-            </div>
+            )}
           </div>
 
           {/* Channel Area */}
@@ -779,7 +937,7 @@ export const SimulationSection = () => {
               style={{ boxShadow: "0 0 15px rgba(52, 152, 219, 0.4)" }}
             >
               <div
-                className={`photon-particle absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-gray-800 shadow-lg transition-all duration-300 ${
+                className={`photon-particle absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-foreground shadow-lg transition-all duration-300 ${
                   isPhotonVisible ? "opacity-100" : "opacity-0"
                 } ${isPhotonVibrating ? "animate-vibrate" : ""} ${isPhotonFalling ? "animate-fall" : ""}`}
                 style={{
@@ -791,7 +949,7 @@ export const SimulationSection = () => {
                 →
               </div>
               <div
-                className={`absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium transition-opacity whitespace-nowrap ${
+                className={`absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground px-4 py-2 rounded-full text-sm font-medium transition-opacity whitespace-nowrap border border-border ${
                   isStatusInfoVisible ? "opacity-100" : "opacity-0"
                 }`}
               >
@@ -802,7 +960,7 @@ export const SimulationSection = () => {
             {/* Alice Polarizer */}
             <div className="absolute left-[10%] top-1/2 transform -translate-y-1/2 z-20">
               <div
-                className={`w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 border-4 border-gray-700 flex items-center justify-center font-bold text-xl text-gray-800 shadow-lg ${
+                className={`w-16 h-16 bg-gradient-to-r from-muted to-muted/80 border-4 border-foreground/50 flex items-center justify-center font-bold text-xl text-foreground shadow-lg ${
                   alicePolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
@@ -847,7 +1005,7 @@ export const SimulationSection = () => {
             {/* Bob Polarizer */}
             <div className="absolute right-[10%] top-1/2 transform -translate-y-1/2 z-20">
               <div
-                className={`w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 border-4 border-gray-700 flex items-center justify-center font-bold text-xl text-gray-800 shadow-lg ${
+                className={`w-16 h-16 bg-gradient-to-r from-muted to-muted/80 border-4 border-foreground/50 flex items-center justify-center font-bold text-xl text-foreground shadow-lg ${
                   bobPolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
@@ -861,15 +1019,17 @@ export const SimulationSection = () => {
             <div className="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl border-4 border-indigo-500 bg-gradient-to-r from-indigo-400 to-indigo-600 shadow-lg">
               👨‍💼
             </div>
-            <div className="font-bold text-gray-800 mb-3">Bob</div>
-            <div className="bg-gray-100 p-3 rounded-lg text-sm w-full text-center border border-gray-200">
-              <div className="font-medium">
-                Basis: <strong>{bobBasis}</strong>
+            <div className="font-bold text-foreground mb-3">Bob</div>
+            {isStepByStep && (
+              <div className="bg-muted p-3 rounded-lg text-sm w-full text-center border border-border">
+                <div className="font-medium">
+                  Basis: <strong>{bobBasis}</strong>
+                </div>
+                <div className="font-medium">
+                  Measures: <strong>{bobBit}</strong>
+                </div>
               </div>
-              <div className="font-medium">
-                Measures: <strong>{bobBit}</strong>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -973,14 +1133,14 @@ export const SimulationSection = () => {
                         <Slider
                           value={eavesdroppingRate}
                           onValueChange={setEavesdroppingRate}
-                          max={100}
+                          max={5}
                           min={0}
-                          step={5}
+                          step={1}
                           className="flex-1"
                           disabled={isRunning}
                         />
                         <span className="text-sm w-8">
-                          {eavesdroppingRate[0]}%
+                          {eavesdroppingRate[0]}
                         </span>
                       </div>
 
@@ -1021,7 +1181,7 @@ export const SimulationSection = () => {
                             size="sm"
                             onClick={() => {
                               setNumQubits([16]);
-                              setEavesdroppingRate([50]);
+                              setEavesdroppingRate([3]);
                               setNoiseLevel([2]);
                             }}
                             className="text-xs"
@@ -1057,7 +1217,7 @@ export const SimulationSection = () => {
                             size="sm"
                             onClick={() => {
                               setNumQubits([16]);
-                              setEavesdroppingRate([30]);
+                              setEavesdroppingRate([2]);
                               setNoiseLevel([5]);
                             }}
                             className="text-xs"
@@ -1332,9 +1492,9 @@ export const SimulationSection = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                       <table className="w-full text-sm">
-                        <thead>
+                        <thead className="sticky top-0 bg-background z-10">
                           <tr className="border-b border-quantum-blue/30">
                             <th className="text-left p-2">Bit #</th>
                             <th className="text-left p-2 bg-quantum-blue/10 border-l border-r border-quantum-blue/30">
@@ -1349,6 +1509,16 @@ export const SimulationSection = () => {
                             </th>
                             <th className="text-left p-2 bg-quantum-blue/10 border-r border-quantum-blue/30">
                               Basis
+                            </th>
+                            <th className="text-left p-2 bg-red-500/10 border-l border-r border-red-500/30" colSpan={3}>
+                              <div className="text-center">
+                                <div className="font-bold text-red-500">
+                                  Eve (Eavesdropper)
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Intercept
+                                </div>
+                              </div>
                             </th>
                             <th className="text-left p-2 bg-quantum-purple/10 border-l border-r border-quantum-purple/30">
                               <div className="text-center">
@@ -1377,13 +1547,22 @@ export const SimulationSection = () => {
                             <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
                               Polarization
                             </th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
+                            <th className="p-1 bg-red-500/5 text-center text-red-500 border-l border-red-500/20">
+                              Measure Basis
+                            </th>
+                            <th className="p-1 bg-red-500/5 text-center text-red-500">
+                              Measured Bit
+                            </th>
+                            <th className="p-1 bg-red-500/5 text-center text-red-500 border-r border-red-500/20">
+                              Resend Basis
+                            </th>
+                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple border-l border-quantum-purple/20">
                               Received Bit
                             </th>
                             <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
                               Measurement
                             </th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
+                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple border-r border-quantum-purple/20">
                               Outcome
                             </th>
                             <th className="p-1 text-center">Basis</th>
@@ -1411,12 +1590,40 @@ export const SimulationSection = () => {
                                     {getBasisSymbol(bit.aliceBasis)}
                                   </span>
                                 </td>
+                                {/* Eve's columns */}
+                                <td className="p-2 font-mono text-center bg-red-500/5 border-l border-red-500/20">
+                                  {bit.intercepted ? (
+                                    <span className="text-lg font-bold text-red-500">
+                                      {getBasisSymbol(bit.eveMeasureBasis!)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </td>
+                                <td className="p-2 font-mono text-center bg-red-500/5">
+                                  {bit.intercepted ? (
+                                    <span className="inline-block w-6 h-6 bg-red-500/20 rounded-full text-center leading-6 text-red-500 font-bold">
+                                      {bit.eveMeasurement}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </td>
+                                <td className="p-2 font-mono text-center bg-red-500/5 border-r border-red-500/20">
+                                  {bit.intercepted ? (
+                                    <span className="text-lg font-bold text-red-500">
+                                      {getBasisSymbol(bit.eveResendBasis!)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </td>
                                 <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
                                   <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
                                     {bit.bobMeasurement ?? "-"}
                                   </span>
                                 </td>
-                                <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
+                                <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 text-center">
                                   <span className="text-lg font-bold">
                                     {getBasisSymbol(bit.bobBasis)}
                                   </span>

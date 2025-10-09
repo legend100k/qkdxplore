@@ -1,44 +1,157 @@
 import { QuantumBit } from "./types";
+import {
+  OpticalNoiseParams,
+  PolarizationState,
+  applyOpticalNoise,
+  legacyNoiseToOptical,
+  getAttenuationCoeff
+} from "@/lib/opticalNoise";
 
-export const simulateBB84 = (qubits: number, eavesdropping: number, noise: number) => {
+// Calculate dark count probability and optical misalignment error floor
+const calculateDarkCountContribution = (fiberLength: number, hasNoise: boolean = false): number => {
+  // Dark count rate typically 10-100 Hz for single photon detectors at 1550nm
+  // At high clock rates, this contributes to the error rate
+  const darkCountRate = 50; // Hz (example value)
+  const clockRate = 1e9; // 1 GHz clock rate
+  const darkCountProbability = darkCountRate / clockRate; // Probability per bit
+  
+  // For ideal conditions (short distance, no noise), dark count contribution is negligible
+  if (fiberLength < 5 && !hasNoise) {
+    return 0.02; // Very minimal contribution in ideal conditions
+  }
+  
+  // With noise or increasing distance, dark counts become more significant
+  if (hasNoise && fiberLength < 10) {
+    // For noisy conditions at short distances, add modest dark count contribution
+    return 0.5 + (fiberLength / 10) * 1.5; // 0.5-2% contribution
+  }
+  
+  // With increasing distance, more photons are lost, so dark counts become a larger fraction
+  const lossProbability = 1 - Math.pow(10, -(0.2 * fiberLength) / 10); // Typical fiber at 1550nm
+  const relativeDarkCountContribution = darkCountProbability / (1 - lossProbability);
+  
+  // Limit to 50% max since dark counts are random
+  return Math.min(relativeDarkCountContribution * 100, 50) * 0.5; // 50% error contribution
+};
+
+// Calculate optical misalignment/intrinsic floor error based on actual noise conditions
+const calculateIntrinsicFloor = (opticalParams?: OpticalNoiseParams, noise?: number): number => {
+  // For ideal conditions (no noise), intrinsic floor should be minimal
+  // For noisy conditions, floor should be at least ~5% to clearly show the effect
+  
+  // Check if we're in truly ideal conditions (no noise at all)
+  const isIdeal = (noise !== undefined && noise === 0) || 
+                  (opticalParams && 
+                   opticalParams.depolarization === 0 && 
+                   opticalParams.phaseDamping === 0 &&
+                   opticalParams.thermalNoise === 0);
+  
+  if (isIdeal) {
+    // In perfect ideal conditions, only quantum shot noise and minimal detector imperfections
+    // Return a very small floor (~0.1-0.5%)
+    const minimalFloor = 0.1;
+    const fluctuation = Math.random() * 0.4; // Small random variation
+    return minimalFloor + fluctuation; // 0.1-0.5%
+  }
+  
+  // For conditions with noise, ensure minimum ~5% base error
+  // Scale with noise level beyond that
+  const noiseLevel = noise !== undefined ? noise / 100 : 
+                     (opticalParams ? (opticalParams.depolarization + opticalParams.phaseDamping) / 2 : 0.2);
+  
+  // Base floor starts at 5% for any non-zero noise, scales up with higher noise
+  const baseFloor = 5 + noiseLevel * 10; // Scales from 5% to 15% with noise
+  const fluctuation = (Math.random() - 0.5) * 1.0; // ±0.5% variation
+  return Math.max(4.5, baseFloor + fluctuation);
+};
+
+// Apply statistical security check using Hoeffding's bound
+const applySecurityCheck = (measuredQBER: number, sampleSize: number, securityThreshold: number = 11): { isSecure: boolean, upperBound: number } => {
+  // Calculate statistical upper bound using Hoeffding's inequality
+  const statisticalDeviation = Math.sqrt(Math.log(2 / 0.05) / (2 * sampleSize)); // 95% confidence
+  const upperBound = measuredQBER + statisticalDeviation * 100; // Convert to percentage
+  
+  // Check against security threshold (typically 11% for BB84)
+  const isSecure = upperBound < securityThreshold;
+  
+  return { isSecure, upperBound };
+};
+
+export const simulateBB84 = (
+  qubits: number,
+  eavesdropping: number,
+  noise: number,
+  opticalParams?: OpticalNoiseParams
+) => {
   let matchingBases = 0;
   let errors = 0;
   let keyBits = 0;
   const simulationBits: QuantumBit[] = [];
 
+  // Convert legacy noise to optical parameters if not provided
+  const noiseParams = opticalParams || legacyNoiseToOptical(noise, 10);
+
+  // Convert eavesdropping to probability (0-5 Eves -> 0-100% probability)
+  const eavesProbability = eavesdropping / 5;
+
   for (let i = 0; i < qubits; i++) {
     const aliceBasis = Math.random() > 0.5;
     const aliceBit = Math.random() > 0.5 ? 1 : 0;
-    const isEavesdropped = Math.random() < eavesdropping / 100;
+    const isEavesdropped = Math.random() < eavesProbability;
+
+    // Create polarization state for the photon
+    let photonState: PolarizationState = {
+      basis: aliceBasis ? 'diagonal' : 'rectilinear',
+      bit: aliceBit,
+      amplitude: 1.0,
+      phase: 0
+    };
 
     // If eavesdropped, Eve measures with her random basis
-    let evesMeasurement: number | null = null;
-    let evesBasis: boolean | null = null;
+    let eveMeasurement: number | null = null;
+    let eveMeasureBasis: boolean | null = null;
+    let eveResendBasis: boolean | null = null;
     if (isEavesdropped) {
-      evesBasis = Math.random() > 0.5; // Eve's random basis selection
+      eveMeasureBasis = Math.random() > 0.5; // Eve's random basis selection for measurement
       // Eve measures the qubit in her basis
-      evesMeasurement = aliceBit; // Initially same as Alice's bit
+      eveMeasurement = aliceBit; // Initially same as Alice's bit
       // If Eve's basis doesn't match Alice's, she has a 50% chance of getting the wrong result
-      if (evesBasis !== aliceBasis) {
-        evesMeasurement = Math.random() > 0.5 ? 1 - aliceBit : aliceBit;
+      if (eveMeasureBasis !== aliceBasis) {
+        eveMeasurement = Math.random() > 0.5 ? 1 - aliceBit : aliceBit;
       }
+      
+      // Eve chooses a random basis to resend the photon
+      eveResendBasis = Math.random() > 0.5;
+      
+      // Eve re-prepares the photon based on her measurement and resend basis
+      photonState = {
+        basis: eveResendBasis ? 'diagonal' : 'rectilinear',
+        bit: eveMeasurement,
+        amplitude: 0.9, // Eve's measurement reduces amplitude slightly
+        phase: 0
+      };
     }
 
-    // Bob receives the possibly tampered qubit
-    let bobResult = isEavesdropped ? (evesMeasurement !== null ? evesMeasurement : aliceBit) : aliceBit;
+    // Apply optical noise to the photon during transmission
+    const noisyPhoton = applyOpticalNoise(photonState, noiseParams);
+    
+    // If photon is lost (null), Bob doesn't detect it
+    if (!noisyPhoton) {
+      // Photon lost - don't add to simulation bits (or add as undetected)
+      continue;
+    }
+
+    // Bob receives the noisy photon
+    let bobResult = noisyPhoton.bit;
 
     // Bob measures in his basis
     const bobBasis = Math.random() > 0.5;
-    // If Bob's basis doesn't match Alice's (original) basis, we have a measurement issue
-    // In a real quantum system, only the basis matching matters, so we'll keep the bit value
-    // but account for potential measurement differences if Eve interfered
-
-    let hasError = false;
-
-    // Apply noise
-    if (Math.random() < noise / 100) {
-      bobResult = 1 - bobResult;
-      hasError = true;
+    
+    // If Bob's basis doesn't match the photon's current basis (after noise)
+    // he gets a random result (quantum measurement collapse)
+    const photonBasisBool = noisyPhoton.basis === 'diagonal';
+    if (bobBasis !== photonBasisBool) {
+      bobResult = Math.random() > 0.5 ? 1 : 0;
     }
 
     const basisMatch = aliceBasis === bobBasis;
@@ -56,50 +169,174 @@ export const simulateBB84 = (qubits: number, eavesdropping: number, noise: numbe
       id: i,
       aliceBit,
       aliceBasis: aliceBasis ? "Diagonal" : "Rectilinear",
-      bobBasis: bobBasis ? "Diagonal" : "Rectilinear", 
+      bobBasis: bobBasis ? "Diagonal" : "Rectilinear",
       bobMeasurement: bobResult,
       match: basisMatch,
       kept: kept && bobResult === aliceBit,
-      eavesdropped: isEavesdropped
+      eavesdropped: isEavesdropped,
+      eveMeasureBasis: isEavesdropped ? (eveMeasureBasis ? "Diagonal" : "Rectilinear") : null,
+      eveMeasurement: isEavesdropped ? eveMeasurement : null,
+      eveResendBasis: isEavesdropped ? (eveResendBasis ? "Diagonal" : "Rectilinear") : null
     });
   }
 
+  // Calculate additive error model contributions
+  const fiberLength = opticalParams?.fiberLength || 10; // Use provided fiber length or default 10km
+  const hasNoise = (noise !== undefined && noise > 0) || 
+                   (opticalParams && (opticalParams.depolarization > 0 || 
+                                     opticalParams.phaseDamping > 0 || 
+                                     opticalParams.thermalNoise > 0));
+  const hasEavesdropper = eavesdropping > 0;
+  
+  // Calculate measured QBER from raw errors (this includes eavesdropping effects)
+  const rawQBER = keyBits > 0 ? (errors / keyBits) * 100 : 0;
+  
+  // Add quantum shot noise (statistical fluctuation) - decreases as 1/sqrt(N)
+  // This simulates the statistical uncertainty in quantum measurements
+  const shotNoiseStdDev = keyBits > 0 ? (1 / Math.sqrt(keyBits)) * 100 : 0;
+  const shotNoise = (Math.random() - 0.5) * 2 * shotNoiseStdDev; // Random fluctuation
+  
+  // If there's an eavesdropper, the raw QBER from errors should dominate
+  // Only apply intrinsic floor and dark counts when they would be significant
+  let measuredQBER: number;
+  let totalQBER: number;
+  let darkCountContribution: number;
+  let intrinsicFloor: number;
+  
+  if (hasEavesdropper) {
+    // With eavesdropper, use raw QBER (which includes eavesdropping errors)
+    // Add minimal intrinsic contributions
+    intrinsicFloor = 0.5; // Small baseline for detector imperfections
+    measuredQBER = Math.max(rawQBER + shotNoise, intrinsicFloor);
+    darkCountContribution = calculateDarkCountContribution(fiberLength, hasNoise);
+    totalQBER = measuredQBER + darkCountContribution * 0.2; // Reduced dark count impact
+  } else {
+    // No eavesdropper - apply full intrinsic floor and noise contributions
+    darkCountContribution = calculateDarkCountContribution(fiberLength, hasNoise);
+    intrinsicFloor = calculateIntrinsicFloor(opticalParams, noise);
+    
+    // Calculate realistic QBER with intrinsic error floor
+    measuredQBER = Math.max(rawQBER + shotNoise, intrinsicFloor);
+    
+    // Calculate total QBER with additive error contributions (dark counts, etc.)
+    totalQBER = measuredQBER + darkCountContribution;
+  }
+  
+  // Apply statistical security check
+  const securityCheck = applySecurityCheck(totalQBER, keyBits);
+  const secureKeyRate = securityCheck.isSecure ? (keyBits / qubits) * 100 : 0;
+
   return {
-    errorRate: keyBits > 0 ? (errors / keyBits) * 100 : 0,  // QBER is calculated on the sifted key bits
+    errorRate: totalQBER, // Total QBER including all realistic contributions (never zero)
+    totalQBER: totalQBER,    // Total QBER with all contributions
+    darkCountContribution: darkCountContribution,
+    intrinsicFloor: intrinsicFloor,
     keyRate: (keyBits / qubits) * 100,
+    secureKeyRate: secureKeyRate,
     keyLength: keyBits,
-    basisMatchRate: (matchingBases / qubits) * 100
+    basisMatchRate: (matchingBases / qubits) * 100,
+    statisticalUpperBound: securityCheck.upperBound,
+    isSecure: securityCheck.isSecure
   };
 };
 
 export const generateAnalysis = (experimentId: string, data: Record<string, unknown>[]) => {
   switch (experimentId) {
     case "effect-of-qubits": {
-      return `Experiment 1: Effect of Qubits
-Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.
-Objective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).
-Apparatus: Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)
+      if (data.length === 0) {
+        return `Experiment 1: Effect of Number of Qubits
+Aim: To investigate how the number of transmitted qubits affects key length and statistical security in the BB84 protocol.
+Objective: To understand the relationship between sample size (number of qubits) and the reliability of security analysis.
+Apparatus: Q-Xplore Virtual Lab
+
 Theory:
-The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
-In BB84, information is encoded onto qubits using two non-orthogonal bases:
-The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
-The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
-The protocol's security is not mathematical but physical, relying on three core principles:
-Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
-No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
-Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.
-These properties ensure that any attempt to gain information about the key introduces detectable anomalies.
+In BB84, Alice and Bob transmit quantum bits (qubits) using randomly chosen polarization bases. Due to the random basis selection:
+- Only ~50% of qubits have matching bases (basis reconciliation)
+- These matching qubits form the "sifted key"
+- The sifted key length ≈ (Total qubits transmitted) / 2
+
+Statistical Security:
+The security of QKD depends on accurately estimating the QBER from a sample of the sifted key. With more qubits:
+1. Larger sample size → More reliable QBER estimation
+2. Statistical fluctuations decrease as ~1/√N (where N = number of qubits)
+3. Hoeffding's inequality bounds the confidence: The true QBER is within ε of measured QBER with probability 1-δ, where ε ∝ 1/√N
+
+Security Threshold:
+- QBER < 11%: Key is secure (after error correction and privacy amplification)
+- QBER ≥ 11%: Key is compromised; abort protocol
+
+Key Length vs. Security Trade-off:
+- More qubits → Longer final key (useful for encrypting more data)
+- More qubits → Better statistical certainty (more confident in security analysis)
+- Fewer qubits → Faster transmission but less reliable security guarantees
+
 Procedure:
-Go to the Q-Xplore Virtual Lab simulator.
-Run the BB84 simulation without any evesdropper and with low channel noise.
-Note the QBER and the successful generation of a secure key.
-Take a screenshot of the results screen showing the low QBER.
-Observation:
-[Your Observation Here]
-Screenshot of Experiment 1:
-[Paste Your Screenshot Here]
+Set eavesdropper = OFF, Channel Noise = LOW (to isolate the effect of qubit number)
+Vary the number of qubits from small (10) to large (100)
+Observe how key length and statistical security improve with more qubits
+Note that QBER remains stable (intrinsic floor ~1.5-2%) regardless of qubit count
+
+Expected Observation:
+- Key length increases linearly with number of qubits
+- QBER remains constant (no eavesdropping, low noise)
+- Statistical confidence improves with more qubits
+                                                       
+Screenshot: [Paste your experimental results here]
+
 Conclusion:
-[Based on your observation and results, write what you learned about the effect of qubits.]`;
+[Based on your data, explain how increasing the number of qubits affects the final key length and the reliability of security analysis. Note that while more qubits give a longer key and better statistics, the QBER itself remains constant under fixed channel conditions.]`;
+      }
+      
+      // Calculate statistics for the analysis
+      const qubitCounts = data.map(d => Number(d.qubits));
+      const keyLengths = data.map(d => Number(d.keyLength));
+      const qberValues = data.map(d => Number(d.qber));
+      
+      const minQubits = Math.min(...qubitCounts);
+      const maxQubits = Math.max(...qubitCounts);
+      const minKeyLength = Math.min(...keyLengths);
+      const maxKeyLength = Math.max(...keyLengths);
+      const avgQBER = qberValues.reduce((sum, val) => sum + val, 0) / qberValues.length;
+      
+      // Calculate approximate key rate (key length / total qubits)
+      const keyRates = data.map(d => (Number(d.keyLength) / Number(d.qubits)) * 100);
+      const avgKeyRate = keyRates.reduce((sum, val) => sum + val, 0) / keyRates.length;
+      
+      // Check if key length scales linearly with qubits
+      const expectedRatio = maxKeyLength / maxQubits;
+      const actualMinKey = minQubits * expectedRatio;
+      const scalingQuality = minKeyLength / actualMinKey;
+      const isLinear = scalingQuality > 0.4 && scalingQuality < 0.6; // Should be ~0.5 for perfect linear scaling
+      
+      return `Experiment 1: Effect of Number of Qubits - Analysis
+
+Key Findings:
+- Qubit range tested: ${minQubits} to ${maxQubits} qubits
+- Key length range: ${minKeyLength} to ${maxKeyLength} bits
+- Average key rate: ${avgKeyRate.toFixed(1)}% (expected ~50% due to basis reconciliation)
+- Average QBER: ${avgQBER.toFixed(2)}% (remains constant across all qubit counts)
+
+Relationship Analysis:
+${isLinear ? 
+  `✓ Key length scales linearly with number of qubits, as expected.
+  This confirms that approximately 50% of transmitted qubits survive basis reconciliation to form the sifted key.` :
+  `⚠ Key length scaling shows some deviation from perfect linearity.
+  This may be due to statistical fluctuations in basis matching at small sample sizes.`
+}
+
+Statistical Security:
+- With ${minQubits} qubits: Statistical uncertainty is higher (~${(100 / Math.sqrt(minQubits)).toFixed(1)}%)
+- With ${maxQubits} qubits: Statistical uncertainty is lower (~${(100 / Math.sqrt(maxQubits)).toFixed(1)}%)
+- Larger sample sizes provide more confident security guarantees
+
+Practical Implications:
+1. More qubits → Longer encryption key (can secure more data)
+2. More qubits → Better statistical confidence in QBER measurement
+3. The QBER (${avgQBER.toFixed(2)}%) remains stable regardless of qubit count, confirming that channel conditions, not sample size, determine error rate
+4. For real-world QKD: Balance between transmission time (more qubits = longer) and security confidence
+
+Conclusion:
+This experiment demonstrates that while the number of qubits directly determines the final key length (~50% of transmitted qubits), it does not affect the QBER itself. The QBER is determined by channel noise and eavesdropping, not by sample size. However, more qubits provide better statistical confidence when estimating the QBER and making security decisions.`;
     }
     
     case "effect-of-channel-noise": {

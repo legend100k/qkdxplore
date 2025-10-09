@@ -7,6 +7,7 @@ import { ExperimentUI } from "../common/ExperimentUI";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { OpticalNoiseParams, getAttenuationCoeff, calculatePhotonLoss } from "@/lib/opticalNoise";
 
 const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSaveExperiment }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -48,25 +49,39 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
 
     totalSteps = Math.floor((distanceRange[1] - distanceRange[0]) / step) + 1;
     for (let distance = distanceRange[0]; distance <= distanceRange[1]; distance += step) {
-      // Simulate distance effect in optical fiber where signal degrades exponentially with distance
-      // In optical fiber, signal loss follows Beer-Lambert law: P_out = P_in * 10^(-alpha * L / 10)
-      // where alpha is the attenuation coefficient in dB/km
-      const baseNoiseValue = 0.1; // Base noise independent of distance
+      // Create optical noise parameters that scale with distance
+      // Distance primarily affects: photon loss, PMD, and slightly increases depolarization
       
-      // Calculate effective noise based on distance using exponential decay model
-      const distanceInKm = distance / 10.0; // Convert to km if current unit is not km
-      const fiberLoss = Math.pow(10, -(attenuationCoeff * distanceInKm / 10)); // Linear loss factor
-      const distanceInducedNoise = (1 - fiberLoss) * 20; // As distance increases, noise increases due to signal degradation
+      const photonLoss = calculatePhotonLoss(distance, attenuationCoeff);
       
-      const distanceNoise = baseNoiseValue + distanceInducedNoise + baseNoise;
+      // Base optical noise increases slightly with distance due to:
+      // - More opportunity for polarization drift
+      // - Environmental fluctuations over longer fiber
+      const distanceFactor = Math.sqrt(distance / 100); // Scales with √distance
       
-      const result = simulateBB84(qubits, 0, distanceNoise);
+      const opticalParams: OpticalNoiseParams = {
+        fiberLength: distance,
+        wavelength: 1550,
+        attenuationCoeff: attenuationCoeff,
+        depolarization: (baseNoise / 100) * 0.02 + distanceFactor * 0.01,  // Slight increase with distance
+        phaseDamping: (baseNoise / 100) * 0.015 + distanceFactor * 0.008,  // Phase decoherence
+        amplitudeDamping: photonLoss * 0.5,                                  // Proportional to fiber loss
+        pmd: 0.5 + distance / 100,                                          // PMD grows with distance
+        thermalNoise: (baseNoise / 100) * 0.01                              // Constant thermal noise
+      };
+      
+      const result = simulateBB84(qubits, 0, baseNoise, opticalParams);
       experimentData.push({
         distance,
-        qber: result.errorRate,  // Store as qber for proper charting
-        photonLoss: (1 - Math.pow(10, -(attenuationCoeff * distanceInKm / 10))) * 100, // Fiber loss in %
+        qber: result.totalQBER,  // Store total QBER with all contributions
+        rawQber: result.errorRate,  // Store measured QBER without noise contributions
+        photonLoss: photonLoss * 100, // Photon loss in %
         errorRate: result.errorRate,
-        keyRate: result.keyRate
+        keyRate: result.keyRate,
+        darkCountContribution: result.darkCountContribution,
+        intrinsicFloor: result.intrinsicFloor,
+        statisticalUpperBound: result.statisticalUpperBound,
+        isSecure: result.isSecure
       });
       currentStep++;
       setProgress((currentStep / totalSteps) * 100);
@@ -173,6 +188,15 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
 
   const experimentResult = results["effect-of-distance"];
 
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
+
   return (
     <div className="space-y-6">
       <ExperimentUI
@@ -184,6 +208,7 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
         results={results}
         selectedExpId="effect-of-distance"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="quantum-blue"
         experimentName="Effect of Distance"
         experimentData={experimentResult?.data}

@@ -279,7 +279,7 @@ export const PostQuiz = ({ onQuizComplete }: PostQuizProps) => {
                     <div className="flex items-center gap-3">
                       <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                         selectedAnswers[currentQuestion] === index 
-                          ? "border-white bg-white" 
+                          ? "border-primary-foreground bg-primary-foreground" 
                           : "border-current"
                       }`}>
                         {selectedAnswers[currentQuestion] === index && (

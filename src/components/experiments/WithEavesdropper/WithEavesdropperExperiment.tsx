@@ -30,8 +30,8 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
     setCurrentBits([]);
     
     const experimentData: Record<string, unknown>[] = [];
-    let totalSteps = 0;
-    let currentStep = 0;
+    const totalSteps = 0;
+    const currentStep = 0;
 
     // Animate photon during experiment
     const animatePhoton = async () => {
@@ -76,6 +76,15 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   };
 
   const experimentResult = results["with-eavesdropper"];
+
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
 
   // Parameter controls JSX
   const parameterControls = (
@@ -131,6 +140,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
         results={results}
         selectedExpId="with-eavesdropper"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="quantum-glow"
         experimentName="With Eavesdropper"
         experimentData={experimentResult?.data}

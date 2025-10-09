@@ -84,6 +84,15 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
 
   const experimentResult = results["effect-of-qubits"];
 
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
+
   // Parameter controls JSX
   const parameterControls = (
     <Card className="border-quantum-blue/30 p-4">
@@ -124,11 +133,12 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="eavesdrop">Eavesdropping Rate: {eavesdropRate}%</Label>
+            <Label htmlFor="eavesdrop">Eavesdroppers: {eavesdropRate}</Label>
             <Slider
               id="eavesdrop"
               min={0}
-              max={100}
+              max={5}
+              step={1}
               value={[eavesdropRate]}
               onValueChange={(value) => setEavesdropRate(value[0])}
               disabled={isRunning}
@@ -150,6 +160,7 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
         results={results}
         selectedExpId="effect-of-qubits"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="quantum-blue"
         experimentName="Effect of Qubits"
         experimentData={experimentResult?.data}

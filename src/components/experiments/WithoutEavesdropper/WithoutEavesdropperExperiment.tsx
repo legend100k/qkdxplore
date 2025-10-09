@@ -59,6 +59,15 @@ const WithoutEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onS
 
   const experimentResult = results["without-eavesdropper"];
 
+  const resetExperiment = () => {
+    setResults({});
+    setProgress(0);
+    setPhotonPosition(0);
+    setShowBitsSimulation(false);
+    setCurrentBits([]);
+    setFinalExperimentBits([]);
+  };
+
   return (
     <div className="space-y-6">
       <ExperimentUI
@@ -70,6 +79,7 @@ const WithoutEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onS
         results={results}
         selectedExpId="without-eavesdropper"
         runExperiment={runExperiment}
+        resetExperiment={resetExperiment}
         color="primary"
         experimentName="Without Eavesdropper"
         experimentData={experimentResult?.data}
