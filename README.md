@@ -1,4 +1,4 @@
-# Quantum BB84 Playground
+# QkdXplore
 
 An interactive web application for learning and experimenting with the BB84 quantum key distribution protocol - the first quantum cryptography protocol that enables secure communication using quantum mechanics principles.
 
@@ -19,7 +19,7 @@ An interactive web application for learning and experimenting with the BB84 quan
 
 ## Overview
 
-The Quantum BB84 Playground is an educational tool designed to help users understand quantum cryptography, specifically the BB84 protocol developed by Charles Bennett and Gilles Brassard in 1984. This protocol allows two parties (Alice and Bob) to securely share a secret key that can be used for encrypting and decrypting messages, with security guaranteed by the laws of quantum mechanics.
+The QkdXplore virtual lab is an educational tool designed to help users understand quantum cryptography, specifically the BB84 protocol developed by Charles Bennett and Gilles Brassard in 1984. This protocol allows two parties (Alice and Bob) to securely share a secret key that can be used for encrypting and decrypting messages, with security guaranteed by the laws of quantum mechanics.
 
 This application provides:
 - Interactive simulations of the BB84 protocol
@@ -38,7 +38,6 @@ This application provides:
   - Amplitude damping (photon loss)
   - Polarization mode dispersion (PMD)
   - Thermal detector noise
-  - Wavelength-dependent fiber attenuation (850nm, 1310nm, 1550nm)
 - Step-by-step mode to understand each phase of the protocol
 - Detailed results display showing bit values, basis choices, and key generation
 
@@ -60,7 +59,7 @@ This application provides:
 ### Reporting
 - Experiment report generation
 - Data visualization in reports
-- Downloadable HTML reports
+- Downloadable DOCX reports
 - Comprehensive analysis and conclusions
 
 ## Technology Stack
@@ -85,7 +84,7 @@ This application provides:
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd quantum-bb84-playground
+cd qkdxplore
 ```
 
 2. Install dependencies:
