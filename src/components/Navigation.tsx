@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { BookOpen, FileText, Cpu, FlaskConical, Cable, Code, FilePieChart, FileQuestion, GraduationCap, Info } from "lucide-react";
+import { BookOpen, FileText, Cpu, FlaskConical, Cable, Code, FilePieChart, FileQuestion, GraduationCap, Info, Newspaper } from "lucide-react";
+import { Certificate } from "./Certificate";
 
 interface NavigationProps {
   activeTab: string;
@@ -9,17 +10,17 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { id: "theory", label: "Theory", icon: BookOpen },
-  { id: "pre-quiz", label: "Pre-Quiz", icon: FileQuestion },
-  { id: "simulation", label: "Simulation", icon: Cpu },
-  { id: "experiments", label: "Experiments", icon: FlaskConical },
-  { id: "hardware", label: "Hardware", icon: Info },
+  { id: "theory", label: "Concepts", icon: BookOpen },
+  { id: "pre-quiz", label: "Knowledge Check", icon: FileQuestion },
+  { id: "simulation", label: "BB84 Simulation", icon: Cpu },
+  { id: "experiments", label: "Virtual Lab", icon: FlaskConical },
+  { id: "hardware", label: "Lab Equipment", icon: Info },
   //{ id: "qiskit", label: "Qiskit"},
-  { id: "python", label: "Python Code", icon: Code },
-  { id: "reports", label: "Reports", icon: FilePieChart },
-  { id: "post-quiz", label: "Post-Quiz", icon: FileText },    
-  //{ id: "certificate", label: "Certificate"},
-  { id: "about", label: "About", icon: GraduationCap },
+  { id: "python", label: "Code Explorer", icon: Code },
+  { id: "reports", label: "Experiment Reports", icon: FilePieChart },
+  { id: "post-quiz", label: "Assesment", icon: FileText },    
+  { id: "certificate", label: "Certification", icon : Newspaper},
+  { id: "about", label: "Credits", icon: GraduationCap }
 ];
 
 const getIcon = (id: string) => {
@@ -38,7 +39,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
             </div>
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent">
-                QKD Xplore
+                QKD_Xplore
               </h1>
               <p className="text-xs text-muted-foreground">
                 Quantum Lab
