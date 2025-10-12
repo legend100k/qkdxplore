@@ -1,36 +1,127 @@
-  const getDefaultTheory = (experimentId: string) => {
-    switch (experimentId) {
-      case "noise-analysis":
-        return `Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an eavesdropper, as it becomes impossible to distinguish these errors from a malicious attack.`;
-      case "eavesdropping-detection":
-        return `This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
-
+Experiment 1: Effect of Qubits
+Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.
+Objective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).
+Apparatus: Q-Xplore Virtual Lab (Web-based interface powered by Qiskit)
+Theory:
+The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+In BB84, information is encoded onto qubits using two non-orthogonal bases:
+The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
+The protocol's security is not mathematical but physical, relying on three core principles:
+Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.
+These properties ensure that any attempt to gain information about the key introduces detectable anomalies.
+Procedure:
+Go to the Q-Xplore Virtual Lab simulator.
+Run the BB84 simulation without any evesdropper and with low channel noise.
+Note the QBER and the successful generation of a secure key.
+Take a screenshot of the results screen showing the low QBER.
+Observation:
+[Your Observation Here]
+Screenshot of Experiment 1:
+[Paste Your Screenshot Here]
+Conclusion:
+[Based on your observation and results, write what you learned about the effect of qubits.]
+Experiment 2: BB84 Without an Evesdropper
+Aim: To establish a baseline for the BB84 protocol's performance under ideal, secure conditions.
+Objective: To observe the key generation process and resulting QBER when the quantum channel is secure.
+Apparatus: Q-Xplore Virtual Lab
+Theory:
+This experiment establishes the optimal operating conditions for the BB84 protocol. In the complete absence of an evesdropper, the only factors affecting the Quantum Bit Error Rate (QBER) are the inherent channel noise and system imperfections, as described in Experiment 2. Under well-controlled laboratory conditions with high-quality components, this intrinsic QBER can be very low, often below 2%.
+The process proceeds as follows:
+Quantum Transmission: Alice sends a sequence of qubits, each randomly prepared in one of the two bases.
+Quantum Measurement: Bob independently and randomly chooses a basis for each incoming qubit and measures it.
+Sifting: Alice and Bob publicly communicate the bases they used for each qubit (but not the bit values) over a classical channel. They discard all bits where their bases did not match. The remaining bits form the sifted key.
+Error Estimation: They compare a random subset of the sifted key to calculate the QBER. A low QBER confirms the channel is secure.
+Key Finalization: The remaining portion of the sifted key is then processed through error correction (to fix the few remaining errors) and privacy amplification (to reduce any partial information a potential evesdropper might have) to produce a final, identical, and perfectly secret key.
+This scenario demonstrates the protocol's maximum efficiency and serves as a control to identify the disruptive effects of an evesdropper.
+Procedure:
+Go to the Q-Xplore Virtual Lab simulator.
+Set the "evesdropper" parameter to OFF and "Channel Noise" to LOW.
+Run the simulation and note the low QBER and efficient key generation.
+Take a screenshot of the successful results.
+Observation:
+[Your Observation Here]
+Screenshot of Experiment 3:
+[Paste Your Screenshot Here]
+Conclusion :
+[Based on your observation and results, write what you learned.]
+Experiment 3: With an Evesdropper
+Aim: To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.
+Objective: To observe how Eve's interception attempts disturb the quantum states and significantly increase the QBER.
+Apparatus: Q-Xplore Virtual Lab
+Theory:
+This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
 Interception: Eve intercepts the qubit sent by Alice.
 Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.
 Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.
 Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.
-
 This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:
-
 P(Eve chooses wrong basis) = 1/2
 P(Bob gets wrong bit | Eve was wrong) = 1/2
 Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%
+Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.
+Procedure:
+Go to the Q-Xplore Virtual Lab simulator.
+Set the "evesdropper" parameter to ON.
+Run the simulation and observe the QBER.
+Take a screenshot of the results showing the high (~25%) QBER.
+Observation:
+[Your Observation Here]
+Screenshot of Experiment 4:
+[Paste Your Screenshot Here]
+Conclusion :
+[Based on your observation and results, write what you learned.]
+Experiment 4: Effect of Channel Noise
+Aim: To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).
+Objective: To isolate and observe the impact of channel noise on the QBER.
+Apparatus: Q-Xplore Virtual Lab
 
-Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.`;
-      case "qubit-scaling":
-        return `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+Theory: Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.
+Procedure:
+Set evesdropper = OFF, Distance = SHORT (to minimize other effects).
+Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
+Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
+Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.
+Observation:
+[Note: The QBER should increase significantly with higher noise levels, while the Final Key Length decreases only slightly. This proves noise creates errors.]
+                                                       Screenshot: [Paste screenshot for High Noise setting here]
+Conclusion:
+[Explain that channel noise directly increases the QBER, which threatens the security of the key by making it indistinguishable from an eavesdropped channel.]
 
-In BB84, information is encoded onto qubits using two non-orthogonal bases:
-The Rectilinear Basis (+): |0⟩₊ = |↑⟩ (Horizontal polarization), |1⟩₊ = |→⟩ (Vertical polarization)
-The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|↑⟩ + |→⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|↑⟩ - |→⟩)/√2 (135° polarization)
 
-The protocol's security is not mathematical but physical, relying on three core principles:
-Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
-No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An eavesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
-Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.`;
-      case "real-world-comparison":
-        return `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`;
-      default:
-        return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
-    }
-  };
+Experiment 5: Effect of Distance
+Aim: To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.
+Objective: To observe the relationship between distance, photon loss (key rate), and error rate (QBER).
+Apparatus: Q-Xplore Virtual Lab
+Theory: The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.
+Procedure:
+Set evesdropper = OFF, Channel Noise = LOW.
+Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
+Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
+Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length.
+Observation:
+[Note: The Final Key Length should drop dramatically with distance. The QBER may also see a slight increase. This shows distance causes loss and can worsen errors.]
+                                            Screenshot: [Paste screenshot for Long Distance setting here]
+Conclusion:
+[Explain that distance primarily causes photon loss, reducing key generation efficiency. It can also secondarily increase QBER, making it a critical practical limitation for QKD.]
+
+
+Experiment 6: Effect of Photon Loss
+Aim: To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.
+Objective: To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.
+Theory: It is crucial to distinguish between Photon Loss and Bit Errors.
+Photon Loss: A photon is sent but not detected. This reduces the raw number of bits, lowering the key rate, but it does not increase the QBER (a lost photon isn't an error; it's just missing data).
+Bit Errors: A photon is detected but its value is wrong. This increases the QBER and compromises security.
+An evesdropper causes errors. Channel noise causes errors. Distance causes loss (which can lead to errors indirectly). This experiment isolates the pure effect of loss.
+Procedure:
+Set evesdropper = OFF, Channel Noise = LOW (to ensure no errors are introduced).
+Find a "Photon Loss" or "Attenuation" parameter. If not available, use Distance = LONG.
+Set loss to HIGH (or use max distance). Run the simulation.
+Record the very short (or zero) Final Key Length and the QBER.
+Observation:
+[Note: You should observe a very low Key Rate or failed key generation, but the QBER should remain LOW. This proves loss affects quantity, not quality.]
+                                              Screenshot: [Paste screenshot showing high loss but low QBER here]
+Conclusion:
+[Explain that photon loss severely reduces the key rate and efficiency but, unlike noise or eavesdropping, does not by itself increase the QBER or compromise the security of the successfully received bits.]

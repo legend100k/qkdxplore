@@ -1,1030 +1,447 @@
-import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Download, Eye, Trash2, Plus, BarChart3, File } from "lucide-react";
-import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import html2canvas from "html2canvas";
-import { 
-  noiseAnalysisReportText, 
-  eavesdroppingDetectionReportText, 
-  qubitScalingReportText, 
-  realWorldComparisonReportText 
-} from "./experiments/reports/index";
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, HeadingLevel } from "docx";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileDown, FileText } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Document, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType, Packer } from 'docx';
+import { saveAs } from 'file-saver';
+import { ExperimentResult } from './experiments/common/types';
 
-interface ExperimentResult {
-  id: string;
+interface ReportsSectionProps {
+  availableExperiments?: ExperimentResult[];
+}
+
+interface ExperimentData {
   name: string;
-  parameters: any;
-  data: any[];
-  analysis: string;
-  completed: boolean;
-  timestamp: string;
-}
-
-interface Report {
-  id: string;
-  title: string;
-  experimentId: string;
-  experimentName: string;
   aim: string;
-  procedure: string;
+  objective: string;
+  apparatus: string;
   theory: string;
-  conclusion: string;
-  timestamp: string;
-  data: any[];
+  procedure: string[];
 }
 
-export const ReportsSection = ({ availableExperiments = [] }: { availableExperiments?: ExperimentResult[] }) => {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [selectedExperiment, setSelectedExperiment] = useState<string>("");
-  const [currentReport, setCurrentReport] = useState<Partial<Report> | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [viewingReport, setViewingReport] = useState<Report | null>(null);
-  const reportRef = useRef<HTMLDivElement>(null);
-
-  const startNewReport = () => {
-    if (!selectedExperiment) {
-      toast.error("Please select an experiment first");
-      return;
-    }
-
-    const experiment = availableExperiments.find(e => e.id === selectedExperiment);
-    if (!experiment) return;
-
-    // Auto-fill aim, theory, and procedure based on experiment type
-    const aim = getAimText(experiment.id);
-    
-    const theory = getDefaultTheory(experiment.id);
-    
-    const procedure = getDefaultProcedure(experiment.id);
-
-    setCurrentReport({
-      id: Date.now().toString(),
-      title: `Report: ${experiment.name}`,
-      experimentId: experiment.id,
-      experimentName: experiment.name,
-      aim: aim,
-      procedure: procedure,
-      theory: theory,
-      conclusion: "",
-      timestamp: new Date().toISOString(),
-      data: experiment.data
-    });
-    setIsCreating(true);
-  };
-
-  const saveReport = () => {
-    if (!currentReport || !currentReport.aim || !currentReport.conclusion) {
-      toast.error("Please fill in at least the aim and conclusion");
-      return;
-    }
-
-    const report: Report = {
-      ...currentReport,
-      id: currentReport.id || Date.now().toString(),
-      title: currentReport.title || `Report: ${currentReport.experimentName}`,
-      experimentId: currentReport.experimentId || "",
-      experimentName: currentReport.experimentName || "",
-      aim: currentReport.aim,
-      procedure: currentReport.procedure || getDefaultProcedure(currentReport.experimentId || ""),
-      theory: currentReport.theory || getDefaultTheory(currentReport.experimentId || ""),
-      conclusion: currentReport.conclusion,
-      timestamp: currentReport.timestamp || new Date().toISOString(),
-      data: currentReport.data || []
-    };
-
-    setReports(prev => [...prev, report]);
-    setCurrentReport(null);
-    setIsCreating(false);
-    toast.success("Report saved successfully!");
-  };
-
-  const deleteReport = (reportId: string) => {
-    setReports(prev => prev.filter(r => r.id !== reportId));
-    toast.success("Report deleted");
-  };
-
-  const generateReportHTML = (report: Report) => {
-    // Generate chart data as base64 image
-    const chartData = encodeURIComponent(`
-      <div id="chart-container" style="width: 600px; height: 400px;">
-        <canvas id="chart-canvas"></canvas>
-      </div>
-      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const ctx = document.getElementById('chart-canvas').getContext('2d');
-          const chartData = ${JSON.stringify(report.data)};
-          
-          // Determine chart type based on experiment
-          let xAxisKey, series1, series2;
-          if ('${report.experimentId}' === 'noise-analysis') {
-            xAxisKey = 'noise';
-            series1 = 'errorRate';
-            series2 = 'keyRate';
-          } else if ('${report.experimentId}' === 'eavesdropping-detection') {
-            xAxisKey = 'eavesdropping';
-            series1 = 'errorRate';
-            series2 = 'keyRate';
-          } else if ('${report.experimentId}' === 'qubit-scaling') {
-            xAxisKey = 'qubits';
-            series1 = 'errorRate';
-            series2 = 'keyRate';
-          } else {
-            xAxisKey = Object.keys(chartData[0])[0];
-            series1 = Object.keys(chartData[0])[1];
-            series2 = Object.keys(chartData[0])[2];
-          }
-          
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels: chartData.map(d => d[xAxisKey]),
-              datasets: [{
-                label: series1,
-                data: chartData.map(d => d[series1]),
-                borderColor: '#ef4444',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                fill: false,
-                tension: 0.1
-              }, {
-                label: series2,
-                data: chartData.map(d => d[series2]),
-                borderColor: '#fbbf24',
-                backgroundColor: 'rgba(251, 191, 36, 0.1)',
-                fill: false,
-                tension: 0.1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: xAxisKey
-                  }
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Percentage'
-                  }
-                }
-              }
-            }
-          });
-        });
-      </script>
-    `);
-
-    return `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>${report.title}</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #2563eb; border-bottom: 2px solid #2563eb; }
-        h2 { color: #7c3aed; margin-top: 30px; }
-        .section { margin: 20px 0; }
-        .data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .data-table th { background-color: #f2f2f2; }
-        .conclusion { background-color: #f0f9ff; padding: 15px; border-left: 4px solid #2563eb; }
-        .chart-container { width: 100%; height: 400px; margin: 20px 0; }
-    </style>
-</head>
-<body>
-    <h1>${report.title}</h1>
-    <p><strong>Date:</strong> ${new Date(report.timestamp).toLocaleDateString()}</p>
-    <p><strong>Experiment:</strong> ${report.experimentName}</p>
-    
-    <div class="section">
-        <h2>Aim</h2>
-        <p>${report.aim}</p>
-    </div>
-    
-    <div class="section">
-        <h2>Theory</h2>
-        <p>${report.theory}</p>
-    </div>
-    
-    <div class="section">
-        <h2>Procedure</h2>
-        <p>${report.procedure}</p>
-    </div>
-    
-    <div class="section">
-        <h2>Results and Data Visualization</h2>
-        <div class="chart-container">
-          <iframe 
-            src="data:text/html,${chartData}" 
-            style="width: 100%; height: 100%; border: none;"
-            title="Experiment Chart">
-          </iframe>
-        </div>
-    </div>
-    
-    <div class="section">
-        <h2>Numerical Results</h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    ${Object.keys(report.data[0] || {}).map(key => `<th>${key}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${report.data.map(row => 
-                    `<tr>${Object.values(row).map(value => `<td>${typeof value === 'number' ? value.toFixed(2) : value}</td>`).join('')}</tr>`
-                ).join('')}
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="section">
-        <h2>Conclusion</h2>
-        <div class="conclusion">
-            <p>${report.conclusion}</p>
-        </div>
-    </div>
-</body>
-</html>`;
-  };
-
-  
-
-  const downloadReport = async (report: Report, format: 'html' | 'pdf' | 'docx' = 'html') => {
-    // NOTE: 'pdf' format now downloads an image file (png) instead of a PDF due to jsPDF removal
-    if (format === 'pdf') {
-      try {
-        // Create a temporary container for the report content
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = generateReportHTML(report);
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.style.top = '-9999px';
-        tempContainer.style.width = '210mm'; // A4 width
-        tempContainer.style.height = '297mm'; // A4 height
-        tempContainer.style.backgroundColor = 'white';
-        tempContainer.style.padding = '20px';
-        tempContainer.style.boxSizing = 'border-box';
-        tempContainer.style.zIndex = '-1';
-        
-        document.body.appendChild(tempContainer);
-        
-        // Wait for any potential content to load
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Use html2canvas to capture the HTML content as an image
-        const canvas = await html2canvas(tempContainer, {
-          scale: 2, // Higher resolution
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        });
-        
-        // Remove the temporary container
-        document.body.removeChild(tempContainer);
-        
-        // Convert canvas to image data
-        const imgData = canvas.toDataURL('image/png');
-        
-        // Create a link to download the image as PNG
-        const link = document.createElement('a');
-        link.href = imgData;
-        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success("Report image downloaded!");
-      } catch (error) {
-        console.error("Error generating report image:", error);
-        toast.error("Error generating report image. Please try again or use HTML format.");
-      }
-    } else if (format === 'docx') {
-      try {
-        // Create a DOCX document
-        const doc = new Document({
-          sections: [{
-            properties: {},
-            children: [
-              // Title
-              new Paragraph({
-                text: report.title,
-                heading: HeadingLevel.HEADING_1,
-                spacing: { after: 200 },
-              }),
-              new Paragraph({
-                text: `Date: ${new Date(report.timestamp).toLocaleDateString()}`,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: `Experiment: ${report.experimentName}`,
-                spacing: { after: 200 },
-              }),
-              
-              // Aim section
-              new Paragraph({
-                text: "Aim",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: report.aim,
-                spacing: { after: 200 },
-              }),
-              
-              // Theory section
-              new Paragraph({
-                text: "Theory",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: report.theory,
-                spacing: { after: 200 },
-              }),
-              
-              // Procedure section
-              new Paragraph({
-                text: "Procedure",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: report.procedure,
-                spacing: { after: 200 },
-              }),
-        
-              // Results section
-              new Paragraph({
-                text: "Results and Data Visualization",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: "Charts and visualizations are not automatically included in the DOCX format. To include plots in your report:",
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({ bold: true, text: "• " }),
-                  new TextRun("Run the experiment in the web application"),
-                  new TextRun({ break: 1 }),
-                  new TextRun({ bold: true, text: "• " }),
-                  new TextRun("Take screenshots of the generated plots"),
-                  new TextRun({ break: 1 }),
-                  new TextRun({ bold: true, text: "• " }),
-                  new TextRun("Manually insert the screenshots into this DOCX file after download"),
-                ],
-                spacing: { after: 200 },
-              }),
-              
-              // Numerical Results section with data
-              new Paragraph({
-                text: "Numerical Results",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              // Create a table for the data if it exists
-              ...(report.data && report.data.length > 0 && report.data[0] && Object.keys(report.data[0]).length > 0 ? (() => {
-                const tableKeys = Object.keys(report.data[0]);
-                const columnWidth = Math.floor(100 / tableKeys.length);
-                return [
-                  new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: [
-                      // Header row
-                      new TableRow({
-                        children: tableKeys.map(key => 
-                          new TableCell({
-                            children: [new Paragraph({ text: key, bold: true })],
-                            width: { size: columnWidth, type: WidthType.PERCENTAGE },
-                          })
-                        ),
-                      }),
-                      // Data rows - use the same keys for consistent column order
-                      ...report.data.map(row => 
-                        new TableRow({
-                          children: tableKeys.map(key => 
-                            new TableCell({
-                              children: [new Paragraph(typeof row[key] === 'number' ? row[key].toFixed(2) : String(row[key] ?? ''))],
-                              width: { size: columnWidth, type: WidthType.PERCENTAGE },
-                            })
-                          ),
-                        })
-                      ),
-                    ],
-                  }),
-                  new Paragraph({ spacing: { after: 200 } }),
-                ];
-              })() : [new Paragraph("No numerical results available."), new Paragraph({ spacing: { after: 200 } })]),
-        
-              // Conclusion section
-              new Paragraph({
-                text: "Conclusion",
-                heading: HeadingLevel.HEADING_2,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: report.conclusion,
-                spacing: { after: 200 },
-              }),
-            ],
-          }],
-        });
-
-        // Generate DOCX file and trigger download
-        const blob = await Packer.toBlob(doc);
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.docx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        toast.success("DOCX Report downloaded!");
-      } catch (error) {
-        console.error("Error generating DOCX report:", error);
-        toast.error("Error generating DOCX report. Please try again.");
-      }
-    } else {
-      const htmlContent = generateReportHTML(report);
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${report.title.replace(/[^a-z0-9]/gi, '_')}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("HTML Report downloaded!");
-    }
-  };
-
-  const getAimText = (experimentId: string) => {
-    switch (experimentId) {
-      case "noise-analysis":
-        return "Aim: To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).\n\nObjective: To isolate and observe the impact of channel noise on the QBER.";
-      case "eavesdropping-detection":
-        return "Aim: To demonstrate the detection of an eavesdropper (Eve) using the BB84 protocol.\n\nObjective: To observe how Eve's interception attempts disturb the quantum states and significantly increase the QBER.";
-      case "qubit-scaling":
-        return "Aim: To study the fundamental role of qubits and their quantum properties in the BB84 protocol.\n\nObjective: To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).";
-      case "real-world-comparison":
-        return "Aim: To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.\n\nObjective: To observe the relationship between distance, photon loss (key rate), and error rate (QBER).";
-      default:
-        return "To analyze and document the results of the experiment conducted using the QKD_Xplore quantum key distribution simulator.";
-    }
-  };
-
-  const getDefaultProcedure = (experimentId: string) => {
-    switch (experimentId) {
-      case "noise-analysis":
-        return `1. Set evesdropper = OFF, Distance = SHORT (to minimize other effects).
-2. Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
-3. Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
-4. Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.
-
-Note: The QBER should increase significantly with higher noise levels, while the Final Key Length decreases only slightly. This proves noise creates errors.`;
-      case "eavesdropping-detection":
-        return `1. Go to the Q-Xplore Virtual Lab simulator.
-2. Set the "evesdropper" parameter to ON.
-3. Run the simulation and observe the QBER.
-4. Take a screenshot of the results showing the high (~25%) QBER.`;
-      case "qubit-scaling":
-        return `1. Go to the Q-Xplore Virtual Lab simulator.
-2. Run the BB84 simulation without any evesdropper and with low channel noise.
-3. Note the QBER and the successful generation of a secure key.
-4. Take a screenshot of the results screen showing the low QBER.`;
-      case "real-world-comparison":
-        return `1. Set evesdropper = OFF, Channel Noise = LOW.
-2. Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.
-3. Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.
-4. Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length.
-
-Note: The Final Key Length should drop dramatically with distance. The QBER may also see a slight increase. This shows distance causes loss and can worsen errors.`;
-      default:
-        return "Detailed experimental procedure to be documented.";
-    }
-  };
-
-  const getDefaultTheory = (experimentId: string) => {
-    switch (experimentId) {
-      case "noise-analysis":
-        return `Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an eavesdropper, as it becomes impossible to distinguish these errors from a malicious attack.`;
-      case "eavesdropping-detection":
-        return `This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
-
+// Parse experiment data from reports-section.txt content
+const getExperimentData = (experimentId: string): ExperimentData => {
+  const experiments: { [key: string]: ExperimentData } = {
+    'effect-of-qubits': {
+      name: 'Experiment 1: Effect of Qubits',
+      aim: 'To study the fundamental role of qubits and their quantum properties in the BB84 protocol.',
+      objective: 'To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).',
+      apparatus: 'Qkd-xplore Virtual Lab (Web-based interface powered by Qiskit)',
+      theory: `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
+In BB84, information is encoded onto qubits using two non-orthogonal bases:
+The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
+The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
+The protocol's security is not mathematical but physical, relying on three core principles:
+Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
+No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
+Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.
+These properties ensure that any attempt to gain information about the key introduces detectable anomalies.`,
+      procedure: [
+        "Go to the Qkd-xplore Virtual Lab simulator.",
+        "Run the BB84 simulation without any evesdropper and with low channel noise.",
+        "Note the QBER and the successful generation of a secure key.",
+        "Take a screenshot of the results screen showing the low QBER."
+      ]
+    },
+    'without-eavesdropper': {
+      name: 'Experiment 2: BB84 Without an Evesdropper',
+      aim: "To establish a baseline for the BB84 protocol's performance under ideal, secure conditions.",
+      objective: 'To observe the key generation process and resulting QBER when the quantum channel is secure.',
+      apparatus: 'Qkd-xplore Virtual Lab',
+      theory: `This experiment establishes the optimal operating conditions for the BB84 protocol. In the complete absence of an evesdropper, the only factors affecting the Quantum Bit Error Rate (QBER) are the inherent channel noise and system imperfections, as described in Experiment 2. Under well-controlled laboratory conditions with high-quality components, this intrinsic QBER can be very low, often below 2%.
+The process proceeds as follows:
+Quantum Transmission: Alice sends a sequence of qubits, each randomly prepared in one of the two bases.
+Quantum Measurement: Bob independently and randomly chooses a basis for each incoming qubit and measures it.
+Sifting: Alice and Bob publicly communicate the bases they used for each qubit (but not the bit values) over a classical channel. They discard all bits where their bases did not match. The remaining bits form the sifted key.
+Error Estimation: They compare a random subset of the sifted key to calculate the QBER. A low QBER confirms the channel is secure.
+Key Finalization: The remaining portion of the sifted key is then processed through error correction (to fix the few remaining errors) and privacy amplification (to reduce any partial information a potential evesdropper might have) to produce a final, identical, and perfectly secret key.
+This scenario demonstrates the protocol's maximum efficiency and serves as a control to identify the disruptive effects of an evesdropper.`,
+      procedure: [
+        "Go to the Qkd-xplore Virtual Lab simulator.",
+        'Set the "evesdropper" parameter to OFF and "Channel Noise" to LOW.',
+        "Run the simulation and note the low QBER and efficient key generation.",
+        "Take a screenshot of the successful results."
+      ]
+    },
+    'with-eavesdropper': {
+      name: 'Experiment 3: With an Evesdropper',
+      aim: 'To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.',
+      objective: "To observe how Eve's interception attempts disturb the quantum states and significantly increase the QBER.",
+      apparatus: 'Qkd-xplore Virtual Lab',
+      theory: `This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:
 Interception: Eve intercepts the qubit sent by Alice.
 Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.
 Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.
 Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.
-
 This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:
-
 P(Eve chooses wrong basis) = 1/2
 P(Bob gets wrong bit | Eve was wrong) = 1/2
 Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%
-
-Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.`;
-      case "qubit-scaling":
-        return `The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).
-
-In BB84, information is encoded onto qubits using two non-orthogonal bases:
-The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)
-The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)
-
-The protocol's security is not mathematical but physical, relying on three core principles:
-Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.
-No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.
-Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.`;
-      case "real-world-comparison":
-        return `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`;
-      default:
-        return "Theoretical background explaining the quantum mechanical principles underlying this experiment.";
+Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of eavesdropping, forcing Alice and Bob to discard the compromised key.`,
+      procedure: [
+        "Go to the Qkd-xplore Virtual Lab simulator.",
+        'Set the "evesdropper" parameter to ON.',
+        "Run the simulation and observe the QBER.",
+        "Take a screenshot of the results showing the high (~25%) QBER."
+      ]
+    },
+    'effect-of-channel-noise': {
+      name: 'Experiment 4: Effect of Channel Noise',
+      aim: 'To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).',
+      objective: 'To isolate and observe the impact of channel noise on the QBER.',
+      apparatus: 'Qkd-xplore Virtual Lab',
+      theory: `Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.`,
+      procedure: [
+        "Set evesdropper = OFF, Distance = SHORT (to minimize other effects).",
+        "Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.",
+        "Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.",
+        "Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length."
+      ]
+    },
+    'effect-of-distance': {
+      name: 'Experiment 5: Effect of Distance',
+      aim: 'To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.',
+      objective: 'To observe the relationship between distance, photon loss (key rate), and error rate (QBER).',
+      apparatus: 'Qkd-xplore Virtual Lab',
+      theory: `The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.`,
+      procedure: [
+        "Set evesdropper = OFF, Channel Noise = LOW.",
+        "Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.",
+        "Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.",
+        "Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length."
+      ]
+    },
+    'overall': {
+      name: 'Experiment 6: Effect of Photon Loss',
+      aim: 'To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.',
+      objective: 'To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.',
+      apparatus: 'Qkd-xplore Virtual Lab',
+      theory: `It is crucial to distinguish between Photon Loss and Bit Errors.
+Photon Loss: A photon is sent but not detected. This reduces the raw number of bits, lowering the key rate, but it does not increase the QBER (a lost photon isn't an error; it's just missing data).
+Bit Errors: A photon is detected but its value is wrong. This increases the QBER and compromises security.
+An evesdropper causes errors. Channel noise causes errors. Distance causes loss (which can lead to errors indirectly). This experiment isolates the pure effect of loss.`,
+      procedure: [
+        "Set evesdropper = OFF, Channel Noise = LOW (to ensure no errors are introduced).",
+        'Find a "Photon Loss" or "Attenuation" parameter. If not available, use Distance = LONG.',
+        "Set loss to HIGH (or use max distance). Run the simulation.",
+        "Record the very short (or zero) Final Key Length and the QBER."
+      ]
     }
   };
-
-  const getXAxisLabel = (experimentId: string) => {
-    switch (experimentId) {
-      case "noise-analysis":
-        return "Noise Level (%)";
-      case "eavesdropping-detection":
-        return "Eavesdropping Rate (%)";
-      case "qubit-scaling":
-        return "Number of Qubits";
-      default:
-        return "X-Axis";
-    }
+  
+  return experiments[experimentId] || {
+    name: 'Unknown Experiment',
+    aim: 'Unknown',
+    objective: 'Unknown',
+    apparatus: 'Qkd-xplore Virtual Lab',
+    theory: 'Unknown',
+    procedure: ['Run the experiment with default parameters']
   };
+};
 
-  const getYAxisLabel = (experimentId: string, series: string) => {
-    if (series === "keyRate") {
-      return "Key Rate (%)";
-    } else if (series === "keyLength") {
-      return "Key Length";
-    } else {
-      return "Y-Axis";
+export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperiments = [] }) => {
+  const [selectedExperiment, setSelectedExperiment] = useState<string>('');
+  const [userConclusion, setUserConclusion] = useState<string>('');
+  const [experimentResultData, setExperimentResultData] = useState<ExperimentResult | null>(null);
+  
+  useEffect(() => {
+    if (selectedExperiment && availableExperiments.length > 0) {
+      const expData = availableExperiments.find(exp => exp.id === selectedExperiment);
+      setExperimentResultData(expData || null);
     }
-  };
+  }, [selectedExperiment, availableExperiments]);
 
-  const renderExperimentChart = (data: any[], experimentId: string) => {
-    // Determine chart configuration based on experiment type
-    let xAxisKey, series1, series2;
-    if (experimentId === "noise-analysis") {
-      xAxisKey = "noise";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else if (experimentId === "eavesdropping-detection") {
-      xAxisKey = "eavesdropping";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else if (experimentId === "qubit-scaling") {
-      xAxisKey = "qubits";
-      series1 = "errorRate";
-      series2 = "keyRate";
-    } else {
-      // Default case
-      xAxisKey = Object.keys(data[0] || {})[0];
-      series1 = Object.keys(data[0] || {})[1];
-      series2 = Object.keys(data[0] || {})[2];
+  const generateDocx = async () => {
+    if (!selectedExperiment) {
+      alert('Please select an experiment first');
+      return;
     }
 
-    return (
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--muted-foreground))" opacity={0.3} />
-            <XAxis 
-              dataKey={xAxisKey}
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: getXAxisLabel(experimentId), 
-                position: "insideBottom", 
-                offset: -5 
-              }}
-            />
-            <YAxis 
-              yAxisId="left" 
-              stroke="hsl(var(--muted-foreground))" 
-              fontSize={12}
-              label={{ 
-                value: "Error Rate (%)", 
-                angle: -90, 
-                position: "insideLeft" 
-              }}
-            />
-            <YAxis 
-              yAxisId="right" 
-              orientation="right" 
-              stroke="hsl(var(--quantum-glow))" 
-              fontSize={12}
-              label={{ 
-                value: getYAxisLabel(experimentId, series2), 
-                angle: 90, 
-                position: "insideRight" 
-              }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--background))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '6px'
-              }} 
-            />
-            <Legend />
-            <Line 
-              yAxisId="left"
-              type="monotone" 
-              dataKey={series1} 
-              stroke="hsl(var(--destructive))" 
-              strokeWidth={2}
-              name={series1 === "errorRate" ? "Error Rate (%)" : series1 === "keyRate" ? "Key Rate (%)" : series1}
-              activeDot={{ r: 8 }}
-            />
-            <Line 
-              yAxisId="right"
-              type="monotone" 
-              dataKey={series2} 
-              stroke="hsl(var(--quantum-glow))" 
-              strokeWidth={2}
-              name={series2 === "keyRate" ? "Key Rate (%)" : series2 === "keyLength" ? "Key Length" : series2}
-              activeDot={{ r: 8 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    );
+    const expInfo = getExperimentData(selectedExperiment);
+    if (!expInfo) return;
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          new Paragraph({
+            text: expInfo.name,
+            heading: HeadingLevel.HEADING_1,
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            text: "AIM",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: expInfo.aim,
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            text: "OBJECTIVE",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: expInfo.objective,
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            text: "APPARATUS",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: expInfo.apparatus,
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            text: "THEORY",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...expInfo.theory.split('\n').filter(p => p.trim()).map(para => 
+            new Paragraph({
+              text: para,
+              spacing: { after: 100 }
+            })
+          ),
+          
+          new Paragraph({
+            text: "PROCEDURE",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...expInfo.procedure.map((step, index) => 
+            new Paragraph({
+              text: `${index + 1}. ${step}`,
+              spacing: { after: 50 }
+            })
+          ),
+          
+          new Paragraph({
+            text: "RESULTS",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: "Graphs and experimental data will be inserted here by the user.",
+            spacing: { after: 100 }
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Note: Please add your experiment graphs, charts, and observations in this section.",
+                italics: true
+              })
+            ],
+            spacing: { after: 100 }
+          }),
+          
+          ...(experimentResultData && experimentResultData.data && experimentResultData.data.length > 0 ? [
+            new Paragraph({
+              text: "Experimental Data Table:",
+              spacing: { before: 100, after: 100 }
+            }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: [
+                new TableRow({
+                  children: Object.keys(experimentResultData.data[0]).map(key => 
+                    new TableCell({
+                      children: [new Paragraph({ 
+                        text: key.charAt(0).toUpperCase() + key.slice(1),
+                        alignment: AlignmentType.CENTER
+                      })]
+                    })
+                  )
+                }),
+                ...experimentResultData.data.map(row => 
+                  new TableRow({
+                    children: Object.values(row).map(value => 
+                      new TableCell({
+                        children: [new Paragraph({ 
+                          text: typeof value === 'number' ? value.toFixed(2) : String(value),
+                          alignment: AlignmentType.CENTER
+                        })]
+                      })
+                    )
+                  })
+                )
+              ]
+            })
+          ] : []),
+          
+          new Paragraph({
+            text: "CONCLUSION",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: userConclusion || "(User-provided conclusion to be inserted here)",
+            spacing: { after: 200 }
+          }),
+          
+          new Paragraph({
+            text: `Report generated on: ${new Date().toLocaleDateString()}`,
+            alignment: AlignmentType.RIGHT,
+            spacing: { before: 400 }
+          })
+        ]
+      }]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    saveAs(blob, `${selectedExperiment}_report.docx`);
   };
-
-  if (viewingReport) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-quantum-blue/30">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-quantum-blue flex items-center gap-2">
-                <FileText className="w-6 h-6" />
-                Report Viewer
-              </CardTitle>
-              <Button
-                onClick={() => setViewingReport(null)}
-                variant="outline"
-                className="border-quantum-purple/50 hover:bg-quantum-purple/10"
-              >
-                Back to Reports
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div ref={reportRef} className="space-y-6 p-6 bg-background border rounded-lg">
-              <div className="text-center border-b pb-4">
-                <h1 className="text-2xl font-bold text-quantum-blue">{viewingReport.title}</h1>
-                <p className="text-muted-foreground">Date: {new Date(viewingReport.timestamp).toLocaleDateString()}</p>
-                <p className="text-muted-foreground">Experiment: {viewingReport.experimentName}</p>
-              </div>
-
-              <div className="space-y-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-quantum-purple mb-2">Aim</h2>
-                    <p className="text-foreground/90">{viewingReport.aim}</p>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl font-semibold text-quantum-purple mb-2">Theory</h2>
-                    <p className="text-foreground/90 whitespace-pre-line">{viewingReport.theory}</p>
-                  </div>
-
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Procedure</h2>
-                  <p className="text-foreground/90 whitespace-pre-line">{viewingReport.procedure}</p>
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    Results and Data Visualization
-                  </h2>
-                  <Card className="bg-secondary/20">
-                    <CardContent className="p-4">
-                      {renderExperimentChart(viewingReport.data, viewingReport.experimentId)}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Numerical Results</h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-quantum-blue/30">
-                      <thead>
-                        <tr className="bg-secondary/50">
-                          {Object.keys(viewingReport.data[0] || {}).map(key => (
-                            <th key={key} className="border border-quantum-blue/30 p-2 text-left">{key}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {viewingReport.data.map((row, index) => (
-                          <tr key={index} className="border-b border-quantum-blue/20">
-                            {Object.values(row).map((value, i) => (
-                              <td key={i} className="border border-quantum-blue/30 p-2">
-                                {typeof value === 'number' ? (value as number).toFixed(2) : String(value)}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-semibold text-quantum-purple mb-2">Conclusion</h2>
-                  <div className="p-4 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
-                    <p className="text-foreground/90 whitespace-pre-line">{viewingReport.conclusion}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-center mt-6 gap-2 flex-wrap">
-              <Button
-                onClick={() => downloadReport(viewingReport, 'html')}
-                className="bg-quantum-blue hover:bg-quantum-blue/80"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download HTML Report
-              </Button>
-              <Button
-                onClick={() => downloadReport(viewingReport, 'docx')}
-                className="bg-quantum-purple hover:bg-quantum-purple/80"
-              >
-                <File className="w-4 h-4 mr-2" />
-                Download DOCX Report
-              </Button>
-              {/*<Button
-                onClick={() => downloadReport(viewingReport, 'pdf')}
-                className="bg-quantum-purple hover:bg-quantum-purple/80"
-              >
-                <File className="w-4 h-4 mr-2" />
-                Download Image Report
-              </Button>*/}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (isCreating && currentReport) {
-    return (
-      <div className="space-y-6">
-        <Card className="border-quantum-glow/30">
-          <CardHeader>
-            <CardTitle className="text-quantum-glow flex items-center gap-2">
-              <Plus className="w-6 h-6" />
-              Create Experiment Report
-            </CardTitle>
-            <p className="text-muted-foreground">Document your experimental findings and analysis</p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Report Title</label>
-                  <input
-                    type="text"
-                    value={currentReport.title || ""}
-                    onChange={(e) => setCurrentReport(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full p-3 bg-background border border-quantum-blue/30 rounded focus:border-quantum-blue focus:outline-none"
-                    placeholder="Enter report title"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Aim *</label>
-                  <Textarea
-                    value={currentReport.aim || ""}
-                    onChange={(e) => setCurrentReport(prev => ({ ...prev, aim: e.target.value }))}
-                    placeholder="Aim: To [state the main goal of the experiment]\n\nObjective: To [describe the specific objective and what you aim to observe or demonstrate]..."
-                    className="min-h-[100px] border-quantum-blue/30 focus:border-quantum-blue"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Theory</label>
-                  <Textarea
-                    value={currentReport.theory || ""}
-                    onChange={(e) => setCurrentReport(prev => ({ ...prev, theory: e.target.value }))}
-                    placeholder="Theory: Explain the quantum mechanical principles, formulas, and theoretical background relevant to this experiment. Include key concepts like qubit properties, measurement disturbance, no-cloning theorem, QBER calculations, etc."
-                    className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Procedure</label>
-                  <Textarea
-                    value={currentReport.procedure || ""}
-                    onChange={(e) => setCurrentReport(prev => ({ ...prev, procedure: e.target.value }))}
-                    placeholder="Procedure:\n1. Go to the Q-Xplore Virtual Lab simulator.\n2. Set the parameters (e.g., eavesdropper, channel noise, distance).\n3. Run the simulation.\n4. Record the QBER, Final Key Length, and other results.\n5. Take a screenshot of the results."
-                    className="min-h-[120px] border-quantum-glow/30 focus:border-quantum-glow"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Conclusion *</label>
-                  <Textarea
-                    value={currentReport.conclusion || ""}
-                    onChange={(e) => setCurrentReport(prev => ({ ...prev, conclusion: e.target.value }))}
-                    placeholder="Based on your observation and results, write what you learned from this experiment..."
-                    className="min-h-[120px] border-quantum-purple/30 focus:border-quantum-purple"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {currentReport.data && currentReport.data.length > 0 && (
-              <Card className="bg-secondary/20">
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    Experimental Data Visualization
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {renderExperimentChart(currentReport.data, currentReport.experimentId || "")}
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    This chart will be included in your final report
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="flex gap-4 justify-center">
-              <Button
-                onClick={saveReport}
-                className="bg-quantum-blue hover:bg-quantum-blue/80"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Save Report
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsCreating(false);
-                  setCurrentReport(null);
-                }}
-                variant="outline"
-                className="border-quantum-purple/50 hover:bg-quantum-purple/10"
-              >
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <Card className="border-quantum-purple/30">
-        <CardHeader>
-          <CardTitle className="text-quantum-purple flex items-center gap-2">
-            <FileText className="w-6 h-6" />
-            Experiment Reports
-          </CardTitle>
-          <p className="text-muted-foreground">
-            Generate comprehensive reports from your experimental data with analysis and conclusions
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Card className="bg-secondary/30">
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Select Experiment</label>
-                  <Select value={selectedExperiment} onValueChange={setSelectedExperiment}>
-                    <SelectTrigger className="border-quantum-blue/30">
-                      <SelectValue placeholder="Choose an experiment to create a report" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableExperiments.map(exp => (
-                        <SelectItem key={exp.id} value={exp.id}>
-                          {exp.name}
-                        </SelectItem>
+    <Card className="border-quantum-glow">
+      <CardHeader>
+        <CardTitle className="text-quantum-blue flex items-center gap-2">
+          <FileText className="w-6 h-6" />
+          Experiment Reports
+        </CardTitle>
+        <p className="text-muted-foreground">
+          Generate comprehensive reports for your experiments with customizable results and conclusions
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="experiment-select">Select Experiment</Label>
+          <Select value={selectedExperiment} onValueChange={setSelectedExperiment}>
+            <SelectTrigger id="experiment-select" className="w-full">
+              <SelectValue placeholder="Choose an experiment to generate report" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="effect-of-qubits">Experiment 1: Effect of Qubits</SelectItem>
+              <SelectItem value="without-eavesdropper">Experiment 2: BB84 Without an Evesdropper</SelectItem>
+              <SelectItem value="with-eavesdropper">Experiment 3: With an Evesdropper</SelectItem>
+              <SelectItem value="effect-of-channel-noise">Experiment 4: Effect of Channel Noise</SelectItem>
+              <SelectItem value="effect-of-distance">Experiment 5: Effect of Distance</SelectItem>
+              <SelectItem value="overall">Experiment 6: Effect of Photon Loss</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {selectedExperiment && (() => {
+          const expData = getExperimentData(selectedExperiment);
+          return (
+            <>
+              <Card className="bg-secondary/20">
+                <CardHeader>
+                  <CardTitle className="text-sm">Report Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div>
+                    <h3 className="font-semibold mb-1">Aim:</h3>
+                    <p className="text-muted-foreground">{expData.aim}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-1">Objective:</h3>
+                    <p className="text-muted-foreground">{expData.objective}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-1">Apparatus:</h3>
+                    <p className="text-muted-foreground">{expData.apparatus}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-1">Theory:</h3>
+                    <p className="text-muted-foreground text-xs max-h-32 overflow-y-auto whitespace-pre-line">
+                      {expData.theory}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-1">Procedure:</h3>
+                    <ol className="text-muted-foreground text-xs list-decimal list-inside space-y-1">
+                      {expData.procedure.map((step, idx) => (
+                        <li key={idx}>{step}</li>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="pt-6"> {/* Add padding to align with the select box */}
-                  <Button
-                    onClick={startNewReport}
-                    disabled={!selectedExperiment}
-                    className="bg-quantum-blue hover:bg-quantum-blue/80 whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    New Report
-                  </Button>
+                    </ol>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="space-y-4">
+                {experimentResultData && experimentResultData.data && experimentResultData.data.length > 0 && (
+                <Card className="bg-secondary/10">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Experimental Data Table (from simulation)</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b">
+                            {Object.keys(experimentResultData.data[0]).map((key) => (
+                              <th key={key} className="px-2 py-1 text-left">
+                                {key.charAt(0).toUpperCase() + key.slice(1)}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {experimentResultData.data.slice(0, 5).map((row, idx) => (
+                            <tr key={idx} className="border-b">
+                              {Object.values(row).map((value, vIdx) => (
+                                <td key={vIdx} className="px-2 py-1">
+                                  {typeof value === 'number' ? value.toFixed(2) : String(value)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                          {experimentResultData.data.length > 5 && (
+                            <tr>
+                              <td colSpan={Object.keys(experimentResultData.data[0]).length} className="text-center py-2 text-muted-foreground">
+                                ... and {experimentResultData.data.length - 5} more rows
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div>
+                <Label htmlFor="user-conclusion">Conclusion</Label>
+                <Textarea
+                  id="user-conclusion"
+                  placeholder="Enter your conclusion based on the experimental results..."
+                  value={userConclusion}
+                  onChange={(e) => setUserConclusion(e.target.value)}
+                  className="min-h-[100px]"
+                />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {reports.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-quantum-glow">Saved Reports</h3>
-              <div className="grid gap-4">
-                {reports.map(report => (
-                  <Card key={report.id} className="border-quantum-blue/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-quantum-blue">{report.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {report.experimentName} • Created: {new Date(report.timestamp).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            onClick={() => setViewingReport(report)}
-                            variant="outline"
-                            size="sm"
-                            className="border-quantum-blue/50 hover:bg-quantum-blue/10"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            onClick={() => downloadReport(report, 'html')}
-                            variant="outline"
-                            size="sm"
-                            className="border-quantum-glow/50 hover:bg-quantum-glow/10 mr-1"
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            HTML
-                          </Button>
-                          <Button
-                            onClick={() => downloadReport(report, 'docx')}
-                            variant="outline"
-                            size="sm"
-                            className="border-quantum-purple/50 hover:bg-quantum-purple/10"
-                          >
-                            <File className="w-4 h-4 mr-1" />
-                            DOCX
-                          </Button>
-                          {/*<Button
-                            onClick={() => downloadReport(report, 'pdf')}
-                            variant="outline"
-                            size="sm"
-                            className="border-quantum-purple/50 hover:bg-quantum-purple/10"
-                          >
-                            <File className="w-4 h-4 mr-1" />
-                            Image
-                          </Button>*/}
-                          <Button
-                            onClick={() => deleteReport(report.id)}
-                            variant="outline"
-                            size="sm"
-                            className="border-red-500/50 hover:bg-red-500/10 text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="flex justify-end">
+                <Button
+                  onClick={generateDocx}
+                  className="bg-quantum-blue hover:bg-quantum-blue/90 flex items-center gap-2"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Download Report (.docx)
+                </Button>
               </div>
-            </div>
-          )}
-
-          {reports.length === 0 && (
-            <Card className="bg-muted/20 border-dashed border-2 border-muted-foreground/20">
-              <CardContent className="p-8 text-center">
-                <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Reports Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Select an experiment above and create your first comprehensive report
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            </>
+          );
+        })()}
+      </CardContent>
+    </Card>
   );
 };
