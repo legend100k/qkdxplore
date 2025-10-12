@@ -19,7 +19,7 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
   
   // State for experiment parameters
   const [qubitRange, setQubitRange] = useState<[number, number]>([10, 100]);
-  const [step, setStep] = useState(10);
+  const step = 10; // Fixed step size
   const noise = 5; // Fixed noise level at 5%
 
   const runExperiment = async () => {
@@ -114,21 +114,13 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
               disabled={isRunning}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="step">Step Size: {step}</Label>
-            <Slider
-              id="step"
-              min={1}
-              max={20}
-              value={[step]}
-              onValueChange={(value) => setStep(value[0])}
-              disabled={isRunning}
-            />
-          </div>
         </div>
         
-        <div className="bg-quantum-blue/10 p-3 rounded-lg border border-quantum-blue/30">
+        <div className="text-sm text-muted-foreground mt-4">
+          <p>Qubit range: {qubitRange[0]} - {qubitRange[1]} (step: {step})</p>
+        </div>
+        
+        <div className="bg-quantum-blue/10 p-3 rounded-lg border border-quantum-blue/30 mt-4">
           <p className="text-sm text-quantum-blue">
             <strong>Note:</strong> Noise Level is fixed at 5% and Eavesdroppers are fixed at 1 for this experiment.
           </p>

@@ -20,7 +20,7 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
   
   // State for experiment parameters
   const [noiseRange, setNoiseRange] = useState<[number, number]>([0, 20]);
-  const [step, setStep] = useState(2);
+  const step = 2; // Fixed step size
   const [qubits, setQubits] = useState(50);
 
   const runExperiment = async () => {
@@ -122,17 +122,6 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="noise-step">Step Size: {step}%</Label>
-            <Slider
-              id="noise-step"
-              min={1}
-              max={10}
-              value={[step]}
-              onValueChange={(value) => setStep(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="num-qubits">Number of Qubits: {qubits}</Label>
             <Slider
               id="num-qubits"
@@ -143,6 +132,9 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
               disabled={isRunning}
             />
           </div>
+        </div>
+        <div className="text-sm text-muted-foreground mt-4">
+          <p>Noise range: {noiseRange[0]}% - {noiseRange[1]}% (step: {step}%)</p>
         </div>
       </CardContent>
     </Card>
