@@ -239,14 +239,18 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
               return [0, 1, 2, 3, 4, 5];
             } else if (selectedExpId === 'effect-of-qubits') {
               const ticks = [];
-              for (let i = 0; i <= 200; i += 25) {
+              for (let i = 0; i <= 100; i += 10) {
                 ticks.push(i);
               }
               return ticks;
             } else if (selectedExpId === 'effect-of-distance') {
               return [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
             } else if (selectedExpId === 'effect-of-channel-noise') {
-              return [0, 5, 10, 15, 20, 25, 30];
+              const ticks = [];
+              for (let i = 0; i <= 20; i += 2) {
+                ticks.push(i);
+              }
+              return ticks;
             }
             return null;
           })()

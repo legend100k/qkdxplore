@@ -20,7 +20,7 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   
   // State for experiment parameters
   const [distanceRange, setDistanceRange] = useState<[number, number]>([1, 100]);
-  const [step, setStep] = useState(10);
+  const step = 10; // Fixed step size
   const [qubits, setQubits] = useState(40);
   const [baseNoise, setBaseNoise] = useState(2); // Set to low noise as per procedure
   const [attenuationCoeff, setAttenuationCoeff] = useState(0.2); // Fiber attenuation coefficient
