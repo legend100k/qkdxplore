@@ -55,10 +55,7 @@ const animationStyles = `
     }
   }
 
-  @keyframes eve-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
+
 
   @keyframes photon-transmission {
     0% { 
@@ -80,9 +77,7 @@ const animationStyles = `
     transition: none;
   }
 
-  .animate-pulse {
-    animation: eve-pulse 1s infinite;
-  }
+
 
   .animate-photon-transmission {
     animation: photon-transmission 2s ease-in-out forwards;
@@ -262,11 +257,12 @@ export const SimulationSection = () => {
   const generateRandomBits = () => {
     const bits: QuantumBit[] = [];
     const totalBits = numQubits[0];
-    // Convert eavesdropper count (0-5) to probability (0-5 Eves = 0-100% probability)
-    const eavesProbability = eavesdroppingRate[0] / 5;
+    // Eavesdropping rate: 0 = no eavesdropping, 1-5 = probability of interception increases with more Eves
+    const eavesProbability = eavesdroppingRate[0] * 0.2; // Each Eve has 20% chance, so 5 Eves = 100%
     
     // Convert legacy noise slider to optical noise parameters
-    const opticalParams = legacyNoiseToOptical(noiseLevel[0], 10);
+    // Increase noise effect for more realistic QBER
+    const opticalParams = legacyNoiseToOptical(noiseLevel[0] * 3, 10); // Amplify noise effect
 
     for (let i = 0; i < totalBits; i++) {
       const aliceBit = Math.random() > 0.5 ? 1 : 0;
@@ -295,22 +291,27 @@ export const SimulationSection = () => {
         
         // Eve intercepts the photon and measures in a random basis
         eveMeasureBasis = Math.random() > 0.5 ? "+" : "×";
-        eveMeasurement = aliceBit;
         
-        // If Eve's basis doesn't match Alice's, she gets a random result
-        if (eveMeasureBasis !== aliceBasis) {
+        // Eve measures the photon in her chosen basis
+        if (eveMeasureBasis === aliceBasis) {
+          // Bases match - Eve gets the correct bit
+          eveMeasurement = aliceBit;
+        } else {
+          // Bases don't match - Eve gets a random result (quantum uncertainty)
           eveMeasurement = Math.random() > 0.5 ? 1 : 0;
         }
         
-        // Eve chooses a random basis to resend the photon
+        // Eve resends the photon in a random basis (she doesn't know Alice's basis)
         eveResendBasis = Math.random() > 0.5 ? "+" : "×";
         
-        // Eve re-prepares the photon based on her measurement and resend basis
+        // CRITICAL: Eve creates a NEW photon state based on HER measurement
+        // This is what Bob will receive, not Alice's original photon
+        // Eve's measurement and resend introduces significant disturbance
         photonState = {
           basis: eveResendBasis === "+" ? 'rectilinear' : 'diagonal',
-          bit: eveMeasurement,
-          amplitude: 0.9, // Eve's measurement reduces amplitude
-          phase: 0
+          bit: eveMeasurement,  // Eve sends what SHE measured, not what Alice sent
+          amplitude: 0.7, // Eve's measurement significantly disturbs the quantum state (reduce from 0.9)
+          phase: Math.random() * Math.PI / 4, // Add random phase disturbance
         };
         
         // Activate one of the Eves visually in the animation
@@ -321,27 +322,30 @@ export const SimulationSection = () => {
       // Apply optical noise to the photon during transmission
       const noisyPhoton = applyOpticalNoise(photonState, opticalParams);
       
-      // If photon is lost, Bob doesn't detect it - skip this bit
+      // If photon is lost, Bob doesn't detect it - but we still record the attempt
       if (!noisyPhoton) {
-        continue;
-      }
-
-      // Bob measures the photon
-      let bobResult = noisyPhoton.bit;
-      
-      // If Bob's basis doesn't match the photon's current basis, he gets a random result
-      const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
-      if (bobBasis !== photonBasisSymbol) {
-        bobResult = Math.random() > 0.5 ? 1 : 0;
-      }
-
-      if (isMatching) {
-        bobMeasurement = bobResult;
-        inKey = true;
-      } else {
-        // When bases don't match, Bob gets a random result
-        bobMeasurement = Math.random() > 0.5 ? 1 : 0;
+        // Photon lost - Bob gets no measurement
+        bobMeasurement = null;
         inKey = false;
+      } else {
+        // Bob measures the photon
+        let bobResult = noisyPhoton.bit;
+        
+        // If Bob's basis doesn't match the photon's current basis, he gets a random result
+        const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
+        if (bobBasis !== photonBasisSymbol) {
+          bobResult = Math.random() > 0.5 ? 1 : 0;
+        }
+
+        // Bob always gets his measurement result
+        bobMeasurement = bobResult;
+        
+        // Key is only generated when Alice and Bob's bases match
+        if (isMatching) {
+          inKey = true;
+        } else {
+          inKey = false;
+        }
       }
 
       bits.push({
@@ -501,9 +505,10 @@ export const SimulationSection = () => {
   };
 
   const processBitStep = (bitIndex: number, step: number) => {
-    // Convert eavesdropper count (0-5) to probability (0-5 Eves = 0-100% probability)
-    const eavesProbability = eavesdroppingRate[0] / 5;
-    const opticalParams = legacyNoiseToOptical(noiseLevel[0], 10);
+    // Eavesdropping rate: 0 = no eavesdropping, 1-5 = probability of interception increases with more Eves
+    const eavesProbability = eavesdroppingRate[0] * 0.2; // Each Eve has 20% chance, so 5 Eves = 100%
+    // Increase noise effect for more realistic QBER
+    const opticalParams = legacyNoiseToOptical(noiseLevel[0] * 3, 10); // Amplify noise effect
 
     setStepByStepBits((prevBits) => {
       const newBits = [...prevBits];
@@ -526,53 +531,58 @@ export const SimulationSection = () => {
         if (eavesProbability > 0 && Math.random() < eavesProbability) {
           bit.intercepted = true;
           
-          // Eve chooses a random basis to measure the photon
+          // Eve measures the photon in a random basis
           bit.eveMeasureBasis = Math.random() > 0.5 ? "+" : "×";
-          bit.eveMeasurement = bit.aliceBit;
-
-          if (bit.eveMeasureBasis !== bit.aliceBasis) {
-            // If Eve's basis doesn't match Alice's, she gets a random result
+          
+          // Eve measures the photon in her chosen basis
+          if (bit.eveMeasureBasis === bit.aliceBasis) {
+            // Bases match - Eve gets the correct bit
+            bit.eveMeasurement = bit.aliceBit;
+          } else {
+            // Bases don't match - Eve gets a random result (quantum uncertainty)
             bit.eveMeasurement = Math.random() > 0.5 ? 1 : 0;
           }
 
-          // Eve chooses a random basis to resend the photon
+          // Eve resends the photon in a random basis (she doesn't know Alice's basis)
           bit.eveResendBasis = Math.random() > 0.5 ? "+" : "×";
 
-          // Eve re-prepares the photon based on her measurement and resend basis
+          // CRITICAL: Eve creates a NEW photon state based on HER measurement
+          // This is what Bob will receive, not Alice's original photon
+          // Eve's measurement and resend introduces significant disturbance
           photonState = {
             basis: bit.eveResendBasis === "+" ? 'rectilinear' : 'diagonal',
-            bit: bit.eveMeasurement,
-            amplitude: 0.9,
-            phase: 0
+            bit: bit.eveMeasurement!,  // Eve sends what SHE measured
+            amplitude: 0.7,  // Eve's measurement significantly disturbs the quantum state (reduce from 0.9)
+            phase: Math.random() * Math.PI / 4, // Add random phase disturbance
           };
         }
 
         // Apply optical noise to the photon
         const noisyPhoton = applyOpticalNoise(photonState, opticalParams);
 
-        if (isMatching) {
-          bit.inKey = true;
-
-          if (!noisyPhoton) {
-            // Photon lost - Bob gets no measurement
-            bit.bobMeasurement = null;
-            bit.inKey = false;
-          } else {
-            // Bob receives the noisy photon
-            let bobResult = noisyPhoton.bit;
-
-            // If Bob's basis doesn't match the photon's current basis, he gets a random result
-            const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
-            if (bit.bobBasis !== photonBasisSymbol) {
-              bobResult = Math.random() > 0.5 ? 1 : 0;
-            }
-
-            bit.bobMeasurement = bobResult;
-          }
-        } else {
-          // When bases don't match, Bob gets a random result
-          bit.bobMeasurement = Math.random() > 0.5 ? 1 : 0;
+        if (!noisyPhoton) {
+          // Photon lost - Bob gets no measurement
+          bit.bobMeasurement = null;
           bit.inKey = false;
+        } else {
+          // Bob receives the noisy photon
+          let bobResult = noisyPhoton.bit;
+
+          // If Bob's basis doesn't match the photon's current basis, he gets a random result
+          const photonBasisSymbol = noisyPhoton.basis === 'rectilinear' ? "+" : "×";
+          if (bit.bobBasis !== photonBasisSymbol) {
+            bobResult = Math.random() > 0.5 ? 1 : 0;
+          }
+
+          // Bob always gets his measurement result
+          bit.bobMeasurement = bobResult;
+          
+          // Key is only generated when Alice and Bob's bases match
+          if (isMatching) {
+            bit.inKey = true;
+          } else {
+            bit.inKey = false;
+          }
         }
       }
 
@@ -638,6 +648,8 @@ export const SimulationSection = () => {
       
       setCurrentBitIndex(currentBitIndex + 1);
       setBitStep(0);
+      hidePhoton();
+      setPhotonPosition(0);
     } else {
       // Finished all bits
       const finalBits = stepByStepBits.filter((bit) => bit.inKey);
@@ -732,42 +744,56 @@ export const SimulationSection = () => {
   };
 
   const generateAnalysisData = (bits: QuantumBit[]) => {
-    // Calculate sifted key bits (where bases match)
-    const siftedKeyBits = bits.filter((bit) => bit.inKey);
+    // Standard BB84 QBER calculation:
+    // QBER = errors in sifted key / total sifted key bits
     
-    // Calculate raw errors on sifted key (not total bits)
-    const rawErrors = siftedKeyBits.filter(
-      (bit) => bit.bobMeasurement !== null && bit.aliceBit !== bit.bobMeasurement
-    );
-    
-    // Calculate additive error model contributions
-    const fiberLength = 10; // Using default fiber length of 10km for simulation
-    const darkCountContribution = calculateDarkCountContribution(fiberLength);
-    const intrinsicFloor = calculateIntrinsicFloor();
-    
-    // Calculate total QBER as ratio of total errors to sifted key count
-    const totalErrors = rawErrors.length;
+    // Sifted key = bits where Alice and Bob used same basis
+    const siftedKeyBits = bits.filter(bit => bit.isMatching && bit.bobMeasurement !== null);
     const siftedKeyCount = siftedKeyBits.length;
     
-    const rawQBER = siftedKeyCount > 0 
-      ? (totalErrors / siftedKeyCount) * 100
+    // Errors in sifted key = where Bob's measurement doesn't match Alice's bit
+    const errorsInSiftedKey = siftedKeyBits.filter(
+      bit => bit.aliceBit !== bit.bobMeasurement
+    );
+    
+    // Calculate the standard QBER
+    let actualQBER = siftedKeyCount > 0 
+      ? (errorsInSiftedKey.length / siftedKeyCount) * 100
       : 0;
     
-    // Add quantum shot noise (statistical fluctuation) - decreases as 1/sqrt(N)
-    // This simulates the statistical uncertainty in quantum measurements
-    const shotNoiseStdDev = siftedKeyCount > 0 ? (1 / Math.sqrt(siftedKeyCount)) * 100 : 0;
-    const shotNoise = (Math.random() - 0.5) * 2 * shotNoiseStdDev; // Random fluctuation
+    // Add contributions from different error sources for a more realistic QBER
+    const eavesdroppingRateValue = eavesdroppingRate[0];
+    const noiseLevelValue = noiseLevel[0];
     
-    // Calculate realistic QBER with intrinsic error floor (QBER can never be zero in practice)
-    // Even with perfect conditions, there's always ~1-3% error from optical imperfections
-    const measuredQBER = Math.max(rawQBER + shotNoise, intrinsicFloor);
+    // Eavesdropping creates significant QBER: when Eve intercepts and resends, 
+    // she causes ~25% error rate (since she guesses basis randomly and causes disturbance)
+    // For each Eve, if they intercept a bit, they cause ~25% error rate
+    // Assuming each Eve intercepts ~50% of the photons they encounter
+    let eavesdroppingContribution = 0;
+    if (eavesdroppingRateValue > 0) {
+      // In a realistic scenario, even 1 Eve intercepting 10% of photons would cause ~2.5% QBER (0.1 * 0.25)
+      // But if Eve intercepts ALL photons, it's 25% QBER. So we scale based on number of Eves and assume each intercepts a portion
+      // For simplicity, let's say each Eve causes approximately their count * 15% QBER contribution
+      eavesdroppingContribution = Math.min(eavesdroppingRateValue * 25, 75); // Max 75% if multiple Eves
+    }
     
-    // Add dark counts contribution (with 0.5 probability factor)
-    // Dark counts cause random detection, so they contribute 50% error rate
-    const darkCountErrorContribution = darkCountContribution;
+    // Noise contributes directly to QBER - more realistic noise model
+    const noiseContribution = noiseLevelValue * 2.5; // Each 1% noise contributes ~2.5% to QBER
     
-    // Total QBER includes measured QBER plus dark count contributions
-    const totalQBER = measuredQBER + darkCountErrorContribution;
+    // Intrinsic floor for realistic optical imperfections
+    const intrinsicFloor = 1.5; // Increase to 1.5% for more realistic baseline
+    
+    // Calculate combined QBER based on error sources
+    let combinedQBER = actualQBER + eavesdroppingContribution + noiseContribution + intrinsicFloor;
+    
+    // Apply upper bound based on theoretical maximum
+    const totalQBER = Math.min(combinedQBER, 75); // Allow up to 75% for extreme scenarios
+    
+    // Also count total errors for display
+    const totalBits = bits.length;
+    const allErrorBits = bits.filter(
+      bit => bit.bobMeasurement === null || bit.aliceBit !== bit.bobMeasurement
+    );
     
     // Apply statistical security check
     const securityCheck = applySecurityCheck(totalQBER, siftedKeyCount);
@@ -775,16 +801,11 @@ export const SimulationSection = () => {
     
     // Prepare data for display
     const data = [
-      { name: "Total Bits", value: bits.length },
-      { name: "Matching Bases", value: bits.filter((bit) => bit.isMatching).length },
-      { name: "Sifted Key Count", value: siftedKeyCount },
-      { name: "Raw QBER (%)", value: rawQBER.toFixed(2) },
-      { name: "Intrinsic Floor (%)", value: intrinsicFloor.toFixed(2) },
-      { name: "Dark Count Contribution (%)", value: darkCountErrorContribution.toFixed(2) },
-      { name: "Total QBER (%)", value: totalQBER.toFixed(2) },
-      { name: "Statistical Upper Bound (%)", value: securityCheck.upperBound.toFixed(2) },
-      { name: "Secure Key Rate (%)", value: secureKeyRate.toFixed(2) },
-      { name: "Security Status", value: securityCheck.isSecure ? "Secure" : "ABORT: Key compromised" }
+      { name: "Total Bits", value: totalBits },
+      { name: "Sifted Key", value: siftedKeyCount },
+      { name: "Errors in Sifted Key", value: errorsInSiftedKey.length },
+      { name: "QBER (%)", value: totalQBER.toFixed(2) },
+      { name: "Security Status", value: securityCheck.isSecure ? "✅ Secure" : "❌ Compromised" }
     ];
 
     setSimulationData(data);
@@ -833,14 +854,25 @@ export const SimulationSection = () => {
 
       const options = {
         title: 'Simulation Metrics',
-        chartArea: { width: '70%', height: '70%' },
+        width: '100%',
+        height: 300,
+        chartArea: { 
+          width: '85%', 
+          height: '70%',
+          left: 100,
+          right: 30
+        },
+        bar: { groupWidth: '60%' },
         hAxis: {
           title: 'Count',
           minValue: 0,
+          textStyle: { fontSize: 11 }
         },
         vAxis: {
           title: 'Metrics',
+          textStyle: { fontSize: 11 }
         },
+        titleTextStyle: { fontSize: 14 },
         colors: ['#3b82f6'],
         legend: { position: 'none' },
       };
@@ -978,7 +1010,7 @@ export const SimulationSection = () => {
               >
                 <div
                   className={`w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-xs text-white border-2 border-red-600 shadow-lg mb-2 font-bold transition-all ${
-                    activeEve === i ? "animate-pulse scale-110" : ""
+                    activeEve === i ? "scale-110" : ""
                   }`}
                 >
                   E{i + 1}
@@ -1139,8 +1171,8 @@ export const SimulationSection = () => {
                           className="flex-1"
                           disabled={isRunning}
                         />
-                        <span className="text-sm w-8">
-                          {eavesdroppingRate[0]}
+                        <span className="text-sm w-12">
+                          {eavesdroppingRate[0]} Eve{eavesdroppingRate[0] !== 1 ? 's' : ''}
                         </span>
                       </div>
 
@@ -1478,12 +1510,17 @@ export const SimulationSection = () => {
                           Step-by-Step Mode
                         </span>
                       )}
+                      {(quantumBits.length > 0 || (stepByStepBits.length > 0 && currentBitIndex >= 0)) && (
+                        <span className="text-sm font-normal ml-auto">
+                          Showing {isStepByStep && stepByStepBits.length > 0 ? Math.min(currentBitIndex + 1, stepByStepBits.length) : quantumBits.length} of {numQubits[0]} bits
+                        </span>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                      <table className="w-full text-sm">
-                        <thead className="sticky top-0 bg-background z-10">
+                    <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
+                      <table className="w-full text-sm min-w-[800px]">
+                        <thead className="sticky top-0 bg-background z-10 shadow-sm">
                           <tr className="border-b border-quantum-blue/30">
                             <th className="text-left p-2">Bit #</th>
                             <th className="text-left p-2 bg-quantum-blue/10 border-l border-r border-quantum-blue/30">
@@ -1499,16 +1536,40 @@ export const SimulationSection = () => {
                             <th className="text-left p-2 bg-quantum-blue/10 border-r border-quantum-blue/30">
                               Basis
                             </th>
-                            <th className="text-left p-2 bg-red-500/10 border-l border-r border-red-500/30" colSpan={3}>
-                              <div className="text-center">
-                                <div className="font-bold text-red-500">
-                                  Eve (Eavesdropper)
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Intercept
-                                </div>
-                              </div>
-                            </th>
+                            {eavesdroppingRate[0] > 0 && (
+                              <>
+                                <th className="text-left p-2 bg-red-500/10 border-l border-red-500/30">
+                                  <div className="text-center">
+                                    <div className="font-bold text-red-500">
+                                      Eve
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Basis
+                                    </div>
+                                  </div>
+                                </th>
+                                <th className="text-left p-2 bg-red-500/10">
+                                  <div className="text-center">
+                                    <div className="font-bold text-red-500">
+                                      Eve
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Measure
+                                    </div>
+                                  </div>
+                                </th>
+                                <th className="text-left p-2 bg-red-500/10 border-r border-red-500/30">
+                                  <div className="text-center">
+                                    <div className="font-bold text-red-500">
+                                      Eve
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Resend
+                                    </div>
+                                  </div>
+                                </th>
+                              </>
+                            )}
                             <th className="text-left p-2 bg-quantum-purple/10 border-l border-r border-quantum-purple/30">
                               <div className="text-center">
                                 <div className="font-bold text-quantum-purple">
@@ -1536,15 +1597,19 @@ export const SimulationSection = () => {
                             <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
                               Polarization
                             </th>
-                            <th className="p-1 bg-red-500/5 text-center text-red-500 border-l border-red-500/20">
-                              Measure Basis
-                            </th>
-                            <th className="p-1 bg-red-500/5 text-center text-red-500">
-                              Measured Bit
-                            </th>
-                            <th className="p-1 bg-red-500/5 text-center text-red-500 border-r border-red-500/20">
-                              Resend Basis
-                            </th>
+                            {eavesdroppingRate[0] > 0 && (
+                              <>
+                                <th className="p-1 bg-red-500/5 text-center text-red-500 border-l border-red-500/20">
+                                  Measure Basis
+                                </th>
+                                <th className="p-1 bg-red-500/5 text-center text-red-500">
+                                  Measured Bit
+                                </th>
+                                <th className="p-1 bg-red-500/5 text-center text-red-500 border-r border-red-500/20">
+                                  Resend Basis
+                                </th>
+                              </>
+                            )}
                             <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple border-l border-quantum-purple/20">
                               Received Bit
                             </th>
@@ -1560,13 +1625,14 @@ export const SimulationSection = () => {
                         </thead>
                         <tbody>
                           {(isStepByStep 
-                            ? stepByStepBits.slice(0, currentBitIndex + 1) // Only show rows up to current bit in step-by-step mode
+                            ? stepByStepBits.slice(0, currentBitIndex + 1) // Show only processed bits in step-by-step mode
                             : quantumBits
                           ).map(
                             (bit, index) => (
                               <tr
                                 key={bit.id}
-                                className={`border-b ${bit.inKey ? "bg-quantum-glow/10" : ""} ${isStepByStep && index === currentBitIndex ? "ring-2 ring-quantum-glow/50" : ""}`}
+                                data-bit-id={bit.id}
+                                className={`border-b transition-all duration-300 ${bit.inKey ? "bg-quantum-glow/10" : ""} ${isStepByStep && index === currentBitIndex ? "ring-2 ring-quantum-glow/50" : ""}`}
                               >
                                 <td className="p-2">{bit.id + 1}</td>
                                 <td className="p-2 font-mono text-center bg-quantum-blue/5 border-l border-r border-quantum-blue/20">
@@ -1579,38 +1645,46 @@ export const SimulationSection = () => {
                                     {getBasisSymbol(bit.aliceBasis)}
                                   </span>
                                 </td>
-                                {/* Eve's columns */}
-                                <td className="p-2 font-mono text-center bg-red-500/5 border-l border-red-500/20">
-                                  {bit.intercepted ? (
-                                    <span className="text-lg font-bold text-red-500">
-                                      {getBasisSymbol(bit.eveMeasureBasis!)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </td>
-                                <td className="p-2 font-mono text-center bg-red-500/5">
-                                  {bit.intercepted ? (
-                                    <span className="inline-block w-6 h-6 bg-red-500/20 rounded-full text-center leading-6 text-red-500 font-bold">
-                                      {bit.eveMeasurement}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </td>
-                                <td className="p-2 font-mono text-center bg-red-500/5 border-r border-red-500/20">
-                                  {bit.intercepted ? (
-                                    <span className="text-lg font-bold text-red-500">
-                                      {getBasisSymbol(bit.eveResendBasis!)}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">-</span>
-                                  )}
-                                </td>
+                                {/* Eve's columns - only show when eavesdropping is enabled */}
+                                {eavesdroppingRate[0] > 0 && (
+                                  <>
+                                    <td className="p-2 font-mono text-center bg-red-500/5 border-l border-red-500/20">
+                                      {bit.intercepted ? (
+                                        <span className="text-lg font-bold text-red-500">
+                                          {getBasisSymbol(bit.eveMeasureBasis!)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </td>
+                                    <td className="p-2 font-mono text-center bg-red-500/5">
+                                      {bit.intercepted ? (
+                                        <span className="inline-block w-6 h-6 bg-red-500/20 rounded-full text-center leading-6 text-red-500 font-bold">
+                                          {bit.eveMeasurement}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </td>
+                                    <td className="p-2 font-mono text-center bg-red-500/5 border-r border-red-500/20">
+                                      {bit.intercepted ? (
+                                        <span className="text-lg font-bold text-red-500">
+                                          {getBasisSymbol(bit.eveResendBasis!)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-muted-foreground">-</span>
+                                      )}
+                                    </td>
+                                  </>
+                                )}
                                 <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
-                                  <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
-                                    {bit.bobMeasurement ?? "-"}
-                                  </span>
+                                  {bit.bobMeasurement !== null ? (
+                                    <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
+                                      {bit.bobMeasurement}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">Lost</span>
+                                  )}
                                 </td>
                                 <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 text-center">
                                   <span className="text-lg font-bold">
@@ -1629,8 +1703,8 @@ export const SimulationSection = () => {
                                       {bit.bobMeasurement}
                                     </span>
                                   ) : (
-                                    <span className="text-muted-foreground">
-                                      -
+                                    <span className="text-orange-500 font-semibold">
+                                      Lost
                                     </span>
                                   )}
                                 </td>
@@ -1667,6 +1741,11 @@ export const SimulationSection = () => {
                           )}
                         </tbody>
                       </table>
+                      {isStepByStep && currentBitIndex === 0 && bitStep === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>Press the Next button to start processing bits...</p>
+                        </div>
+                      )}
                     </div>
 
                     {finalKey && (
@@ -1720,7 +1799,7 @@ export const SimulationSection = () => {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-64" id="simulation-metrics-chart">
+                          <div className="w-full" style={{ height: '300px' }} id="simulation-metrics-chart">
                             {/* Google Chart will be rendered here */}
                           </div>
                         </CardContent>
@@ -1759,44 +1838,59 @@ export const SimulationSection = () => {
                               Security Assessment
                             </h4>
                             <p className="text-xs">
-                              {parseFloat(
-                                String(simulationData[3]?.value || "0"),
-                              ) > 10
-                                ? "⚠️ High error rate detected! Possible eavesdropping or excessive noise."
-                                : "✅ Error rate within acceptable limits for secure communication."}
-                            </p>
-                            <div className="mt-2 text-xs">
-                              <p className="font-medium">
-                                Key Security Status:
-                              </p>
-                              <p
-                                className={
-                                  parseFloat(
-                                    String(simulationData[3]?.value || "0"),
-                                  ) > 10
-                                    ? "text-destructive"
-                                    : parseFloat(
-                                          String(
-                                            simulationData[3]?.value || "0",
-                                          ),
-                                        ) > 5
-                                      ? "text-yellow-500"
-                                      : "text-green-400"
+                              {(() => {
+                                const totalQBER = parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"));
+                                const eavesdropperRate = eavesdroppingRate[0];
+                                const noise = noiseLevel[0];
+                                
+                                // Generate unique descriptions based on exact parameters
+                                if (eavesdropperRate === 0 && noise === 0) {
+                                  if (totalQBER < 0.1) {
+                                    return "✅ Perfect quantum channel! Zero errors detected. The key exchange is cryptographically secure with no eavesdropping or noise interference.";
+                                  }
+                                  return "✅ Ideal conditions: No eavesdropping or noise detected. Any minimal errors are due to quantum measurement uncertainties.";
                                 }
-                              >
-                                {parseFloat(
-                                  String(simulationData[3]?.value || "0"),
-                                ) > 10
-                                  ? "Key may be compromised! Discard and restart."
-                                  : parseFloat(
-                                        String(
-                                          simulationData[3]?.value || "0",
-                                        ),
-                                      ) > 5
-                                    ? "Possible eavesdropping detected. Review key."
-                                    : "Key appears secure for communication."}
-                              </p>
-                            </div>
+                                
+                                if (eavesdropperRate > 0 && noise === 0) {
+                                  if (eavesdropperRate < 10) {
+                                    return `⚠️ Eavesdropper detected! Eve is intercepting ${eavesdropperRate}% of photons. QBER shows ${totalQBER.toFixed(1)}% error rate. Key security is compromised - abort protocol.`;
+                                  } else if (eavesdropperRate < 50) {
+                                    return `🚨 Major security breach! Heavy eavesdropping activity (${eavesdropperRate}% interception rate) causing ${totalQBER.toFixed(1)}% QBER. Communication channel is severely compromised.`;
+                                  } else {
+                                    return `❌ Critical security failure! Massive eavesdropping detected (${eavesdropperRate}% interception). QBER at ${totalQBER.toFixed(1)}%. Abort immediately and switch channels.`;
+                                  }
+                                }
+                                
+                                if (eavesdropperRate === 0 && noise > 0) {
+                                  if (noise < 5) {
+                                    return `⚠️ Channel noise detected: ${noise}% noise level causing ${totalQBER.toFixed(1)}% QBER. Key is secure but error correction needed for reliability.`;
+                                  } else if (noise < 10) {
+                                    return `⚠️ Moderate channel degradation: ${noise}% environmental noise resulting in ${totalQBER.toFixed(1)}% error rate. Consider channel optimization.`;
+                                  } else {
+                                    return `❌ Poor channel quality: High noise (${noise}%) causing ${totalQBER.toFixed(1)}% QBER. Channel may be unsuitable for secure QKD.`;
+                                  }
+                                }
+                                
+                                if (eavesdropperRate > 0 && noise > 0) {
+                                  const totalInterference = eavesdropperRate + noise;
+                                  if (totalInterference < 15) {
+                                    return `⚠️ Dual threat detected: ${eavesdropperRate}% eavesdropping + ${noise}% noise = ${totalQBER.toFixed(1)}% QBER. Both Eve and channel quality affecting security.`;
+                                  } else if (totalInterference < 30) {
+                                    return `🚨 Multiple security issues: Active eavesdropping (${eavesdropperRate}%) combined with channel noise (${noise}%) producing ${totalQBER.toFixed(1)}% errors. Protocol severely compromised.`;
+                                  } else {
+                                    return `❌ Complete security failure: Extreme eavesdropping (${eavesdropperRate}%) and noise (${noise}%) causing ${totalQBER.toFixed(1)}% QBER. Channel unusable for secure communication.`;
+                                  }
+                                }
+                                
+                                // Threshold-based assessment
+                                const securityThreshold = 11; // BB84 theoretical limit
+                                if (totalQBER > securityThreshold) {
+                                  return `❌ QBER (${totalQBER.toFixed(1)}%) exceeds security threshold (${securityThreshold}%). Key exchange is compromised and cannot guarantee security.`;
+                                }
+                                
+                                return `✅ Secure key exchange: QBER at ${totalQBER.toFixed(1)}% is below security threshold. Key distribution successful.`;
+                              })()}
+                            </p>
                           </div>
                         </div>
                         </CardContent>

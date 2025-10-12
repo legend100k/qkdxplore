@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { BookOpen, FileText, Cpu, FlaskConical, Cable, Code, FilePieChart, FileQuestion, GraduationCap, Info, Newspaper } from "lucide-react";
-import { Certificate } from "./Certificate";
+
 
 interface NavigationProps {
   activeTab: string;
@@ -46,7 +45,6 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
               </p>
             </div>
           </div>
-          <ThemeToggle />
         </div>
         
         <nav className="space-y-2">

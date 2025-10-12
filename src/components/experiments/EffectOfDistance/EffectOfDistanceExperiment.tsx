@@ -115,39 +115,6 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
       <CardContent className="space-y-4 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="distance-start">Starting Distance: {distanceRange[0]} km</Label>
-            <Slider
-              id="distance-start"
-              min={1}
-              max={distanceRange[1]}
-              value={[distanceRange[0]]}
-              onValueChange={(value) => setDistanceRange([value[0], distanceRange[1]])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="distance-end">Ending Distance: {distanceRange[1]} km</Label>
-            <Slider
-              id="distance-end"
-              min={distanceRange[0]}
-              max={200}
-              value={[distanceRange[1]]}
-              onValueChange={(value) => setDistanceRange([distanceRange[0], value[0]])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="distance-step">Step Size: {step} km</Label>
-            <Slider
-              id="distance-step"
-              min={1}
-              max={20}
-              value={[step]}
-              onValueChange={(value) => setStep(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="num-qubits">Number of Qubits: {qubits}</Label>
             <Slider
               id="num-qubits"
@@ -181,6 +148,9 @@ const EffectOfDistanceExperiment: React.FC<ExperimentComponentProps> = ({ onSave
               disabled={isRunning}
             />
           </div>
+        </div>
+        <div className="text-sm text-muted-foreground mt-4">
+          <p>Distance range: {distanceRange[0]} - {distanceRange[1]} km (step: {step} km)</p>
         </div>
       </CardContent>
     </Card>

@@ -18,8 +18,7 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   const [finalExperimentBits, setFinalExperimentBits] = useState<any[]>([]);
   
   // State for experiment parameters
-  const [numEavesdroppers, setNumEavesdroppers] = useState(0);
-  const [qubits, setQubits] = useState(80);
+  const qubits = 80; // Fixed number of qubits
   const [noise, setNoise] = useState(2);
 
   const runExperiment = async () => {
@@ -44,22 +43,31 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
     // Start photon animation
     animatePhoton();
 
-    // Run single experiment with specified number of eavesdroppers
-    const result = simulateBB84(qubits, numEavesdroppers, noise);
-    experimentData.push({
-      eavesdroppers: numEavesdroppers,
-      qber: result.errorRate,  // Store as qber for proper charting
-      errorRate: result.errorRate,
-      detectionProbability: Math.min(100, result.errorRate * 4),
-      keyRate: result.keyRate
-    });
-    setProgress(100);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Run experiments with varying numbers of eavesdroppers to show comparison
+    const eavesdropperCounts = [0, 1, 2, 3, 4, 5];
+    
+    for (let i = 0; i < eavesdropperCounts.length; i++) {
+      const eveCount = eavesdropperCounts[i];
+      const result = simulateBB84(qubits, eveCount, noise); // Using fixed qubits value
+      
+      experimentData.push({
+        eavesdroppers: eveCount,
+        qber: result.errorRate,  // Store as qber for proper charting
+        qberNoEve: eveCount === 0 ? result.errorRate : null, // Baseline without Eve
+        qberWithEve: eveCount > 0 ? result.errorRate : null, // With Eve
+        errorRate: result.errorRate,
+        detectionProbability: Math.min(100, result.errorRate * 4),
+        keyRate: result.keyRate
+      });
+      
+      setProgress((i + 1) * (100 / eavesdropperCounts.length));
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
 
     const experimentResult: ExperimentResult = {
       id: "with-eavesdropper",
       name: "With Eavesdropper",
-      parameters: { numEavesdroppers, qubits, noise, basisSelection: "random" },
+      parameters: { qubits: 80, noise, basisSelection: "random" }, // Fixed qubits at 80
       data: experimentData,
       analysis: generateAnalysis("with-eavesdropper", experimentData),
       completed: true,
@@ -90,40 +98,22 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
   const parameterControls = (
     <Card className="border-quantum-glow/30 p-4">
       <CardContent className="space-y-4 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="num-eavesdroppers">Number of Eavesdroppers: {numEavesdroppers}</Label>
-            <Slider
-              id="num-eavesdroppers"
-              min={0}
-              max={5}
-              value={[numEavesdroppers]}
-              onValueChange={(value) => setNumEavesdroppers(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="num-qubits">Number of Qubits: {qubits}</Label>
-            <Slider
-              id="num-qubits"
-              min={1}
-              max={200}
-              value={[qubits]}
-              onValueChange={(value) => setQubits(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="noise">Noise Level: {noise}%</Label>
-            <Slider
-              id="noise"
-              min={0}
-              max={20}
-              value={[noise]}
-              onValueChange={(value) => setNoise(value[0])}
-              disabled={isRunning}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="noise">Noise Level: {noise}%</Label>
+          <Slider
+            id="noise"
+            min={0}
+            max={20}
+            value={[noise]}
+            onValueChange={(value) => setNoise(value[0])}
+            disabled={isRunning}
+          />
+        </div>
+        
+        <div className="bg-quantum-glow/10 p-3 rounded-lg border border-quantum-glow/30">
+          <p className="text-sm text-quantum-glow">
+            <strong>Note:</strong> Number of Qubits is fixed at 80 for this experiment.
+          </p>
         </div>
       </CardContent>
     </Card>

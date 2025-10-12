@@ -22,7 +22,6 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
   const [noiseRange, setNoiseRange] = useState<[number, number]>([0, 20]);
   const [step, setStep] = useState(2);
   const [qubits, setQubits] = useState(50);
-  const [eavesdropRate, setEavesdropRate] = useState(0); // Set to 0 to match procedure (evesdropper OFF)
 
   const runExperiment = async () => {
     setIsRunning(true);
@@ -61,7 +60,7 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
         thermalNoise: normalizedNoise * 0.15       // Thermal noise
       };
       
-      const result = simulateBB84(qubits, eavesdropRate, noise, opticalParams);
+      const result = simulateBB84(qubits, 0, noise, opticalParams); // Fixed eavesdrop rate to 0
       experimentData.push({
         noise,
         qber: result.errorRate,  // Store as qber for proper charting
@@ -123,17 +122,6 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="noise-end">Ending Noise: {noiseRange[1]}%</Label>
-            <Slider
-              id="noise-end"
-              min={noiseRange[0]}
-              max={50}
-              value={[noiseRange[1]]}
-              onValueChange={(value) => setNoiseRange([noiseRange[0], value[0]])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="noise-step">Step Size: {step}%</Label>
             <Slider
               id="noise-step"
@@ -152,18 +140,6 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
               max={200}
               value={[qubits]}
               onValueChange={(value) => setQubits(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="eavesdrop">Eavesdroppers: {eavesdropRate}</Label>
-            <Slider
-              id="eavesdrop"
-              min={0}
-              max={5}
-              step={1}
-              value={[eavesdropRate]}
-              onValueChange={(value) => setEavesdropRate(value[0])}
               disabled={isRunning}
             />
           </div>

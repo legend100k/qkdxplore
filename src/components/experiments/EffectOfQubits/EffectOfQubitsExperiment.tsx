@@ -20,8 +20,7 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
   // State for experiment parameters
   const [qubitRange, setQubitRange] = useState<[number, number]>([10, 100]);
   const [step, setStep] = useState(10);
-  const [noise, setNoise] = useState(2); // Set to low noise as per procedure
-  const [eavesdropRate, setEavesdropRate] = useState(0); // Set to no eavesdropping as per procedure
+  const noise = 5; // Fixed noise level at 5%
 
   const runExperiment = async () => {
     setIsRunning(true);
@@ -45,15 +44,21 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
     // Start photon animation
     animatePhoton();
 
-    // Use the parameter values
+    // Use the fixed parameter values - run both with and without Eve for comparison
     totalSteps = Math.floor((qubitRange[1] - qubitRange[0]) / step) + 1;
     for (let qubits = qubitRange[0]; qubits <= qubitRange[1]; qubits += step) {
-      const result = simulateBB84(qubits, eavesdropRate, noise);
+      // Run without Eve
+      const resultNoEve = simulateBB84(qubits, 0, noise); // Fixed noise at 5%
+      // Run with Eve
+      const resultWithEve = simulateBB84(qubits, 1, noise); // Fixed noise at 5% and eavesdroppers at 1
+      
       experimentData.push({
         qubits,
-        qber: result.errorRate,  // Store as qber for proper charting
-        errorRate: result.errorRate,
-        keyLength: result.keyLength,
+        qber: resultNoEve.errorRate,  // Default QBER for compatibility
+        qberNoEve: resultNoEve.errorRate,  // Without Eve
+        qberWithEve: resultWithEve.errorRate,  // With Eve
+        errorRate: resultNoEve.errorRate,
+        keyLength: resultNoEve.keyLength,
         statisticalSecurity: Math.min(100, (qubits / 50) * 100)
       });
       currentStep++;
@@ -66,7 +71,7 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
     const experimentResult: ExperimentResult = {
       id: "effect-of-qubits",
       name: "Effect of Qubits",
-      parameters: { qubitRange, step, noise },
+      parameters: { qubitRange, step, noise: 5 }, // Fixed noise at 5%
       data: experimentData,
       analysis: generateAnalysis("effect-of-qubits", experimentData),
       completed: true,
@@ -121,29 +126,12 @@ const EffectOfQubitsExperiment: React.FC<ExperimentComponentProps> = ({ onSaveEx
               disabled={isRunning}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="noise">Noise Level: {noise}%</Label>
-            <Slider
-              id="noise"
-              min={0}
-              max={20}
-              value={[noise]}
-              onValueChange={(value) => setNoise(value[0])}
-              disabled={isRunning}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="eavesdrop">Eavesdroppers: {eavesdropRate}</Label>
-            <Slider
-              id="eavesdrop"
-              min={0}
-              max={5}
-              step={1}
-              value={[eavesdropRate]}
-              onValueChange={(value) => setEavesdropRate(value[0])}
-              disabled={isRunning}
-            />
-          </div>
+        </div>
+        
+        <div className="bg-quantum-blue/10 p-3 rounded-lg border border-quantum-blue/30">
+          <p className="text-sm text-quantum-blue">
+            <strong>Note:</strong> Noise Level is fixed at 5% and Eavesdroppers are fixed at 1 for this experiment.
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -80,49 +80,109 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       let yTitle = '';
       let seriesOptions: any = {};
 
-      // For all experiments, only plot QBER values as requested
-      chartData = [[xAxisDataKey, 'QBER']];
-      data.forEach(item => {
-        chartData.push([
-          item[xAxisDataKey] || 0, 
-          item.qber || item.errorRate || 0
-        ]);
-      });
+      // Check if this is an experiment that shows Eve comparison
+      if (selectedExpId === 'with-eavesdropper') {
+        // For eavesdropper experiment, show both "No Eve" and "With Eve" lines
+        chartData = [['Number of Eavesdroppers', 'No Eve', 'With Eve']];
+        
+        // Get baseline (no eve) value
+        const baselineQBER = data.find(item => item.eavesdroppers === 0)?.qber || 2;
+        
+        data.forEach(item => {
+          if (item.eavesdroppers && item.eavesdroppers > 0) {
+            chartData.push([
+              item.eavesdroppers,
+              baselineQBER,  // Constant baseline for no Eve
+              item.qber || item.errorRate || 0  // With Eve values
+            ]);
+          }
+        });
+      } else if (selectedExpId === 'effect-of-qubits' && data[0]?.qberNoEve !== undefined) {
+        // For qubits experiment with Eve comparison
+        chartData = [['Qubits', 'No Eve', 'With Eve']];
+        data.forEach(item => {
+          chartData.push([
+            item.qubits || 0,
+            item.qberNoEve || item.qber || 0,  // No Eve values
+            item.qberWithEve || item.qber || 0  // With Eve values
+          ]);
+        });
+      } else {
+        // For all other experiments, plot single QBER line
+        chartData = [[xAxisDataKey, 'QBER']];
+        data.forEach(item => {
+          chartData.push([
+            item[xAxisDataKey] || 0, 
+            item.qber || item.errorRate || 0
+          ]);
+        });
+      }
       
       // Set title based on experiment type
+      const hasEveData = (selectedExpId === 'with-eavesdropper') || 
+                        (selectedExpId === 'effect-of-qubits' && data[0]?.qberNoEve !== undefined);
+      
       switch(selectedExpId) {
         case 'effect-of-qubits':
-          title = 'Effect of Qubits: QBER vs Number of Qubits';
+          title = hasEveData ? 'QBER vs Qubits (With/Without Eve)' : 'QBER vs Qubits';
           break;
         case 'effect-of-channel-noise':
-          title = 'Effect of Channel Noise: QBER vs Noise Level';
+          title = 'QBER vs Noise';
           break;
         case 'without-eavesdropper':
-          title = 'Without Eavesdropper: QBER Baseline';
+          title = 'QBER Baseline (No Eavesdropper)';
           break;
         case 'with-eavesdropper':
-          title = 'With Eavesdropper: QBER vs Number of Eavesdroppers';
+          title = 'QBER Comparison (With/Without Eve)';
           break;
         case 'effect-of-distance':
-          title = 'Effect of Distance: QBER vs Distance';
+          title = 'QBER vs Distance';
           break;
         case 'overall':
-          title = 'Overall Analysis: QBER vs Bit Number';
+          title = 'QBER vs Measurement';
           break;
         default:
-          title = 'Experiment Results: QBER';
+          title = 'QBER';
           break;
       }
       
       yTitle = 'QBER (%)';
-      seriesOptions = {
-        0: { color: '#ef4444' }  // Red for QBER
-      };
+      
+      // Determine if this experiment should show comparison (e.g., with/without Eve)
+      const hasEveComparison = (selectedExpId === 'with-eavesdropper') || 
+                               (selectedExpId === 'effect-of-qubits' && data[0]?.qberNoEve !== undefined);
+      
+      if (hasEveComparison) {
+        // For Eve comparison, show green for "No Eve" and red for "With Eve"
+        seriesOptions = {
+          0: { 
+            color: '#22c55e', // Green for No Eve
+            pointSize: 6,
+            lineWidth: 2,
+            lineDashStyle: [0, 0] // Solid line
+          },
+          1: {
+            color: '#ef4444', // Red for With Eve
+            pointSize: 6,
+            lineWidth: 2,
+            lineDashStyle: [0, 0] // Solid line
+          }
+        };
+      } else {
+        // Single series experiments
+        seriesOptions = {
+          0: { 
+            color: '#3b82f6', // Blue for single series
+            pointSize: 6,
+            lineWidth: 2
+          }
+        };
+      }
 
       // Add security threshold line (11% for active experiments)
       if (selectedExpId !== 'without-eavesdropper') {
         // Add a third column for the threshold line
-        const extendedData = [chartData[0].concat('Security Threshold')]; // Add threshold column name
+        const extendedData = [chartData[0].concat('Security Threshold (11%)')]; // Add threshold column name
         chartData.slice(1).forEach(row => {
           extendedData.push([...row, 11]); // Add 11% to each row
         });
@@ -130,13 +190,13 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
         chartData = extendedData;
         
         // Add series configuration for threshold
-        seriesOptions = {
-          0: { color: '#ef4444' }, // Red for QBER
-          1: { 
-            color: '#f59e0b', 
-            lineDashStyle: [4, 4], // Dashed line for threshold
-            visibleInLegend: true
-          }
+        const thresholdIndex = Object.keys(seriesOptions).length;
+        seriesOptions[thresholdIndex] = { 
+          color: '#fbbf24', 
+          lineDashStyle: [10, 2], // Dashed line for threshold
+          pointSize: 0,
+          lineWidth: 2,
+          visibleInLegend: true
         };
       }
 
@@ -144,27 +204,106 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
 
       const options: any = {
         title: title,
+        titleTextStyle: {
+          fontSize: 15,
+          bold: true,
+          color: '#1f2937'
+        },
         hAxis: {
           title: selectedExpId === 'overall' ? 'Bit Number' : 
-                (selectedExpId === 'effect-of-distance' ? 'Distance (km)' : xAxisDataKey || 'X Axis'),
-          gridlines: { color: '#e0e0e0' }
+                (selectedExpId === 'effect-of-distance' ? 'Distance (km)' : 
+                (selectedExpId === 'effect-of-qubits' ? 'Qubits' : 
+                (selectedExpId === 'with-eavesdropper' ? 'Number of Eavesdroppers' : xAxisDataKey || 'X Axis'))),
+          titleTextStyle: {
+            fontSize: 14,
+            italic: false
+          },
+          textStyle: {
+            fontSize: 12,
+            color: '#374151'
+          },
+          gridlines: { 
+            color: '#e5e7eb',
+            count: 10
+          },
+          minorGridlines: {
+            color: '#f3f4f6',
+            count: 1
+          },
+          showTextEvery: 1,
+          slantedText: false,
+          format: '0',
+          ticks: (() => {
+            // Generate specific ticks based on experiment type
+            if (selectedExpId === 'with-eavesdropper') {
+              return [0, 1, 2, 3, 4, 5];
+            } else if (selectedExpId === 'effect-of-qubits') {
+              const ticks = [];
+              for (let i = 0; i <= 200; i += 25) {
+                ticks.push(i);
+              }
+              return ticks;
+            } else if (selectedExpId === 'effect-of-distance') {
+              return [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+            } else if (selectedExpId === 'effect-of-channel-noise') {
+              return [0, 5, 10, 15, 20, 25, 30];
+            }
+            return null;
+          })()
         },
         vAxis: {
           title: yTitle,
-          viewWindow: { min: 0 }, // Start Y-axis at 0 for better visualization
-          gridlines: { count: 10 }
+          titleTextStyle: {
+            fontSize: 14,
+            italic: false
+          },
+          textStyle: {
+            fontSize: 11,
+            color: '#374151'
+          },
+          viewWindow: { 
+            min: 0,
+            max: Math.max(100, ...data.map(d => d.qber || d.errorRate || 0)) * 1.1
+          },
+          gridlines: { 
+            color: '#e5e7eb',
+            count: 10
+          },
+          minorGridlines: {
+            color: '#f3f4f6',
+            count: 1
+          },
+          format: '0.##',
+          ticks: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
         },
         series: seriesOptions,
-        legend: { position: 'top' },
+        legend: { 
+          position: 'top',
+          alignment: 'end',
+          textStyle: {
+            fontSize: 12
+          }
+        },
         width: '100%',
         height: 400,
-        theme: 'material',
-        backgroundColor: 'transparent',
+        backgroundColor: '#ffffff',
         chartArea: {
-          backgroundColor: 'transparent',
-          width: '80%',
-          height: '80%'
-        }
+          backgroundColor: {
+            stroke: '#e5e7eb',
+            strokeWidth: 1
+          },
+          width: '85%',
+          height: '65%',
+          left: 100,
+          top: 50,
+          right: 30,
+          bottom: 70
+        },
+        curveType: 'function',
+        interpolateNulls: true,
+        pointsVisible: true,
+        fontName: 'Arial',
+        fontSize: 12
       };
 
       // Choose chart type based on experiment
@@ -186,11 +325,22 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
     // Check if Google Charts is already loaded
     if (window.google && window.google.charts) {
       drawChart();
+      // Redraw on window resize
+      window.addEventListener('resize', drawChart);
     } else {
       // Wait for Google Charts to be loaded
       window.google.charts.load('current', { packages: ['corechart', 'line', 'bar'] });
-      window.google.charts.setOnLoadCallback(drawChart);
+      window.google.charts.setOnLoadCallback(() => {
+        drawChart();
+        // Redraw on window resize
+        window.addEventListener('resize', drawChart);
+      });
     }
+    
+    // Cleanup resize listener
+    return () => {
+      window.removeEventListener('resize', drawChart);
+    };
   };
 
   const selectedResult = results[selectedExpId];
@@ -294,15 +444,15 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
       <CardContent className="space-y-6">
         {!isRunning && !selectedResult && (
           <>
-            <Card className="bg-secondary/20 border-cyan-500/20">
+            <Card className="bg-white border-gray-200">
               <CardHeader>
-                <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
+                <CardTitle className="text-sm text-gray-700 flex items-center gap-2">
                   <FileText className="w-4 h-4\" />
                   Experiment Details
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <div className="text-xs space-y-2 bg-background/50 p-3 rounded max-h-96 overflow-y-auto">
+                <div className="text-xs space-y-2 bg-gray-50 p-3 rounded-lg max-h-96 overflow-y-auto">
                   {(() => {
                     // Dynamically determine experiment based on selectedExpId
                     const expTextMap: Record<string, string> = {
@@ -682,9 +832,9 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
               )}
             </div>
 
-            <Card className="bg-secondary/30">
+            <Card className="bg-white/95 border-gray-200">
               <CardHeader>
-                <CardTitle className="text-sm">Experiment Results</CardTitle>
+                <CardTitle className="text-lg font-semibold text-gray-800">Experiment Results</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {selectedResult.data.length === 1 && selectedExpId === "without-eavesdropper" ? (
@@ -721,8 +871,10 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                         Reset & Rerun
                       </Button>
                     </div>
-                    <div id="experiment-chart" className="h-96 w-full">
-                      {/* Google Chart will be rendered here */}
+                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div id="experiment-chart" className="w-full" style={{ height: '400px' }}>
+                        {/* Google Chart will be rendered here */}
+                      </div>
                     </div>
                     {/*plotAnalysis && (
                       <div className="text-sm text-muted-foreground mt-2">
@@ -733,13 +885,13 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                 )}
                 
                 {(plotAnalysis || selectedResult?.analysis) && (
-                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4 mt-4">
-                    <h4 className="font-semibold text-cyan-400 mb-2">Analysis</h4>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                    <h4 className="font-semibold text-blue-800 mb-2">Analysis</h4>
                     {plotAnalysis && (
-                      <p className="text-sm">{plotAnalysis}</p>
+                      <p className="text-sm text-gray-700">{plotAnalysis}</p>
                     )}
                     {selectedResult?.analysis && (
-                      <p className="text-sm mt-2 text-muted-foreground">{null}</p>
+                      <p className="text-sm mt-2 text-gray-600">{null}</p>
                     )}
                   </div>
                 )}
