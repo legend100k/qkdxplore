@@ -100,7 +100,7 @@ export const QiskitIntegration = () => {
         <h1 className="text-4xl font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent mb-4">
           Qiskit BB84 Integration
         </h1>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-3xl mx-auto text-justify">
           Run the BB84 Quantum Key Distribution protocol using Qiskit and IBM Quantum hardware
         </p>
       </div>

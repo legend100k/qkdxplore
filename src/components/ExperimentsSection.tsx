@@ -208,7 +208,7 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
             <Beaker className="w-6 h-6" />
             Quantum Cryptography Experiments
           </CardTitle>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-justify">
             Conduct systematic experiments to understand BB84 protocol behavior under various conditions
           </p>
         </CardHeader>

@@ -344,7 +344,9 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperim
                 <CardContent className="space-y-4 text-sm">
                   <div>
                     <h3 className="font-semibold mb-1">Aim:</h3>
-                    <p className="text-muted-foreground">{expData.aim}</p>
+                    <p className="text-muted-foreground text-justify">
+                {expData.aim}
+              </p>
                   </div>
                   
                   <div>
