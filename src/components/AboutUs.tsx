@@ -44,11 +44,11 @@ export const AboutUs = () => {
                   Vivekanand Education Society's Institute of Technology<br />
                 <h5 className="font-bold mb-2">Team Members:</h5>
                 <p className="text-sm text-muted-foreground"></p>
-                  Aniruddha Gharat<br/>
-                  Arundhati Nair<br/>
+                  {/*Aniruddha Gharat<br/>
+                  Arundhati Nair<br/>*/}
                   Harsh Mhadgut<br/>
                   Shantaram Chari<br/>
-                  Sharavani Kale<br/>
+                  {/*Sharavani Kale<br/>*/}
                   Tejas Naringrekar<br/>
                  
 
