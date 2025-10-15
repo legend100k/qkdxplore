@@ -6,7 +6,10 @@ export const AboutUs = () => {
   const teamMembers = [
     "Tejas Naringrekar",
     "Shantaram Chari",
-    "Harsh Mhadgut"
+    "Harsh Mhadgut",
+    "Sharavani Kale",
+    "Arundhati Nair",
+    "Aniruddha Gharat"
   ];
 
   return (
@@ -39,6 +42,7 @@ export const AboutUs = () => {
               <div>
                 <h4 className="font-bold mb-2">Developed under guidance of:</h4>
                  <p className="text-sm text-muted-foreground"></p>
+                  Dr. Ranjan Bala Jain<br />
                   Mrs.Anuradha Jadiya<br />
                   Department of Electronics and Telecommunication<br />
                   Vivekanand Education Society's Institute of Technology<br />
