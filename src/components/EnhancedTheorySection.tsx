@@ -17,7 +17,7 @@ export const EnhancedTheorySection = () => {
             The digital world is under threat. Quantum computers will break today's encryption, but a defense exists - powered by the unbreakable laws of physics, not just math.
             Welcome to the quantum frontier of security. Q-Xplore is an immersive educational platform designed to make the complex world of Quantum Key Distribution (QKD) accessible and engaging. Through interactive simulations powered by Qiskit, you will not just learn about the BB84 protocol, you will run it, break it, and understand why it is the future of un-hackable communication.
           </p>
-          
+
           <div className="space-y-6">
             <h3 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <span className="w-1 h-8 bg-blue-600 rounded-full inline-block"></span>
@@ -27,10 +27,10 @@ export const EnhancedTheorySection = () => {
               <p className="text-lg text-foreground/80 leading-relaxed text-justify">
                 Our mission is to bridge the gap between complex quantum theory and practical, hands-on understanding.
               </p>
-              
+
               <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-gray-800">
                 <p className="text-lg text-foreground/90 mb-4"><span className="font-bold text-blue-600 dark:text-blue-400">Aim:</span> To provide a comprehensive, web-based learning environment that demystifies Quantum Key Distribution (QKD) through interactive simulation.</p>
-                
+
                 <p className="font-bold text-foreground text-lg mb-3">Objectives:</p>
                 <ul className="space-y-3 ml-2">
                   {[
@@ -48,7 +48,7 @@ export const EnhancedTheorySection = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="mt-8 p-6 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/50">
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400">
@@ -65,7 +65,7 @@ export const EnhancedTheorySection = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-6 mt-8">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
@@ -79,7 +79,7 @@ export const EnhancedTheorySection = () => {
                 Classical information can be copied without a trace.
               </p>
             </div>
-            
+
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800/50">
               <div className="flex items-center gap-3 mb-4">
                 <ShieldCheck className="text-blue-600 dark:text-blue-400" />
@@ -95,13 +95,13 @@ export const EnhancedTheorySection = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="space-y-6 mt-8">
             <h3 className="text-2xl font-semibold text-foreground flex items-center gap-2">
               <span className="w-1 h-8 bg-indigo-500 rounded-full inline-block"></span>
               Why is this a Revolution?
             </h3>
-            
+
             <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
@@ -164,47 +164,47 @@ export const EnhancedTheorySection = () => {
               </div>
             </div>
           </div>
-            
-            <div className="space-y-6 mt-8">
-              <h3 className="text-xl font-semibold text-foreground">The Quantum Principles Behind the Magic</h3>
-              <p className="text-foreground/80 leading-relaxed text-justify">
-                QKD leverages several fascinating and non-negotiable properties of quantum mechanics:
-              </p>
-              
-              <div className="grid md:grid-cols-2 gap-4">
-                {[
-                  { title: "Quantum Superposition", desc: "A quantum particle can exist in multiple states at the same time until measured." },
-                  { title: "Measurement Disturbance", desc: "Measuring a particle forces it to 'choose' a state, changing it forever if measured wrong." },
-                  { title: "No-Cloning Theorem", desc: "Impossible to create an identical copy of an unknown quantum state." },
-                  { title: "Complementarity", desc: "Measuring in the wrong way yields a random result." }
-                ].map((card, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
-                    <h4 className="font-bold text-blue-600 dark:text-blue-400 mb-2">{card.title}</h4>
-                    <p className="text-sm text-foreground/80">{card.desc}</p>
-                  </div>
-                ))}
+
+          <div className="space-y-6 mt-8">
+            <h3 className="text-xl font-semibold text-foreground">The Quantum Principles Behind the Magic</h3>
+            <p className="text-foreground/80 leading-relaxed text-justify">
+              QKD leverages several fascinating and non-negotiable properties of quantum mechanics:
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                { title: "Quantum Superposition", desc: "A quantum particle can exist in multiple states at the same time until measured." },
+                { title: "Measurement Disturbance", desc: "Measuring a particle forces it to 'choose' a state, changing it forever if measured wrong." },
+                { title: "No-Cloning Theorem", desc: "Impossible to create an identical copy of an unknown quantum state." },
+                { title: "Complementarity", desc: "Measuring in the wrong way yields a random result." }
+              ].map((card, i) => (
+                <div key={i} className="p-4 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 transition-colors">
+                  <h4 className="font-bold text-blue-600 dark:text-blue-400 mb-2">{card.title}</h4>
+                  <p className="text-sm text-foreground/80">{card.desc}</p>
+                </div>
+              ))}
             </div>
-              
-              <div className="mt-6 p-5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900">
-                <h4 className="flex items-center gap-2 font-bold text-indigo-700 dark:text-indigo-300 mb-2">
-                  <ShieldCheck size={20} />
-                  The Security Guardian: Quantum Bit Error Rate (QBER)
-                </h4>
-                <p className="text-foreground/80 text-justify mb-3">
-                  This is the most critical metric. The QBER is the percentage of mismatched bits between Alice and Bob after they have compared a sample of their key.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div className="bg-white dark:bg-indigo-900/50 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                    <span className="font-bold text-green-600 dark:text-green-400 block mb-1">Low QBER</span>
-                    Clean, secure connection with only natural noise.
-                  </div>
-                  <div className="bg-white dark:bg-indigo-900/50 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
-                    <span className="font-bold text-red-500 dark:text-red-400 block mb-1">High QBER (&gt;25%)</span>
-                    Undeniable proof of eavesdropping. Eve's interference creates random errors.
-                  </div>
+
+            <div className="mt-6 p-5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900">
+              <h4 className="flex items-center gap-2 font-bold text-indigo-700 dark:text-indigo-300 mb-2">
+                <ShieldCheck size={20} />
+                The Security Guardian: Quantum Bit Error Rate (QBER)
+              </h4>
+              <p className="text-foreground/80 text-justify mb-3">
+                This is the most critical metric. The QBER is the percentage of mismatched bits between Alice and Bob after they have compared a sample of their key.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                <div className="bg-white dark:bg-indigo-900/50 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                  <span className="font-bold text-green-600 dark:text-green-400 block mb-1">Low QBER</span>
+                  Clean, secure connection with only natural noise.
+                </div>
+                <div className="bg-white dark:bg-indigo-900/50 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                  <span className="font-bold text-red-500 dark:text-red-400 block mb-1">High QBER (&gt;25%)</span>
+                  Undeniable proof of eavesdropping. Eve's interference creates random errors.
                 </div>
               </div>
             </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -216,23 +216,23 @@ export const EnhancedTheorySection = () => {
           <p className="text-foreground/80 leading-relaxed text-justify">
             While several protocols exist, they all leverage quantum mechanics to achieve secure key exchange.
           </p>
-          
+
           <div className="grid md:grid-cols-3 gap-4">
-             {[
-               { name: "BB84", subtitle: "The Standard", desc: "The original and most widely implemented protocol, using photon polarization.", color: "blue" },
-               { name: "E91", subtitle: "The Entangled", desc: "Uses 'spooky action at a distance'—quantum entanglement—to create correlations.", color: "purple" },
-               { name: "CV-QKD", subtitle: "The Integrator", desc: "Uses continuous properties of light, allowing integration with existing telecom fibers.", color: "cyan" }
-             ].map((type, i) => (
-               <div key={i} className={`p-5 rounded-xl bg-${type.color}-50 dark:bg-${type.color}-900/10 border border-${type.color}-100 dark:border-${type.color}-900/50`}>
-                 <h4 className={`text-lg font-bold text-${type.color}-700 dark:text-${type.color}-300`}>{type.name}</h4>
-                 <span className={`text-xs uppercase tracking-wider font-semibold text-${type.color}-600/70 dark:text-${type.color}-400/70 mb-2 block`}>{type.subtitle}</span>
-                 <p className="text-sm text-foreground/80">{type.desc}</p>
-               </div>
-             ))}
+            {[
+              { name: "BB84", subtitle: "The Standard", desc: "The original and most widely implemented protocol, using photon polarization.", color: "blue" },
+              { name: "E91", subtitle: "The Entangled", desc: "Uses 'spooky action at a distance'—quantum entanglement—to create correlations.", color: "purple" },
+              { name: "CV-QKD", subtitle: "The Integrator", desc: "Uses continuous properties of light, allowing integration with existing telecom fibers.", color: "cyan" }
+            ].map((type, i) => (
+              <div key={i} className={`p-5 rounded-xl bg-${type.color}-50 dark:bg-${type.color}-900/10 border border-${type.color}-100 dark:border-${type.color}-900/50`}>
+                <h4 className={`text-lg font-bold text-${type.color}-700 dark:text-${type.color}-300`}>{type.name}</h4>
+                <span className={`text-xs uppercase tracking-wider font-semibold text-${type.color}-600/70 dark:text-${type.color}-400/70 mb-2 block`}>{type.subtitle}</span>
+                <p className="text-sm text-foreground/80">{type.desc}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="border-none shadow-soft">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">The Quantum Magic Trick: It's All in the Basis</CardTitle>
@@ -241,13 +241,13 @@ export const EnhancedTheorySection = () => {
           <p className="text-lg text-foreground/80 leading-relaxed text-justify">
             The protocol uses a simple but powerful concept: information can be encoded in different, incompatible ways.
           </p>
-          
+
           <div className="flex flex-wrap gap-12 justify-center py-8 bg-gray-50 dark:bg-black/20 rounded-2xl border border-gray-100 dark:border-gray-800">
             <div className="flex flex-col items-center group">
               <div className="text-blue-600 dark:text-blue-400 font-bold mb-4 text-lg">Rectilinear Basis (+)</div>
               <div className="relative w-32 h-32 flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
-                <div className="absolute w-24 h-0.5 bg-blue-500/30"></div> 
-                <div className="absolute w-0.5 h-24 bg-blue-500/30"></div> 
+                <div className="absolute w-24 h-0.5 bg-blue-500/30"></div>
+                <div className="absolute w-0.5 h-24 bg-blue-500/30"></div>
                 <div className="absolute w-12 h-12 rounded-full border-2 border-blue-500 bg-background shadow-lg shadow-blue-500/20 flex items-center justify-center z-10">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <line x1="6" y1="12" x2="18" y2="12" strokeWidth="2"></line>
@@ -257,30 +257,30 @@ export const EnhancedTheorySection = () => {
               </div>
               <div className="text-sm font-medium text-foreground/60 text-center mt-4 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border shadow-sm">Horizontal (0) or Vertical (1)</div>
             </div>
-            
+
             <div className="flex flex-col items-center group">
               <div className="text-purple-600 dark:text-purple-400 font-bold mb-4 text-lg">Diagonal Basis (X)</div>
               <div className="relative w-32 h-32 flex items-center justify-center transition-transform group-hover:scale-110 duration-500">
-                <div className="absolute w-24 h-0.5 bg-purple-500/30 transform -rotate-45 origin-center"></div> 
-                <div className="absolute w-24 h-0.5 bg-purple-500/30 transform rotate-45 origin-center"></div> 
+                <div className="absolute w-24 h-0.5 bg-purple-500/30 transform -rotate-45 origin-center"></div>
+                <div className="absolute w-24 h-0.5 bg-purple-500/30 transform rotate-45 origin-center"></div>
                 <div className="absolute w-12 h-12 rounded-full border-2 border-purple-500 bg-background shadow-lg shadow-purple-500/20 flex items-center justify-center z-10">
-                  <svg className="w-6 h-6 text-purple-600 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-6 h-6 text-purple-600 transform rotate-145" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <line x1="3" y1="12" x2="21" y2="12" strokeWidth="2" transform="rotate(-45 12 12)"></line>
                     <polygon points="18,8 22,12 18,16" fill="currentColor" transform="rotate(-45 12 12)"></polygon>
                   </svg>
                 </div>
               </div>
-               <div className="text-sm font-medium text-foreground/60 text-center mt-4 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border shadow-sm">45° (0) or 135° (1)</div>
+              <div className="text-sm font-medium text-foreground/60 text-center mt-4 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border shadow-sm">45° (0) or 135° (1)</div>
             </div>
           </div>
-          
+
           <p className="text-foreground/80 text-justify bg-amber-50 dark:bg-amber-900/10 p-4 rounded-lg border-l-4 border-amber-400">
             <span className="font-bold text-amber-700 dark:text-amber-500 block mb-1">Crucial Concept:</span>
             If Bob uses the wrong basis to measure a photon, his result is completely random. He has only a 50% chance of guessing the correct bit. This randomness is the core of the protocol's security.
           </p>
         </CardContent>
       </Card>
-      
+
       <Card className="border-none shadow-soft">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">The BB84 Protocol Block Diagram</CardTitle>
@@ -291,7 +291,7 @@ export const EnhancedTheorySection = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="border-none shadow-soft">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-foreground">
@@ -302,7 +302,7 @@ export const EnhancedTheorySection = () => {
           <p className="text-lg text-foreground/80 leading-relaxed text-justify">
             Our simulation will guide you through this elegant dance between Alice and Bob.
           </p>
-          
+
           <div className="space-y-0">
             {[
               { title: "Quantum Encoding (Alice)", desc: "Alice generates a random string of bits (0s and 1s). For each bit, she randomly chooses a basis (+ or X) and prepares a photon in the corresponding polarization state." },
@@ -329,7 +329,7 @@ export const EnhancedTheorySection = () => {
               </div>
             ))}
           </div>
-          
+
           <div className="mt-8 rounded-xl border border-border bg-card p-5 sm:p-6 lg:p-8 shadow-soft relative overflow-hidden">
             <div className="absolute top-0 right-0 w-40 h-40 sm:w-56 sm:h-56 bg-blue-500/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
             <div className="relative z-10 space-y-4">

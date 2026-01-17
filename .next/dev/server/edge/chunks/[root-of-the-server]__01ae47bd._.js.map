@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 16, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/qkdxplore/middleware.ts"],"sourcesContent":["import { NextRequest, NextResponse } from 'next/server';\n\n// This function runs before every request\nexport function middleware(request: NextRequest) {\n  // For now, we'll allow all routes\n  // In a real implementation, you would check authentication status here\n  return NextResponse.next();\n}\n\n// Configure which routes the middleware should run for\nexport const config = {\n  matcher: [\n    /*\n     * Match all request paths except for the ones starting with:\n     * - api (API routes)\n     * - _next/static (static files)\n     * - _next/image (image optimization files)\n     * - favicon.ico (favicon file)\n     */\n    '/((?!api|_next/static|_next/image|favicon.ico).*)',\n  ],\n};"],"names":[],"mappings":";;;;;;AAAA;AAAA;;AAGO,SAAS,WAAW,OAAoB;IAC7C,kCAAkC;IAClC,uEAAuE;IACvE,OAAO,6MAAY,CAAC,IAAI;AAC1B;AAGO,MAAM,SAAS;IACpB,SAAS;QACP;;;;;;KAMC,GACD;KACD;AACH"}}]
+}
