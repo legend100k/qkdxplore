@@ -198,12 +198,14 @@ export const SimulationSection = () => {
   ]);
   const [numEves, setNumEves] = useState(0);
 
-  // Calculate number of Eves based on eavesdropping rate
+  // Calculate number of Eves based on eavesdropping rate (percentage-based)
   useEffect(() => {
-    // Eavesdropping rate is now 0-5 (number of Eves)
-    const calculatedNumEves = eavesdroppingRate[0]; // Direct number of Eves (0-5)
+    const calculatedNumEves =
+      eavesdroppingRate[0] === 0
+        ? 0
+        : Math.min(5, Math.ceil(eavesdroppingRate[0] / 20));
     setNumEves(calculatedNumEves);
-    
+
     // Randomize Eve polarizers when eavesdropping rate changes
     if (eavesdroppingRate[0] > 0) {
       randomizeEvePolarizers();
@@ -259,8 +261,8 @@ export const SimulationSection = () => {
   const generateRandomBits = () => {
     const bits: QuantumBit[] = [];
     const totalBits = numQubits[0];
-    // Eavesdropping rate: 0 = no eavesdropping, 1-5 = probability of interception increases with more Eves
-    const eavesProbability = eavesdroppingRate[0] * 0.2; // Each Eve has 20% chance, so 5 Eves = 100%
+    // Eavesdropping rate: 0-100% probability of interception
+    const eavesProbability = eavesdroppingRate[0] / 100;
     
     // Convert legacy noise slider to optical noise parameters
     // Increase noise effect for more realistic QBER
@@ -507,8 +509,8 @@ export const SimulationSection = () => {
   };
 
   const processBitStep = (bitIndex: number, step: number) => {
-    // Eavesdropping rate: 0 = no eavesdropping, 1-5 = probability of interception increases with more Eves
-    const eavesProbability = eavesdroppingRate[0] * 0.2; // Each Eve has 20% chance, so 5 Eves = 100%
+    // Eavesdropping rate: 0-100% probability of interception
+    const eavesProbability = eavesdroppingRate[0] / 100;
     // Increase noise effect for more realistic QBER
     const opticalParams = legacyNoiseToOptical(noiseLevel[0] * 3, 10); // Amplify noise effect
 
@@ -774,16 +776,12 @@ export const SimulationSection = () => {
     const eavesdroppingRateValue = eavesdroppingRate[0];
     const noiseLevelValue = noiseLevel[0];
     
-    // Eavesdropping creates significant QBER: when Eve intercepts and resends, 
+    // Eavesdropping creates significant QBER: when Eve intercepts and resends,
     // she causes ~25% error rate (since she guesses basis randomly and causes disturbance)
-    // For each Eve, if they intercept a bit, they cause ~25% error rate
-    // Assuming each Eve intercepts ~50% of the photons they encounter
     let eavesdroppingContribution = 0;
     if (eavesdroppingRateValue > 0) {
-      // In a realistic scenario, even 1 Eve intercepting 10% of photons would cause ~2.5% QBER (0.1 * 0.25)
-      // But if Eve intercepts ALL photons, it's 25% QBER. So we scale based on number of Eves and assume each intercepts a portion
-      // For simplicity, let's say each Eve causes approximately their count * 15% QBER contribution
-      eavesdroppingContribution = Math.min(eavesdroppingRateValue * 25, 75); // Max 75% if multiple Eves
+      // If Eve intercepts ALL photons, it's ~25% QBER. Scale linearly by interception rate.
+      eavesdroppingContribution = Math.min((eavesdroppingRateValue / 100) * 25, 25);
     }
     
     // Noise contributes directly to QBER - more realistic noise model
@@ -1190,20 +1188,20 @@ export const SimulationSection = () => {
         </CardHeader>
         
         <CardContent className="space-y-8 pt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
             {/* Left column - Controls */}
-            <div className="lg:col-span-4 xl:col-span-3 space-y-6">
+            <div className="lg:col-span-4 xl:col-span-3 space-y-6 flex flex-col">
               {!isStepByStep || stepByStepBits.length === 0 ? (
-                <div className="bg-gray-50 dark:bg-slate-900/50 rounded-xl p-6 border border-gray-100 dark:border-gray-800 min-h-[520px]">
+                <div className="bg-gray-50 dark:bg-slate-900/50 rounded-xl p-6 border border-gray-100 dark:border-gray-800 flex-1 flex flex-col">
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
                     <Settings className="w-5 h-5 text-gray-500" />
-                    Parameters
+                    Simulation Parameters
                   </h3>
                   
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <label className="font-medium text-foreground">Number of Qubits</label>
+                        <label className="font-medium text-foreground">Qubits</label>
                         <span className="font-mono font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">{numQubits[0]}</span>
                       </div>
                       <Slider
@@ -1219,22 +1217,22 @@ export const SimulationSection = () => {
 
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <label className="font-medium text-foreground">Half-Silvered Mirror (Eve)</label>
+                        <label className="font-medium text-foreground">Eavesdrop</label>
                         <span className={`font-mono font-bold px-2 py-0.5 rounded ${eavesdroppingRate[0] > 0 ? 'text-red-600 bg-red-50 dark:bg-red-900/30' : 'text-gray-500 bg-gray-100'}`}>
-                          {eavesdroppingRate[0] > 0 ? `${eavesdroppingRate[0]} Attacker${eavesdroppingRate[0] > 1 ? 's' : ''}` : 'None'}
+                          {eavesdroppingRate[0]}%
                         </span>
                       </div>
                       <Slider
                         value={eavesdroppingRate}
                         onValueChange={setEavesdroppingRate}
-                        max={5}
+                        max={100}
                         min={0}
-                        step={1}
+                        step={5}
                         className="py-2"
                         disabled={isRunning}
                       />
-                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Simulates an eavesdropper intercepting photons. More attackers = higher probability of interception.
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Simulates an eavesdropper intercepting photons. Higher percentage = more interception.
                       </p>
                     </div>
 
@@ -1256,58 +1254,106 @@ export const SimulationSection = () => {
                       />
                     </div>
                     
-                    <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Quick Presets</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button 
-                          variant="outline" 
+                    <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Experiment Presets</h3>
+                        <Zap className="w-3 h-3 text-amber-500" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setNumQubits([16]);
                             setEavesdroppingRate([0]);
                             setNoiseLevel([2]);
                           }}
-                          className="text-xs border-gray-200 hover:border-blue-300 hover:bg-blue-50 dark:border-gray-700"
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-100 dark:hover:border-blue-800 group"
                         >
-                          Standard Run
+                          <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <ShieldCheck className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-blue-700 dark:group-hover:text-blue-300 uppercase tracking-tighter">No Eavesdropper</span>
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setNumQubits([16]);
-                            setEavesdroppingRate([3]);
+                            setEavesdroppingRate([40]);
                             setNoiseLevel([2]);
                           }}
-                          className="text-xs border-gray-200 hover:border-red-300 hover:bg-red-50 dark:border-gray-700"
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-red-50 dark:hover:bg-red-900/20 border border-transparent hover:border-red-100 dark:hover:border-red-800 group"
                         >
-                          <Eye className="w-3 h-3 mr-1 text-red-500" />
-                          Hacker Attack
+                          <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Eye className="w-4 h-4 text-red-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-red-700 dark:group-hover:text-red-300 uppercase tracking-tighter">With Eavesdropper</span>
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([16]);
+                            setEavesdroppingRate([0]);
+                            setNoiseLevel([15]);
+                          }}
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 border border-transparent hover:border-amber-100 dark:hover:border-amber-800 group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Zap className="w-4 h-4 text-amber-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-amber-700 dark:group-hover:text-amber-300 uppercase tracking-tighter">High Noise</span>
+                        </Button>
+
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setNumQubits([50]);
                             setEavesdroppingRate([0]);
                             setNoiseLevel([2]);
                           }}
-                          className="text-xs border-gray-200 dark:border-gray-700"
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800 group"
                         >
-                          Max Qubits
+                          <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Cpu className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 uppercase tracking-tighter">More Qubits</span>
                         </Button>
-                         <Button 
-                          variant="outline" 
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([32]);
+                            setEavesdroppingRate([25]);
+                            setNoiseLevel([8]);
+                          }}
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-100 dark:hover:border-purple-800 group"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Settings className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-purple-700 dark:group-hover:text-purple-300 uppercase tracking-tighter">Mixed Conditions</span>
+                        </Button>
+
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => {
                             setNumQubits([16]);
                             setEavesdroppingRate([0]);
-                            setNoiseLevel([10]);
+                            setNoiseLevel([0]);
                           }}
-                          className="text-xs border-gray-200 hover:border-amber-300 hover:bg-amber-50 dark:border-gray-700"
+                          className="h-auto py-3 px-2 flex flex-col items-center gap-2 rounded-xl transition-all duration-300 hover:bg-green-50 dark:hover:bg-green-900/20 border border-transparent hover:border-green-100 dark:hover:border-green-800 group"
                         >
-                          <Zap className="w-3 h-3 mr-1 text-amber-500" />
-                          Noisy Channel
+                          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <RotateCw className="w-4 h-4 text-green-600" />
+                          </div>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400 group-hover:text-green-700 dark:group-hover:text-green-300 uppercase tracking-tighter">Ideal System</span>
                         </Button>
                       </div>
                     </div>
@@ -1443,9 +1489,9 @@ export const SimulationSection = () => {
             </div>
 
             {/* Right column - Results */}
-            <div className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0">
+            <div className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0 flex flex-col">
               {quantumBits.length === 0 && (!isStepByStep || stepByStepBits.length === 0) && (
-                <div className="rounded-lg border border-dashed border-border bg-card/60 p-8 text-center min-h-[520px] flex flex-col items-center justify-center">
+                <div className="rounded-lg border border-dashed border-border bg-card/60 p-8 text-center flex-1 flex flex-col items-center justify-center">
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <BarChart3 className="h-6 w-6" />
                   </div>
