@@ -13,6 +13,7 @@ import {
   Eye,
   Shield,
   ShieldCheck,
+  AlertCircle,
   BarChart3,
   Settings,
   ChevronLeft,
