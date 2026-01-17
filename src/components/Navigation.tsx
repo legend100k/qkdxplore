@@ -1,11 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { BookOpen, FileText, Cpu, FlaskConical, Cable, Code, FilePieChart, FileQuestion, GraduationCap, Info, Newspaper } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 
 interface NavigationProps {
   activeTab: string;
-  onTabChange: (tab: string) => void;
+  onTabChange: (tab: string) => void; // Changed from 'id' to 'tab' to match original, but original had (tab: string)
+  className?: string;
+  onClose?: () => void;
 }
 
 const navigationItems = [
@@ -27,46 +31,67 @@ const getIcon = (id: string) => {
   return item?.icon || BookOpen;
 };
 
-export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
+export const Navigation = ({ activeTab, onTabChange, className, onClose }: NavigationProps) => {
   return (
-    <Card className="h-full quantum-glow border-quantum-blue/30">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-quantum-blue to-quantum-purple rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm"><img src="/qkd_temp_logo.png" alt="QKD Logo" /></span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-quantum-blue to-quantum-purple bg-clip-text text-transparent">
-                QKD_Xplore
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                Quantum Lab
-              </p>
-            </div>
+    <Card className={cn(
+      "h-full rounded-none border-r border-border border-l-0 border-t-0 border-b-0 bg-sidebar shadow-none doc-sidebar",
+      className
+    )}>
+      <div className="px-5 py-6 flex flex-col h-full">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-9 h-9 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+            <img src="/qkd_temp_logo.png" alt="QKD Logo" className="w-5 h-5 object-contain dark:brightness-0 dark:invert" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-base font-semibold text-foreground">
+              QKD_Xplore
+            </h1>
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Documentation
+            </p>
           </div>
         </div>
         
-        <nav className="space-y-2">
+        <div className="space-y-1">
+          <p className="px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contents</p>
           {navigationItems.map((item) => {
             const IconComponent = getIcon(item.id);
+            const isActive = activeTab === item.id;
+            
             return (
               <Button
                 key={item.id}
-                variant={activeTab === item.id ? "default" : "ghost"}
-                className={`w-full justify-start h-12 text-left ${
-                  activeTab === item.id
-                    ? "bg-quantum-blue text-white hover:bg-quantum-blue/90"
-                    : "hover:bg-secondary/50"
-                }`}
-                onClick={() => onTabChange(item.id)}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start h-9 px-2 text-left font-normal transition-all duration-150 rounded-md group",
+                  isActive
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                )}
+                onClick={() => {
+                  onTabChange(item.id);
+                  if (onClose) onClose();
+                }}
               >
-                <IconComponent className="text-lg mr-3" />
-                <span className="font-medium flex-1 text-left truncate">{item.label}</span>
+                <IconComponent className={cn(
+                  "w-4 h-4 mr-3 transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                )} />
+                <span className="truncate">{item.label}</span>
               </Button>
             );
           })}
-        </nav>
+        </div>
+        
+        <div className="mt-auto pt-4 border-t border-border/60">
+          <div className="flex items-center justify-between mb-3">
+             <span className="text-xs font-medium text-muted-foreground">Theme</span>
+             <ThemeToggle />
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            v1.0.0 • {new Date().getFullYear()}
+          </div>
+        </div>
       </div>
     </Card>
   );

@@ -437,26 +437,27 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
     }
   }, [selectedResult, xAxisDataKey, selectedExpId, colorScheme]);
   
-  return (
-    <Card className="border-blue-500/30">
-      <CardHeader>
-        <CardTitle className="text-blue-400 flex items-center gap-2">
-          <span className="w-6 h-6\" />
+    return (
+    <Card className="border-none shadow-soft overflow-hidden bg-white dark:bg-slate-950">
+      <CardHeader className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-slate-900/50 pb-4">
+        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+          <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+            <FileText className="w-5 h-5" />
+          </span>
           {experimentName}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-8 p-6 md:p-8">
         {!isRunning && !selectedResult && (
-          <>
-            <Card className="bg-white border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-sm text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4\" />
-                  Experiment Details
+          <div className="grid grid-cols-1 gap-6">
+            <Card className="border-none shadow-sm bg-slate-50 dark:bg-slate-900/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                  Experiment Overview
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="text-xs space-y-2 bg-gray-50 p-3 rounded-lg max-h-96 overflow-y-auto">
+              <CardContent className="text-sm">
+                <div className="space-y-4 text-gray-600 dark:text-gray-300 leading-relaxed">
                   {(() => {
                     // Dynamically determine experiment based on selectedExpId
                     const expTextMap: Record<string, string> = {
@@ -471,224 +472,268 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                     const expName = expTextMap[selectedExpId] || experimentName;
                     
                     return (
-                      <>
-                        <p><strong>{expName}</strong></p>
-                        <p><strong>Aim:</strong> {selectedExpId === 'effect-of-qubits' 
-                          ? 'To study the fundamental role of qubits and their quantum properties in the BB84 protocol.'
-                          : selectedExpId === 'without-eavesdropper'
-                          ? 'To establish a baseline for the BB84 protocol\'s performance under ideal, secure conditions.'
-                          : selectedExpId === 'with-eavesdropper'
-                          ? 'To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.'
-                          : selectedExpId === 'effect-of-channel-noise'
-                          ? 'To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).'
-                          : selectedExpId === 'effect-of-distance'
-                          ? 'To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.'
-                          : 'To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.'}</p>
-                        <p><strong>Objective:</strong> {selectedExpId === 'effect-of-qubits'
-                          ? 'To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).'
-                          : selectedExpId === 'without-eavesdropper'
-                          ? 'To observe the key generation process and resulting QBER when the quantum channel is secure.'
-                          : selectedExpId === 'with-eavesdropper'
-                          ? 'To observe how Eve\'s interception attempts disturb the quantum states and significantly increase the QBER.'
-                          : selectedExpId === 'effect-of-channel-noise'
-                          ? 'To isolate and observe the impact of channel noise on the QBER.'
-                          : selectedExpId === 'effect-of-distance'
-                          ? 'To observe the relationship between distance, photon loss (key rate), and error rate (QBER).'
-                          : 'To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.'}</p>
-                        <p><strong>Apparatus:</strong> Q-Xplore Virtual Lab {(selectedExpId !== 'without-eavesdropper' && selectedExpId !== 'with-eavesdropper' && selectedExpId !== 'effect-of-channel-noise' && selectedExpId !== 'effect-of-distance') ? '(Web-based interface powered by Qiskit)' : ''}</p>
-                        <p className="font-semibold">Theory:</p>
-                        {selectedExpId === 'effect-of-qubits' && (
-                          <>
-                            <p>The BB84 protocol leverages the unique properties of quantum bits, or qubits, which is the fundamental unit of quantum information. Unlike a classical bit, which is definitively 0 or 1, a qubit can exist in a superposition of both states simultaneously, represented as |ψ⟩ = α|0⟩ + β|1⟩, where α and β are complex probability amplitudes (|α|² + |β|² = 1).</p>
-                            <p>In BB84, information is encoded onto qubits using two non-orthogonal bases:</p>
-                            <p>The Rectilinear Basis (+): |0⟩₊ = |→⟩ (Horizontal polarization), |1⟩₊ = |↑⟩ (Vertical polarization)</p>
-                            <p>The Diagonal Basis (×): |0⟩ₓ = |↗⟩ = (|→⟩ + |↑⟩)/√2 (45° polarization), |1⟩ₓ = |↖⟩ = (|→⟩ - |↑⟩)/√2 (135° polarization)</p>
-                            <p>The protocol's security is not mathematical but physical, relying on three core principles:</p>
-                            <p>Measurement Disturbance: Measuring a quantum system irrevocably collapses its state. If Bob measures a qubit in a basis different from the one Alice used to prepare it, the result is random (50% chance of |0⟩ or |1⟩), and the original information is lost.</p>
-                            <p>No-Cloning Theorem: It is impossible to create an identical copy (clone) of an arbitrary unknown quantum state. An evesdropper, Eve, cannot perfectly intercept, copy, and resend a qubit without altering the original.</p>
-                            <p>Heisenberg Uncertainty Principle: Certain pairs of physical properties (like polarization in different bases) cannot be simultaneously known with perfect accuracy. This makes it impossible to measure a quantum state in multiple ways without introducing errors.</p>
-                            <p>These properties ensure that any attempt to gain information about the key introduces detectable anomalies.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'without-eavesdropper' && (
-                          <>
-                            <p>This experiment establishes the optimal operating conditions for the BB84 protocol. In the complete absence of an evesdropper, the only factors affecting the Quantum Bit Error Rate (QBER) are the inherent channel noise and system imperfections. Under well-controlled laboratory conditions with high-quality components, this intrinsic QBER can be very low, often below 2%.</p>
-                            <p>The process proceeds as follows:</p>
-                            <p>Quantum Transmission: Alice sends a sequence of qubits, each randomly prepared in one of the two bases.</p>
-                            <p>Quantum Measurement: Bob independently and randomly chooses a basis for each incoming qubit and measures it.</p>
-                            <p>Sifting: Alice and Bob publicly communicate the bases they used for each qubit (but not the bit values) over a classical channel. They discard all bits where their bases did not match. The remaining bits form the sifted key.</p>
-                            <p>Error Estimation: They compare a random subset of the sifted key to calculate the QBER. A low QBER confirms the channel is secure.</p>
-                            <p>Key Finalization: The remaining portion of the sifted key is then processed through error correction (to fix the few remaining errors) and privacy amplification (to reduce any partial information a potential evesdropper might have) to produce a final, identical, and perfectly secret key.</p>
-                            <p>This scenario demonstrates the protocol's maximum efficiency and serves as a control to identify the disruptive effects of an evesdropper.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'with-eavesdropper' && (
-                          <>
-                            <p>This experiment demonstrates the core security feature of BB84: the detectable disruption caused by any interception attempt. The most straightforward attack is the intercept-resend attack:</p>
-                            <p>Interception: Eve intercepts the qubit sent by Alice.</p>
-                            <p>Measurement: She randomly chooses a basis (rectilinear or diagonal) to measure it. She has a 50% chance of choosing the wrong basis.</p>
-                            <p>Disturbance: If she chooses the wrong basis, the qubit's state collapses randomly. She records this random result as the bit value.</p>
-                            <p>Resending: To hide her presence, she must send a new qubit to Bob prepared in the state she measured.</p>
-                            <p>This action introduces errors. The probability that Eve chooses the wrong basis is 1/2. If she chooses wrong, she sends the wrong state to Bob. However, Bob also has a 50% chance of choosing the wrong basis for his measurement. The overall probability that an error is introduced for a bit that Eve tampered with is calculated as:</p>
-                            <p>P(Eve chooses wrong basis) = 1/2</p>
-                            <p>P(Bob gets wrong bit | Eve was wrong) = 1/2</p>
-                            <p>Therefore, P(Error) = (1/2) * (1/2) = 1/4 or 25%</p>
-                            <p>Thus, Eve's activity raises the Quantum Bit Error Rate (QBER) to approximately 25%, which is far above the typical tolerable threshold of ~11%. This dramatic and predictable increase is an unambiguous signature of evesdropping, forcing Alice and Bob to discard the compromised key.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'effect-of-channel-noise' && (
-                          <>
-                            <p>Channel noise stems from physical imperfections like photon scattering, polarization drift, and detector dark counts. Unlike photon loss, noise directly causes bit errors: Bob detects a photon but records the wrong bit value. This directly increases the QBER. A high QBER can render the key insecure, even without an evesdropper, as it becomes impossible to distinguish these errors from a malicious attack.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'effect-of-distance' && (
-                          <>
-                            <p>The primary effect of distance is exponential photon loss (attenuation), which drastically reduces the number of photons reaching Bob and thus the final key rate. Furthermore, over longer distances, effects like polarization drift have more time to occur, which can also cause errors and lead to a slight increase in the QBER alongside the major issue of loss.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'overall' && (
-                          <>
-                            <p>It is crucial to distinguish between Photon Loss and Bit Errors.</p>
-                            <p>Photon Loss: A photon is sent but not detected. This reduces the raw number of bits, lowering the key rate, but it does not increase the QBER (a lost photon isn't an error; it's just missing data).</p>
-                            <p>Bit Errors: A photon is detected but its value is wrong. This increases the QBER and compromises security.</p>
-                            <p>An evesdropper causes errors. Channel noise causes errors. Distance causes loss (which can lead to errors indirectly). This experiment isolates the pure effect of loss.</p>
-                          </>
-                        )}
-                        <p className="font-semibold">Procedure:</p>
-                        {selectedExpId === 'effect-of-qubits' && (
-                          <>
-                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
-                            <p>Run the BB84 simulation without any evesdropper and with low channel noise.</p>
-                            <p>Note the QBER and the successful generation of a secure key.</p>
-                            <p>Take a screenshot of the results screen showing the low QBER.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'without-eavesdropper' && (
-                          <>
-                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
-                            <p>Set the \"evesdropper\" parameter to OFF and \"Channel Noise\" to LOW.</p>
-                            <p>Run the simulation and note the low QBER and efficient key generation.</p>
-                            <p>Take a screenshot of the successful results.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'with-eavesdropper' && (
-                          <>
-                            <p>Go to the Q-Xplore Virtual Lab simulator.</p>
-                            <p>Set the \"evesdropper\" parameter to ON.</p>
-                            <p>Run the simulation and observe the QBER.</p>
-                            <p>Take a screenshot of the results showing the high (~25%) QBER.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'effect-of-channel-noise' && (
-                          <>
-                            <p>Set evesdropper = OFF, Distance = SHORT (to minimize other effects).</p>
-                            <p>Set Channel Noise = LOW. Run the simulation. Record the QBER and Final Key Length. This is your baseline.</p>
-                            <p>Set Channel Noise = MEDIUM. Run the simulation. Record the QBER and Final Key Length.</p>
-                            <p>Set Channel Noise = HIGH. Run the simulation. Record the QBER and Final Key Length.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'effect-of-distance' && (
-                          <>
-                            <p>Set evesdropper = OFF, Channel Noise = LOW.</p>
-                            <p>Set Distance = SHORT. Run the simulation. Record the QBER and Final Key Length. This is your baseline.</p>
-                            <p>Set Distance = MEDIUM. Run the simulation. Record the QBER and Final Key Length.</p>
-                            <p>Set Distance = LONG. Run the simulation. Record the QBER and Final Key Length.</p>
-                          </>
-                        )}
-                        {selectedExpId === 'overall' && (
-                          <>
-                            <p>Set evesdropper = OFF, Channel Noise = LOW (to ensure no errors are introduced).</p>
-                            <p>Find a \"Photon Loss\" or \"Attenuation\" parameter. If not available, use Distance = LONG.</p>
-                            <p>Set loss to HIGH (or use max distance). Run the simulation.</p>
-                            <p>Record the very short (or zero) Final Key Length and the QBER.</p>
-                          </>
-                        )}
-                      </>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <h4 className="text-lg font-bold text-foreground mb-4">{expName}</h4>
+                        
+                        <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-4">
+                            <p className="mb-2"><strong className="text-blue-600 dark:text-blue-400">Aim:</strong> {selectedExpId === 'effect-of-qubits' 
+                            ? 'To study the fundamental role of qubits and their quantum properties in the BB84 protocol.'
+                            : selectedExpId === 'without-eavesdropper'
+                            ? 'To establish a baseline for the BB84 protocol\'s performance under ideal, secure conditions.'
+                            : selectedExpId === 'with-eavesdropper'
+                            ? 'To demonstrate the detection of an evesdropper (Eve) using the BB84 protocol.'
+                            : selectedExpId === 'effect-of-channel-noise'
+                            ? 'To investigate how noise in the quantum channel affects the security of the BB84 protocol by increasing the Quantum Bit Error Rate (QBER).'
+                            : selectedExpId === 'effect-of-distance'
+                            ? 'To analyze how increasing the transmission distance impacts the efficiency and performance of the BB84 protocol.'
+                            : 'To study the specific impact of photon loss on the efficiency of the BB84 protocol and distinguish it from bit errors.'}</p>
+                            
+                            <p className="mb-0"><strong className="text-indigo-600 dark:text-indigo-400">Objective:</strong> {selectedExpId === 'effect-of-qubits'
+                            ? 'To understand how the principles of superposition, measurement disturbance, and the no-cloning theorem provide the security foundation for Quantum Key Distribution (QKD).'
+                            : selectedExpId === 'without-eavesdropper'
+                            ? 'To observe the key generation process and resulting QBER when the quantum channel is secure.'
+                            : selectedExpId === 'with-eavesdropper'
+                            ? 'To observe how Eve\'s interception attempts disturb the quantum states and significantly increase the QBER.'
+                            : selectedExpId === 'effect-of-channel-noise'
+                            ? 'To isolate and observe the impact of channel noise on the QBER.'
+                            : selectedExpId === 'effect-of-distance'
+                            ? 'To observe the relationship between distance, photon loss (key rate), and error rate (QBER).'
+                            : 'To demonstrate that photon loss reduces the key rate but does not directly increase the QBER.'}</p>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground mb-4"><strong>Apparatus:</strong> Q-Xplore Virtual Lab {(selectedExpId !== 'without-eavesdropper' && selectedExpId !== 'with-eavesdropper' && selectedExpId !== 'effect-of-channel-noise' && selectedExpId !== 'effect-of-distance') ? '(Web-based interface powered by Qiskit)' : ''}</p>
+                        
+                        <div className="space-y-4">
+                            <h5 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mt-6 border-b border-gray-200 dark:border-gray-800 pb-2">
+                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400">i</span>
+                                Theory
+                            </h5>
+                            
+                            <div className="pl-4 border-l-2 border-gray-200 dark:border-gray-800 space-y-3">
+                                {selectedExpId === 'effect-of-qubits' && (
+                                <>
+                                    <p>The BB84 protocol leverages the unique properties of <span className="font-semibold text-foreground">qubits</span>, which can exist in a superposition of states.</p>
+                                    <ul className="list-disc pl-5 space-y-1 marker:text-blue-500">
+                                        <li><strong>Rectilinear Basis (+):</strong> |0⟩ (Horizontal), |1⟩ (Vertical)</li>
+                                        <li><strong>Diagonal Basis (×):</strong> |0⟩ (45°), |1⟩ (135°)</li>
+                                    </ul>
+                                    <p>Security relies on three core principles:</p>
+                                    <ul className="list-disc pl-5 space-y-1 marker:text-indigo-500">
+                                        <li><strong>Measurement Disturbance:</strong> Measuring collapses the state.</li>
+                                        <li><strong>No-Cloning Theorem:</strong> Impossible to copy unknown quantum states perfectly.</li>
+                                        <li><strong>Heisenberg Uncertainty:</strong> Cannot measure both bases simultaneously.</li>
+                                    </ul>
+                                </>
+                                )}
+                                {selectedExpId === 'without-eavesdropper' && (
+                                <>
+                                    <p>This experiment establishes the baseline performance. In a secure channel, QBER (Quantum Bit Error Rate) should be very low (typically &lt; 2%).</p>
+                                    <p>Process:</p>
+                                    <ol className="list-decimal pl-5 space-y-1 marker:text-green-500">
+                                        <li><strong>Transmission:</strong> Alice sends random qubits.</li>
+                                        <li><strong>Measurement:</strong> Bob measures in random bases.</li>
+                                        <li><strong>Sifting:</strong> Bases are compared publicly; mismatches discarded.</li>
+                                        <li><strong>Error Check:</strong> QBER is calculated from a subset.</li>
+                                    </ol>
+                                </>
+                                )}
+                                {selectedExpId === 'with-eavesdropper' && (
+                                <>
+                                    <p>Demonstrates the extensive disruption caused by an intercept-resend attack.</p>
+                                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-100 dark:border-red-900/30 text-red-800 dark:text-red-300 text-xs">
+                                        <strong>Attack Impact Calculation:</strong><br/>
+                                        P(Eve wrong basis) = 0.5<br/>
+                                        P(Bob wrong result | Eve wrong) = 0.5<br/>
+                                        Total Error Probability = 0.5 × 0.5 = <strong>25% QBER</strong>
+                                    </div>
+                                    <p className="mt-2 text-red-600 dark:text-red-400 text-xs font-semibold">This ~25% error rate is the "smoking gun" of eavesdropping.</p>
+                                </>
+                                )}
+                                {selectedExpId === 'effect-of-channel-noise' && (
+                                <>
+                                    <p>Channel noise (scattering, dark counts) introduces errors (QBER) even without an attacker. High noise levels can mimic eavesdropping, making secure key exchange impossible if the QBER exceeds ~11%.</p>
+                                </>
+                                )}
+                                {selectedExpId === 'effect-of-distance' && (
+                                <>
+                                    <p>Distance primarily causes <strong>Photon Loss</strong> (reducing key rate). It can also slightly increase QBER due to polarization drift over long fibers.</p>
+                                </>
+                                )}
+                                {selectedExpId === 'overall' && (
+                                <>
+                                    <p>Distinguishes between:</p>
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        <li><strong>Photon Loss:</strong> Missing data (reduces speed).</li>
+                                        <li><strong>Bit Errors:</strong> Wrong data (reduces security).</li>
+                                    </ul>
+                                </>
+                                )}
+                            </div>
+                            
+                            <h5 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 mt-6 border-b border-gray-200 dark:border-gray-800 pb-2">
+                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-400">ii</span>
+                                Procedure
+                            </h5>
+                            <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 text-sm">
+                                {selectedExpId === 'effect-of-qubits' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Run simulation with varying qubit counts.</li>
+                                    <li>Observe how more qubits lead to statistically more stable keys.</li>
+                                </ul>
+                                )}
+                                {selectedExpId === 'without-eavesdropper' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Set <strong>Eavesdropper: OFF</strong>, <strong>Noise: LOW</strong>.</li>
+                                    <li>Run and observe low QBER (&lt;2%).</li>
+                                </ul>
+                                )}
+                                {selectedExpId === 'with-eavesdropper' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Set <strong>Eavesdropper: ON</strong>.</li>
+                                    <li>Run and observe high QBER (~25%).</li>
+                                    <li>Compare with the secure baseline.</li>
+                                </ul>
+                                )}
+                                {selectedExpId === 'effect-of-channel-noise' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Vary <strong>Channel Noise</strong> from Low to High.</li>
+                                    <li>Record QBER at each level.</li>
+                                    <li>Identify the safety threshold (11%).</li>
+                                </ul>
+                                )}
+                                {selectedExpId === 'effect-of-distance' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Increase <strong>Distance</strong>.</li>
+                                    <li>Observe the drop in Key Rate (loss).</li>
+                                    <li>Observe slight increase in QBER.</li>
+                                </ul>
+                                )}
+                                {selectedExpId === 'overall' && (
+                                <ul className="list-disc pl-5 space-y-1 text-blue-800 dark:text-blue-300">
+                                    <li>Set high loss/distance.</li>
+                                    <li>Note that key generation slows down/stops, but QBER may remain low.</li>
+                                </ul>
+                                )}
+                            </div>
+
+
+                        </div>
+                      </div>
                     );
                   })()}
                 </div>
               </CardContent>
             </Card>
+            
             {experimentControls && (
-              <div className="space-y-4">
+              <div className="bg-gray-50 dark:bg-slate-900/50 p-6 rounded-xl border border-gray-100 dark:border-gray-800">
+                 <h4 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Configuration</h4>
                 {experimentControls}
               </div>
             )}
-            <div className="text-center">
+            
+            <div className="flex justify-center pt-4">
               <Button
                 onClick={runExperiment}
-                className="bg-blue-500 hover:bg-blue-600 flex items-center justify-center\"
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 px-8 py-6 text-lg rounded-xl font-bold transition-all hover:scale-105"
               >
-                <Play className="w-4 h-4 mr-2\" />
-                Run Experiment
+                <Play className="w-5 h-5 mr-3 fill-current" />
+                Start Experiment
               </Button>
             </div>
-          </>
+          </div>
         )}
 
         {isRunning && (
-          <div className="space-y-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">Running experiment...</p>
-              <Progress value={progress} className="mt-2" />
-              <p className="text-xs text-muted-foreground mt-1">{progress.toFixed(0)}%</p>
+          <div className="space-y-8 py-8">
+            <div className="max-w-xl mx-auto text-center space-y-4">
+               <div className="relative pt-1">
+                  <div className="flex mb-2 items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                        Running
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold inline-block text-blue-600">
+                        {progress.toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-sm text-gray-500 mt-2 animate-pulse">Processing quantum states...</p>
+                </div>
             </div>
             
-            {/*<Card className="border-cyan-500/30">
-              <CardHeader>
-                <CardTitle className="text-sm">Photon Transmission</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PhotonTransmissionAnimation photonPosition={photonPosition} />
-              </CardContent>
-            </Card>*/}
-            
             {showBitsSimulation && currentBits.length > 0 && (
-              <Card className="bg-secondary/20">
-                <CardHeader>
-                  <CardTitle className="text-sm">Live Quantum Bits Simulation</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="max-h-48 overflow-y-auto">
-                    <div className="grid grid-cols-8 gap-1 text-xs font-mono">
-                      <div className="font-semibold">Bit</div>
-                      <div className="font-semibold">A-Bit</div>
-                      <div className="font-semibold">A-Basis</div>
-                      <div className="font-semibold">B-Basis</div>
-                      <div className="font-semibold">B-Meas</div>
-                      <div className="font-semibold">Match</div>
-                      <div className="font-semibold">Key</div>
-                      <div className="font-semibold">Eve</div>
-                      
-                      {currentBits.slice(0, Math.min(20, currentBits.length)).map((bit) => (
-                        <React.Fragment key={bit.id}>
-                          <div className="p-1 text-center">{bit.id + 1}</div>
-                          <div className={`p-1 text-center rounded ${bit.aliceBit ? 'bg-blue-500/30' : 'bg-purple-500/30'}`}>
-                            {bit.aliceBit}
-                          </div>
-                          <div className="p-1 text-center text-xs">{bit.aliceBasis[0]}</div>
-                          <div className="p-1 text-center text-xs">{bit.bobBasis[0]}</div>
-                          <div className={`p-1 text-center rounded ${bit.bobMeasurement ? 'bg-blue-500/30' : 'bg-purple-500/30'}`}>
-                            {bit.bobMeasurement}
-                          </div>
-                          <div className={`p-1 text-center rounded text-xs ${bit.match ? 'bg-green-400/30 text-green-400' : 'bg-red-400/30 text-red-400'}`}>
-                            {bit.match ? '✓' : '✗'}
-                          </div>
-                          <div className={`p-1 text-center rounded text-xs ${bit.kept ? 'bg-cyan-500/30 text-cyan-400' : 'bg-muted/30'}`}>
-                            {bit.kept ? '⚿' : '-'}
-                          </div>
-                          <div className={`p-1 text-center rounded text-xs ${bit.eavesdropped ? 'bg-destructive/30 text-destructive' : 'bg-muted/30'}`}>
-                            {bit.eavesdropped ? '👁' : '-'}
-                          </div>
-                        </React.Fragment>
-                      ))}
-                    </div>
-                    {currentBits.length > 20 && (
-                      <p className="text-xs text-muted-foreground mt-2 text-center">
-                        Showing first 20 of {currentBits.length} qubits...
-                      </p>
-                    )}
+              <Card className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-gray-800 shadow-lg overflow-hidden">
+                <CardHeader className="bg-gray-50 dark:bg-slate-950 border-b border-gray-100 dark:border-gray-800 py-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-sm font-bold flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Live Quantum Stream
+                    </CardTitle>
+                    <span className="text-xs text-muted-foreground font-mono">{currentBits.length} Qubits</span>
                   </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono">
+                        <thead className="bg-gray-50 dark:bg-slate-950 sticky top-0">
+                            <tr className="text-gray-500">
+                                <th className="p-2 font-semibold">#</th>
+                                <th className="p-2 font-semibold text-blue-600">Alice</th>
+                                <th className="p-2 font-semibold text-blue-600">Basis</th>
+                                <th className="p-2 font-semibold text-purple-600">Bob</th>
+                                <th className="p-2 font-semibold text-purple-600">Basis</th>
+                                <th className="p-2 font-semibold">Match</th>
+                                <th className="p-2 font-semibold">Key</th>
+                                <th className="p-2 font-semibold text-red-500">Eve</th>
+                            </tr>
+                        </thead>
+                     
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {currentBits.slice(0, Math.min(50, currentBits.length)).map((bit) => (
+                        <tr key={bit.id} className="hover:bg-gray-50/50">
+                          <td className="p-2 text-center text-gray-400">{bit.id + 1}</td>
+                          <td className="p-2 text-center">
+                            <span className={`inline-block px-1.5 rounded ${bit.aliceBit ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {bit.aliceBit}
+                            </span>
+                          </td>
+                          <td className="p-2 text-center text-blue-500">{bit.aliceBasis[0]}</td>
+                          <td className="p-2 text-center text-purple-500">{bit.bobBasis[0]}</td>
+                          <td className="p-2 text-center">
+                            <span className={`inline-block px-1.5 rounded ${bit.bobMeasurement ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                                {bit.bobMeasurement}
+                            </span>
+                          </td>
+                          <td className="p-2 text-center">
+                             {bit.match ? <span className="text-green-500 font-bold">✓</span> : <span className="text-gray-300">·</span>}
+                          </td>
+                          <td className="p-2 text-center">
+                             {bit.kept ? <span className="text-green-600 bg-green-50 px-1 rounded font-bold">KEY</span> : <span className="text-gray-300">-</span>}
+                          </td>
+                          <td className="p-2 text-center">
+                            {bit.eavesdropped 
+                                ? <span className="text-red-500 bg-red-50 px-1 rounded font-bold animate-pulse">DETECTED</span> 
+                                : <span className="text-gray-300">-</span>}
+                          </td>
+                        </tr>
+                      ))}
+                      </tbody>
+                       </table>
+                    </div>
+                  </div>
+                    {currentBits.length > 50 && (
+                      <div className="bg-gray-50 p-2 text-center border-t border-gray-100">
+                        <p className="text-xs text-gray-500">
+                          ... streaming remaining qubits
+                        </p>
+                      </div>
+                    )}
                 </CardContent>
               </Card>
             )}
@@ -696,172 +741,170 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
         )}
 
         {selectedResult && (
-          <div className="space-y-6">
-            <div className="space-y-6">
-              <Card className="bg-secondary/20 border-cyan-500/20">
-                <CardHeader>
-                  <CardTitle className="text-sm text-cyan-400 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Calculations & Formulas
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 {/* Analysis Card */}
+              <Card className="border border-indigo-100 dark:border-indigo-900 bg-indigo-50/30 dark:bg-indigo-950/20 shadow-sm">
+                <CardHeader className="bg-indigo-50/50 dark:bg-indigo-900/10 border-b border-indigo-100 dark:border-indigo-900 py-3">
+                  <CardTitle className="text-sm font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-2">
+                    <span className="p-1 bg-indigo-100 dark:bg-indigo-900 rounded-md">
+                        <FileText className="w-4 h-4" />
+                    </span>
+                    Mathematical Analysis
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-purple-400">Statistical Formulas:</h4>
-                      <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded">
+                <CardContent className="p-6">
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide">Key Formulas Used</h4>
+                      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm font-mono text-xs space-y-2 text-indigo-900 dark:text-indigo-200">
                         {selectedExpId === 'effect-of-qubits' && (
                           <>
-                            <div>Statistical Security = (Qubits / 50) × 100%</div>
-                            <div>Key Length = Matched Bases - Errors</div>
+                            <div className="flex justify-between"><span>Security Confidence</span> <span>= (1 - (1/2)^n) × 100%</span></div>
+                            <div className="flex justify-between"><span>Raw Key</span> <span>= Sifted Bits - Errors</span></div>
                           </>
                         )}
                         {selectedExpId === 'effect-of-channel-noise' && (
                           <>
-                            <div>Error Rate = (Noise Level + Base Errors) / Total</div>
-                            <div>Security = Error Rate &lt; 11% ? "Secure" : "Compromised"</div>
+                            <div className="flex justify-between"><span>Observed QBER</span> <span>= Error Bits / Total Sifted Bits</span></div>
+                            <div className="flex justify-between text-red-500 dark:text-red-400 font-bold"><span>Security Threshold</span> <span>&lt; 11%</span></div>
                           </>
                         )}
                         {selectedExpId === 'without-eavesdropper' && (
                           <>
-                            <div>Error Rate = Base Channel Errors</div>
-                            <div>Security = Error Rate &lt; 11% ? "Secure" : "Insecure"</div>
+                            <div className="flex justify-between"><span>Baseline QBER</span> <span>= Intrinsic Noise Only</span></div>
+                            <div className="flex justify-between text-green-600"><span>Expected QBER</span> <span>~0-2% (Ideal)</span></div>
                           </>
                         )}
                         {selectedExpId === 'with-eavesdropper' && (
                           <>
-                            <div>Detection Prob = min(100%, Error Rate × 4)</div>
-                            <div>Eve Error = 25% per intercepted qubit</div>
+                            <div className="flex justify-between"><span>Eve's Error Introduction</span> <span>P(Error) = 25%</span></div>
+                            <div className="flex justify-between font-bold"><span>Detected QBER</span> <span>≈ 25% × Interception Rate</span></div>
                           </>
                         )}
                         {selectedExpId === 'effect-of-distance' && (
-                          <>
-                            <div>Photon Loss = (1 - e^(-Distance/50)) × 100%</div>
-                            <div>Error Rate = Noise + Distance Factor</div>
+                           <>
+                            <div className="flex justify-between"><span>Transmission T</span> <span>= 10^(-Loss_dB * L / 10)</span></div>
+                            <div className="flex justify-between"><span>Key Rate</span> <span>∝ T (Exponential Decay)</span></div>
                           </>
                         )}
                         {selectedExpId === 'overall' && (
-                          <>
-                            <div>Combined Error = f(Distance, Noise, Eavesdropping)</div>
-                            <div>Security = Error Rate &lt; 11% ? "Secure" : "Compromised"</div>
+                           <>
+                            <div className="flex justify-between"><span>Final Security</span> <span>= QBER &lt; 11% AND Key Length &gt; Min</span></div>
                           </>
                         )}
                       </div>
                     </div>
-                    {selectedResult && (
-                      <div className="space-y-2">
-                        <h4 className="font-semibold text-blue-400">Experiment Data:</h4>
-                        <div className="font-mono text-xs space-y-1 bg-background/50 p-3 rounded max-h-32 overflow-y-auto">
-                          {selectedResult.data.slice(0, 5).map((dataPoint, idx) => (
-                            <div key={idx} className="text-xs">
-                              {Object.entries(dataPoint).map(([key, value]) => (
-                                <span key={key} className="mr-2">
-                                  {key}: {typeof value === 'number' ? value.toFixed(1) : String(value)}
-                                </span>
-                              ))}
-                            </div>
-                          ))}
-                          {selectedResult.data.length > 5 && (
-                            <div className="text-muted-foreground">...and {selectedResult.data.length - 5} more data points</div>
-                          )}
+                    
+                    {selectedResult && selectedResult.data.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wide">Latest Data Points</h4>
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm overflow-hidden">
+                             <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left">
+                                <thead className="text-gray-400 border-b border-gray-100">
+                                    <tr>
+                                        {Object.keys(selectedResult.data[0]).slice(0,3).map(k => (
+                                            <th key={k} className="pb-2 font-medium capitalize">{k.replace(/([A-Z])/g, ' $1').trim()}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                   {selectedResult.data.slice(-3).map((point, idx) => (
+                                        <tr key={idx}>
+                                            {Object.values(point).slice(0,3).map((val, vIdx) => (
+                                                <td key={vIdx} className="py-2 font-mono text-gray-600 dark:text-gray-300">
+                                                    {typeof val === 'number' ? val.toFixed(2) : String(val)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                   ))}
+                                </tbody>
+                              </table>
+                             </div>
                         </div>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
-
-              {selectedResult.usedBits && selectedResult.usedBits.length > 0 && (
-                <div className="grid gap-4">
-                  <Card className="bg-blue-500/10 border-blue-500/30">
-                    <CardHeader>
-                      <CardTitle className="text-sm text-blue-400 flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                        Alice's Transmitted Bits
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="text-xs text-muted-foreground">Bits: {selectedResult.usedBits.filter(b => b.kept).length} kept from {selectedResult.usedBits.length} total</div>
-                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                          {selectedResult.usedBits.map((bit, index) => (
+              
+               {/* Bits Visualization Preview */}
+              <div className="space-y-6">
+                {selectedResult.usedBits && selectedResult.usedBits.length > 0 && (
+                    <>
+                    <Card className="border-none shadow-sm bg-blue-50/50 dark:bg-blue-900/10">
+                        <CardHeader className="py-3">
+                        <CardTitle className="text-sm font-bold text-blue-700 dark:text-blue-300 flex justify-between items-center">
+                            Alice's Transmission
+                            <span className="text-xs bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded text-blue-800 dark:text-blue-200">
+                                {selectedResult.usedBits.filter(b => b.kept).length} bits generated
+                            </span>
+                        </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                        <div className="flex flex-wrap gap-1">
+                            {selectedResult.usedBits.slice(0, 40).map((bit, index) => (
                             <div 
-                              key={index}
-                              className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded border ${
+                                key={index}
+                                className={`w-8 h-8 flex items-center justify-center text-xs font-mono font-bold rounded-md transition-all hover:scale-110 ${
                                 bit.kept 
-                                  ? 'bg-blue-500/30 border-blue-500 text-blue-400' 
-                                  : 'bg-muted/20 border-muted text-muted-foreground'
-                              }`}
-                              title={`Bit ${index + 1}: ${bit.aliceBit} (${bit.aliceBasis}) ${bit.kept ? '- Kept' : '- Discarded'}`}
+                                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/20' 
+                                    : 'bg-white border border-blue-100 text-gray-300 opacity-50'
+                                }`}
                             >
-                              {bit.aliceBit}
+                                {bit.aliceBit}
                             </div>
-                          ))}
+                            ))}
+                             {selectedResult.usedBits.length > 40 && (
+                                <div className="w-8 h-8 flex items-center justify-center text-xs text-blue-400">...</div>
+                             )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </CardContent>
+                    </Card>
 
-                  <Card className="bg-purple-500/10 border-purple-500/30">
-                    <CardHeader>
-                      <CardTitle className="text-sm text-purple-400 flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                        Bob's Received Bits
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="text-xs text-muted-foreground">Measurements: {selectedResult.usedBits.filter(b => b.kept).length} kept from {selectedResult.usedBits.length} total</div>
-                        <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                          {selectedResult.usedBits.map((bit, index) => (
+                    <Card className="border-none shadow-sm bg-purple-50/50 dark:bg-purple-900/10">
+                        <CardHeader className="py-3">
+                        <CardTitle className="text-sm font-bold text-purple-700 dark:text-purple-300 flex justify-between items-center">
+                            Bob's Reception
+                            <span className="text-xs bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded text-purple-800 dark:text-purple-200">
+                                {selectedResult.usedBits.filter(b => b.kept).length} bits matched
+                            </span>
+                        </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 pt-0">
+                        <div className="flex flex-wrap gap-1">
+                            {selectedResult.usedBits.slice(0, 40).map((bit, index) => (
                             <div 
-                              key={index}
-                              className={`w-6 h-6 flex items-center justify-center text-xs font-mono rounded border ${
+                                key={index}
+                                className={`w-8 h-8 flex items-center justify-center text-xs font-mono font-bold rounded-md transition-all hover:scale-110 ${
                                 bit.kept 
-                                  ? bit.eavesdropped 
-                                    ? 'bg-destructive/30 border-destructive text-destructive'
-                                    : 'bg-purple-500/30 border-purple-500 text-purple-400'
-                                  : 'bg-muted/20 border-muted text-muted-foreground'
-                              }`}
-                              title={`Bit ${index + 1}: ${bit.bobMeasurement} (${bit.bobBasis}) ${bit.kept ? '- Kept' : '- Discarded'} ${bit.eavesdropped ? '- Eavesdropped' : ''}`}
+                                    ? bit.eavesdropped 
+                                    ? 'bg-red-500 text-white shadow-md shadow-red-500/20 ring-2 ring-red-300'
+                                    : 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
+                                    : 'bg-white border border-purple-100 text-gray-300 opacity-50'
+                                }`}
                             >
-                              {bit.bobMeasurement}
+                                {bit.bobMeasurement}
                             </div>
-                          ))}
+                            ))}
+                              {selectedResult.usedBits.length > 40 && (
+                                <div className="w-8 h-8 flex items-center justify-center text-xs text-purple-400">...</div>
+                             )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
-            </div>
+                        </CardContent>
+                    </Card>
+                    </>
+                )}
+              </div>
+             </div>
 
-            <Card className="bg-white/95 border-gray-200">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-800">Experiment Results</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedResult.data.length === 1 && selectedExpId === "without-eavesdropper" ? (
-                  <div className="h-64 flex items-center justify-center bg-secondary/20 rounded-lg">
-                    <div className="text-center p-6">
-                      <h4 className="text-lg font-semibold mb-4">Single Run Results</h4>
-                      <div className="space-y-2">
-                        <p>Key Rate: <span className="font-mono">{typeof selectedResult.data[0].keyRate === 'number' ? selectedResult.data[0].keyRate.toFixed(2) : String(selectedResult.data[0].keyRate)}%</span></p>
-                        <p>Error Rate: <span className="font-mono">{typeof selectedResult.data[0].errorRate === 'number' ? selectedResult.data[0].errorRate.toFixed(2) : String(selectedResult.data[0].errorRate)}%</span></p>
-                        <p className={`font-semibold mt-4 ${selectedResult.data[0].security === 'Secure' ? 'text-green-500' : 'text-destructive'}`}>
-                          Security: {String(selectedResult.data[0].security)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">QBER vs {selectedExpId === 'effect-of-qubits' ? 'Number of Qubits' : 
-                        selectedExpId === 'effect-of-channel-noise' ? 'Noise Level (%)' : 
-                        selectedExpId === 'with-eavesdropper' ? 'Eavesdropping Rate (%)' : 
-                        selectedExpId === 'effect-of-distance' ? 'Distance (km)' : 'Parameter'}</h3>
-                      <Button
+            <Card className="border-none shadow-soft bg-white dark:bg-slate-950 overflow-hidden">
+              <CardHeader className="bg-gray-50/50 dark:bg-slate-900/50 border-b border-gray-100">
+                <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg font-bold text-gray-800 dark:text-gray-100">Analytic Results</CardTitle>
+                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
@@ -870,56 +913,83 @@ export const ExperimentUI: React.FC<SharedExperimentUIProps> = ({
                           }
                         }}
                         disabled={isRunning}
-                        className="text-xs"
+                        className="text-xs border-gray-200 hover:bg-gray-50"
                       >
-                        Reset & Rerun
+                        Run Again
                       </Button>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 border border-gray-200">
-                      <div id="experiment-chart" className="w-full" style={{ height: '400px' }}>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6 p-6">
+                {selectedResult.data.length === 1 && (selectedExpId === "without-eavesdropper" || selectedExpId === "overall") ? (
+                   <div className="flex flex-col md:flex-row items-center justify-center gap-8 py-8 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div className="flex-1 max-w-xs text-center p-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100">
+                             <div className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Key Rate</div>
+                             <div className="text-4xl font-bold text-blue-600 mb-1">
+                                {typeof selectedResult.data[0].keyRate === 'number' ? selectedResult.data[0].keyRate.toFixed(1) : String(selectedResult.data[0].keyRate)}%
+                             </div>
+                             <div className="text-xs text-gray-400">Efficiency</div>
+                        </div>
+                        
+                         <div className="flex-1 max-w-xs text-center p-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100">
+                             <div className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Error Rate (QBER)</div>
+                             <div className={`text-4xl font-bold mb-1 ${Number(selectedResult.data[0].errorRate) > 11 ? 'text-red-500' : 'text-green-500'}`}>
+                                {typeof selectedResult.data[0].errorRate === 'number' ? selectedResult.data[0].errorRate.toFixed(1) : String(selectedResult.data[0].errorRate)}%
+                             </div>
+                             <div className="text-xs text-gray-400">Target: &lt; 11%</div>
+                        </div>
+                        
+                        <div className="flex-1 max-w-xs text-center p-6 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100">
+                             <div className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">Status</div>
+                             <div className={`text-2xl font-bold mb-1 ${String(selectedResult.data[0].security) === 'Secure' ? 'text-green-600' : 'text-red-600'}`}>
+                                {String(selectedResult.data[0].security)}
+                             </div>
+                              <div className="text-xs text-gray-400">Protocol Outcome</div>
+                        </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                      <div id="experiment-chart" className="w-full min-h-[400px]">
                         {/* Google Chart will be rendered here */}
                       </div>
                     </div>
-                    {/*plotAnalysis && (
-                      <div className="text-sm text-muted-foreground mt-2">
-                        <p>{plotAnalysis}</p>
-                      </div>
-                    )*/}
                   </div>
                 )}
                 
                 {(plotAnalysis || selectedResult?.analysis) && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                    <h4 className="font-semibold text-blue-800 mb-2">Analysis</h4>
+                  <div className={`rounded-xl p-6 border-l-4 shadow-sm ${String(selectedResult?.data?.[0]?.security || '').includes('Compromised') || Number(selectedResult?.data?.[0]?.errorRate || 0) > 11 ? 'bg-red-50 border-red-500' : 'bg-blue-50 border-blue-500'}`}>
+                    <h4 className={`font-bold mb-3 flex items-center gap-2 ${String(selectedResult?.data?.[0]?.security || '').includes('Compromised') || Number(selectedResult?.data?.[0]?.errorRate || 0) > 11 ? 'text-red-800' : 'text-blue-800'}`}>
+                        <span className="text-xl">💡</span>
+                        Insight
+                    </h4>
                     {plotAnalysis && (
-                      <p className="text-sm text-gray-700">{plotAnalysis}</p>
-                    )}
-                    {selectedResult?.analysis && (
-                      <p className="text-sm mt-2 text-gray-600">{null}</p>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium mb-2">{plotAnalysis}</p>
                     )}
                   </div>
                 )}
                 
                 {/* New visualizations for distance experiment */}
                 {selectedExpId === 'effect-of-distance' && selectedResult?.data && selectedResult.data.length > 0 && (
-                  <div className="mt-6 space-y-6">
-                    <QBERDistanceVisualization 
-                      data={selectedResult.data.map(item => ({
-                        distance: Number(item.distance),
-                        qber: Number(item.qber)
-                      }))}
-                      title="QBER vs Distance with Security Threshold"
-                    />
-                    
-                    <NoiseDecompositionVisualization 
-                      data={selectedResult.data.map(item => ({
-                        distance: Number(item.distance),
-                        eOpt: Number(item.intrinsicFloor || 1.5),      // Optical misalignment/intrinsic floor error
-                        eDark: Number(item.darkCountContribution || 0), // Dark count contribution
-                        totalQBER: Number(item.qber)
-                      }))}
-                      title="Noise Decomposition Analysis"
-                    />
+                  <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <QBERDistanceVisualization 
+                        data={selectedResult.data.map(item => ({
+                            distance: Number(item.distance),
+                            qber: Number(item.qber)
+                        }))}
+                        title="Distance vs QBER"
+                        />
+                        
+                        <NoiseDecompositionVisualization 
+                        data={selectedResult.data.map(item => ({
+                            distance: Number(item.distance),
+                            eOpt: Number(item.intrinsicFloor || 1.5),      // Optical misalignment/intrinsic floor error
+                            eDark: Number(item.darkCountContribution || 0), // Dark count contribution
+                            totalQBER: Number(item.qber)
+                        }))}
+                        title="Error Source Breakdown"
+                        />
+                    </div>
                   </div>
                 )}
               </CardContent>

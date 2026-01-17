@@ -188,22 +188,24 @@ export const PreQuiz = () => {
 
     return (
       <div className="space-y-6">
-        <Card className="border-quantum-purple/30">
-          <CardHeader>
-            <CardTitle className="text-quantum-purple flex items-center gap-2">
-              <Brain className="w-6 h-6" />
+        <Card className="border-none shadow-soft bg-white dark:bg-slate-950">
+          <CardHeader className="text-center pb-2 pt-6">
+            <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 dark:text-purple-400">
+                <Brain className="w-6 h-6" />
+              </div>
               Pre-Quiz Results
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <div className={`text-4xl font-bold ${getScoreColor(score)}`}>
+          <CardContent className="space-y-8 p-6">
+            <div className={`text-center p-8 rounded-2xl ${percentage >= 70 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <div className={`text-5xl font-bold mb-2 ${percentage >= 70 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {score}/{questions.length}
               </div>
-              <div className="text-xl text-muted-foreground">
+              <div className="text-xl font-medium text-gray-600 dark:text-gray-300">
                 {percentage.toFixed(0)}% Score
               </div>
-              <Progress value={percentage} className="mt-4" />
+              <Progress value={percentage} className={`mt-6 h-3 ${percentage >= 70 ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`} indicatorClassName={percentage >= 70 ? 'bg-green-600' : 'bg-red-600'} />
             </div>
 
             <div className="space-y-4">
@@ -212,26 +214,26 @@ export const PreQuiz = () => {
                 const isCorrect = userAnswer === question.correct;
 
                 return (
-                  <Card key={question.id} className={`border ${isCorrect ? 'border-green-400/30 bg-green-400/5' : 'border-red-400/30 bg-red-400/5'}`}>
+                  <Card key={question.id} className={`border shadow-none ${isCorrect ? 'border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10' : 'border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-900/10'}`}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {isCorrect ? (
-                          <CheckCircle className="w-5 h-5 text-green-400 mt-1 flex-shrink-0" />
+                          <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                         ) : (
-                          <XCircle className="w-5 h-5 text-red-400 mt-1 flex-shrink-0" />
+                          <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold mb-2">{question.question}</p>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Your answer: {question.options[userAnswer]}
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{question.question}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Your answer: <span className="font-medium">{question.options[userAnswer]}</span>
                           </p>
                           {!isCorrect && (
-                            <p className="text-sm text-green-400 mb-2">
+                            <p className="text-sm text-green-600 dark:text-green-400 mb-2 font-medium">
                               Correct answer: {question.options[question.correct]}
                             </p>
                           )}
-                          <p className="text-sm text-quantum-glow">
-                            {question.explanation}
+                          <p className="text-sm text-blue-600 dark:text-blue-400 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/50">
+                            <strong>Explanation:</strong> {question.explanation}
                           </p>
                         </div>
                       </div>
@@ -241,11 +243,11 @@ export const PreQuiz = () => {
               })}
             </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-4">
               <Button
                 onClick={resetQuiz}
                 variant="outline"
-                className="border-quantum-blue/50 hover:bg-quantum-blue/10"
+                className="border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-slate-800 font-medium h-10 px-6"
               >
                 <RotateCw className="w-4 h-4 mr-2" />
                 Retake Quiz
@@ -262,63 +264,63 @@ export const PreQuiz = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-blue/30">
-        <CardHeader>
-          <CardTitle className="text-quantum-blue flex items-center gap-2">
-            <Brain className="w-6 h-6" />
+      <Card className="border-none shadow-soft bg-white dark:bg-slate-950">
+        <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-6">
+          <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                <Brain className="w-5 h-5" />
+            </span>
             Pre-Quiz: Test Your Knowledge
           </CardTitle>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="pt-4 space-y-2">
+            <div className="flex items-center justify-between text-sm font-medium text-gray-500 dark:text-gray-400">
               <span>Question {currentQuestion + 1} of {questions.length}</span>
-              <span>{progress.toFixed(0)}%</span>
+              <span>{Math.round(progress)}% Complete</span>
             </div>
-            <Progress value={progress} />
+            <Progress value={progress} className="h-2" />
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <Card className="bg-secondary/30">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-quantum-glow">
-                {currentQ.question}
-              </h3>
-              
-              <div className="space-y-3">
-                {currentQ.options.map((option, index) => (
-                  <Button
-                    key={index}
-                    variant={selectedAnswers[currentQuestion] === index ? "default" : "outline"}
-                    className={`w-full text-left justify-start p-4 h-auto ${
-                      selectedAnswers[currentQuestion] === index
-                        ? "bg-quantum-blue hover:bg-quantum-blue/80"
-                        : "border-quantum-purple/30 hover:bg-quantum-purple/10"
-                    }`}
-                    onClick={() => handleAnswerSelect(index)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        selectedAnswers[currentQuestion] === index 
-                          ? "border-primary-foreground bg-primary-foreground" 
-                          : "border-current"
-                      }`}>
-                        {selectedAnswers[currentQuestion] === index && (
-                          <div className="w-3 h-3 bg-quantum-blue rounded-full"></div>
-                        )}
-                      </div>
-                      <span className="flex-1">{option}</span>
+        <CardContent className="space-y-6 pt-6">
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-6 border border-gray-100 dark:border-gray-800">
+            <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 leading-snug">
+              {currentQ.question}
+            </h3>
+            
+            <div className="space-y-3">
+              {currentQ.options.map((option, index) => (
+                <Button
+                  key={index}
+                  variant={selectedAnswers[currentQuestion] === index ? "default" : "outline"}
+                  className={`w-full text-left justify-start p-4 h-auto transition-all ${
+                    selectedAnswers[currentQuestion] === index
+                      ? "bg-blue-600 hover:bg-blue-700 border-transparent shadow-md shadow-blue-600/10"
+                      : "bg-white dark:bg-slate-950 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-slate-900 text-gray-700 dark:text-gray-300"
+                  }`}
+                  onClick={() => handleAnswerSelect(index)}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors ${
+                      selectedAnswers[currentQuestion] === index 
+                        ? "border-white bg-white/20" 
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}>
+                      {selectedAnswers[currentQuestion] === index && (
+                        <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                      )}
                     </div>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <span className="flex-1 whitespace-normal text-sm leading-relaxed">{option}</span>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
 
-          <div className="flex justify-between">
+          <div className="flex justify-between pt-2">
             <Button
               onClick={prevQuestion}
               disabled={currentQuestion === 0}
               variant="outline"
-              className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+              className="border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-400"
             >
               Previous
             </Button>
@@ -326,9 +328,9 @@ export const PreQuiz = () => {
             <Button
               onClick={nextQuestion}
               disabled={selectedAnswers[currentQuestion] === undefined}
-              className="bg-quantum-blue hover:bg-quantum-blue/80"
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[120px]"
             >
-              {currentQuestion === questions.length - 1 ? "Finish Quiz" : "Next"}
+              {currentQuestion === questions.length - 1 ? "Finish Quiz" : "Next Question"}
             </Button>
           </div>
         </CardContent>

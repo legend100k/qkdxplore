@@ -107,11 +107,17 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
 
   // Parameter controls JSX
   const parameterControls = (
-    <Card className="border-quantum-purple/30 p-4">
-      <CardContent className="space-y-4 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="noise-start">Starting Noise: {noiseRange[0]}%</Label>
+    <div className="space-y-6">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="noise-start" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Starting Noise Level
+                </Label>
+                 <span className="text-sm font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                    {noiseRange[0]}%
+                </span>
+            </div>
             <Slider
               id="noise-start"
               min={0}
@@ -119,10 +125,19 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
               value={[noiseRange[0]]}
               onValueChange={(value) => setNoiseRange([value[0], noiseRange[1]])}
               disabled={isRunning}
+              className="py-2"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="num-qubits">Number of Qubits: {qubits}</Label>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+                <Label htmlFor="num-qubits" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Number of Qubits
+                </Label>
+                 <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    {qubits}
+                </span>
+            </div>
             <Slider
               id="num-qubits"
               min={1}
@@ -130,14 +145,16 @@ const EffectOfChannelNoiseExperiment: React.FC<ExperimentComponentProps> = ({ on
               value={[qubits]}
               onValueChange={(value) => setQubits(value[0])}
               disabled={isRunning}
+              className="py-2"
             />
           </div>
         </div>
-        <div className="text-sm text-muted-foreground mt-4">
-          <p>Noise range: {noiseRange[0]}% - {noiseRange[1]}% (step: {step}%)</p>
+        
+        <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-md border border-gray-100 dark:border-gray-800">
+          <div className="w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-xs font-bold text-gray-600">i</div>
+          <p>Simulation will run from <strong>{noiseRange[0]}%</strong> to <strong>{noiseRange[1]}%</strong> noise in steps of <strong>{step}%</strong>.</p>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 
   return (

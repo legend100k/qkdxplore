@@ -17,35 +17,35 @@ const experimentConfigs = [
     name: "Effect of Qubits",
     description: "Explore how the number of qubits affects the BB84 protocol performance and key generation process",
     icon: BarChart3,
-    color: "quantum-blue",
+    color: "blue",
   },
   {
     id: "effect-of-channel-noise",
     name: "Effect of Channel Noise",
     description: "Analyze how quantum channel noise impacts the success rate and error rate of the BB84 protocol",
     icon: Beaker,
-    color: "quantum-blue",
+    color: "purple",
   },
   {
     id: "with-eavesdropper", 
     name: "With Eavesdropper",
     description: "Simulate BB84 protocol with an eavesdropper using random basis selection",
     icon: Eye,
-    color: "quantum-blue",
+    color: "red",
   },
   {
     id: "effect-of-distance",
     name: "Effect of Distance",
     description: "Study how transmission distance affects the fidelity and success rate of quantum key distribution",
     icon: Zap,
-    color: "quantum-blue",
+    color: "orange",
   },
   {
     id: "overall",
     name: "Overall Analysis",
     description: "Comprehensive analysis combining all factors and their cumulative effects on BB84 protocol",
     icon: FileText,
-    color: "quantum-blue",
+    color: "indigo",
   }
 ];
 
@@ -202,42 +202,62 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
 
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-glow">
-        <CardHeader>
-          <CardTitle className="text-quantum-blue flex items-center gap-2">
-            <Beaker className="w-6 h-6" />
+      <Card className="border-none shadow-soft bg-white dark:bg-slate-950">
+        <CardHeader className="pl-6 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+            <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                <Beaker className="w-5 h-5" />
+            </span>
             Quantum Cryptography Experiments
           </CardTitle>
-          <p className="text-muted-foreground text-justify">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             Conduct systematic experiments to understand BB84 protocol behavior under various conditions
           </p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {experimentConfigs.map((experiment) => {
               const Icon = experiment.icon;
+              const isSelected = selectedExperiment === experiment.id;
+              
+              // Map simple names to tailwind classes explicitly to avoid purge issues if needed, 
+              // or just rely on standard tailwind classes being present.
+              // We'll use style objects for colors to be safe if dynamic classes are an issue, 
+              // but assuming standard setup, we can try dynamic classes first, but carefully.
+              // Actually, better to just use dynamic string interpolation matching standard intent.
               
               return (
                 <Card 
                   key={experiment.id}
-                  className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                    selectedExperiment === experiment.id 
-                      ? `border-${experiment.color} bg-${experiment.color}/10 quantum-glow`
-                      : 'border-muted-foreground/20 hover:border-quantum-glow/50'
+                  className={`cursor-pointer transition-all duration-300 border hover:shadow-md ${
+                    isSelected
+                      ? `border-${experiment.color}-500 ring-1 ring-${experiment.color}-500 bg-${experiment.color}-50 dark:bg-${experiment.color}-950/30`
+                      : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-blue-200 dark:hover:border-blue-800'
                   }`}
                   onClick={() => setSelectedExperiment(experiment.id)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-full bg-${experiment.color}/20`}>
-                        <Icon className={`w-5 h-5 text-${experiment.color}`} />
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl transition-colors ${
+                          isSelected 
+                            ? `bg-${experiment.color}-100 text-${experiment.color}-600 dark:bg-${experiment.color}-900/50 dark:text-${experiment.color}-400`
+                            : `bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:bg-${experiment.color}-50 group-hover:text-${experiment.color}-500`
+                      }`}>
+                        <Icon className="w-5 h-5" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold mb-1 flex items-center gap-2">
+                        <h3 className={`font-bold text-sm mb-1 ${isSelected ? `text-${experiment.color}-900 dark:text-${experiment.color}-100` : 'text-gray-900 dark:text-gray-100'}`}>
                           {experiment.name}
                         </h3>
-                        <p className="text-sm text-muted-foreground">{experiment.description}</p>
+                        <p className={`text-xs leading-relaxed ${isSelected ? `text-${experiment.color}-700 dark:text-${experiment.color}-300` : 'text-gray-500 dark:text-gray-400'}`}>
+                            {experiment.description}
+                        </p>
                       </div>
+                      {isSelected && (
+                        <div className={`text-${experiment.color}-500`}>
+                            <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -251,50 +271,51 @@ export const ExperimentsSection = ({ onSaveExperiment }: { onSaveExperiment?: (r
         {selectedExperiment && renderExperiment()}
 
         {lastResult && metrics.length === 4 && (
-          <Card className="border-quantum-glow mt-4">
-            <CardHeader>
-              <CardTitle className="text-quantum-glow">
+          <Card className="border-none shadow-soft bg-white dark:bg-slate-950 mt-8 overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+              <CardTitle className="text-gray-800 dark:text-gray-200 flex items-center gap-2 text-lg">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
                 Experiment Analysis
               </CardTitle>
               {analysisSummary && (
-                <p className="text-muted-foreground text-sm">{analysisSummary}</p>
+                <p className="text-gray-500 text-sm">{analysisSummary}</p>
               )}
             </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="bg-secondary/20">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Total Bits</CardTitle>
+            <CardContent className="p-6">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card className="shadow-none border border-gray-100 bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Bits</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-64" id="exp-chart-total-bits"></div>
+                  <CardContent className="p-0">
+                    <div className="h-48 w-full" id="exp-chart-total-bits"></div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-secondary/20">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Matching Bases</CardTitle>
+                <Card className="shadow-none border border-gray-100 bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-bold text-gray-500 uppercase tracking-wider">Matching Bases</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-64" id="exp-chart-matching-bases"></div>
+                  <CardContent className="p-0">
+                    <div className="h-48 w-full" id="exp-chart-matching-bases"></div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-secondary/20">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Key Bits</CardTitle>
+                <Card className="shadow-none border border-gray-100 bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-bold text-gray-500 uppercase tracking-wider">Key Bits</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-64" id="exp-chart-key-bits"></div>
+                  <CardContent className="p-0">
+                    <div className="h-48 w-full" id="exp-chart-key-bits"></div>
                   </CardContent>
                 </Card>
 
-                <Card className="bg-secondary/20">
-                  <CardHeader>
-                    <CardTitle className="text-sm">QBER (%)</CardTitle>
+                <Card className="shadow-none border border-gray-100 bg-white">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xs font-bold text-gray-500 uppercase tracking-wider">QBER (%)</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="h-64" id="exp-chart-qber"></div>
+                  <CardContent className="p-0">
+                    <div className="h-48 w-full" id="exp-chart-qber"></div>
                   </CardContent>
                 </Card>
               </div>

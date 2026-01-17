@@ -12,6 +12,7 @@ import {
   Zap,
   Eye,
   Shield,
+  ShieldCheck,
   BarChart3,
   Settings,
   ChevronLeft,
@@ -157,6 +158,7 @@ const getPolarizationSymbol = (bit: number, basis: string): string => {
 export const SimulationSection = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+
   const [quantumBits, setQuantumBits] = useState<QuantumBit[]>([]);
   const [finalKey, setFinalKey] = useState<string>("");
   const [photonPosition, setPhotonPosition] = useState(0);
@@ -673,37 +675,43 @@ export const SimulationSection = () => {
   };
 
   const runSimulation = async () => {
-    setIsRunning(true);
-    setCurrentStep(0);
-    setFinalKey("");
+    try {
+      setIsRunning(true);
+      setCurrentStep(0);
+      setFinalKey("");
 
-    for (let step = 0; step <= 5; step++) {
-      setCurrentStep(step);
+      for (let step = 0; step <= 5; step++) {
+        setCurrentStep(step);
 
-      if (step === 1) {
-        // Animate photon transmission with improved animation
-        await animatePhotonTransmission();
-        hidePhoton();
+        if (step === 1) {
+          // Animate photon transmission with improved animation
+          await animatePhotonTransmission();
+          hidePhoton();
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const bits = generateRandomBits();
+      setQuantumBits(bits);
+
+      const key = bits
+        .filter((bit) => bit.inKey)
+        .map((bit) => bit.aliceBit)
+        .join("");
+      setFinalKey(key);
+
+      // Generate analysis data
+      generateAnalysisData(bits);
+      setShowGraphs(true);
+
+      toast.success(`Simulation complete! Generated ${key.length}-bit key.`);
+    } catch (error) {
+      console.error("Simulation failed:", error);
+      toast.error("Simulation failed. Please try again.");
+    } finally {
+      setIsRunning(false);
     }
-
-    const bits = generateRandomBits();
-    setQuantumBits(bits);
-
-    const key = bits
-      .filter((bit) => bit.inKey)
-      .map((bit) => bit.aliceBit)
-      .join("");
-    setFinalKey(key);
-
-    // Generate analysis data
-    generateAnalysisData(bits);
-    setShowGraphs(true);
-
-    toast.success(`Simulation complete! Generated ${key.length}-bit key.`);
-    setIsRunning(false);
   };
 
   // Calculate dark count probability and optical misalignment error floor
@@ -744,6 +752,7 @@ export const SimulationSection = () => {
   };
 
   const generateAnalysisData = (bits: QuantumBit[]) => {
+    try {
     // Standard BB84 QBER calculation:
     // QBER = errors in sifted key / total sifted key bits
     
@@ -812,33 +821,57 @@ export const SimulationSection = () => {
     
     // Render the chart with the new data
     setTimeout(() => renderSimulationMetricsChart(data), 100);
+    } catch (error) {
+      console.error("Analysis generation failed:", error);
+    }
   };
 
   // Function to load Google Charts
   const loadGoogleCharts = () => {
     return new Promise((resolve, reject) => {
-      if (window.google) {
-        window.google.load('visualization', '1', { packages: ['corechart', 'bar'] });
-        window.google.setOnLoadCallback(() => resolve(window.google));
-        return;
+      try {
+        if (window.google?.visualization) {
+          resolve(window.google);
+          return;
+        }
+        if (window.google?.charts?.load) {
+          window.google.charts.load('current', { packages: ['corechart', 'bar'] });
+          window.google.charts.setOnLoadCallback(() => resolve(window.google));
+          return;
+        }
+        if (window.google?.load) {
+          window.google.load('visualization', '1', { packages: ['corechart', 'bar'] });
+          window.google.setOnLoadCallback(() => resolve(window.google));
+          return;
+        }
+
+        // Load the Google Charts script if not already loaded
+        const script = document.createElement('script');
+        script.src = 'https://www.gstatic.com/charts/loader.js';
+        script.async = true;
+        script.onload = () => {
+          if (!window.google?.charts?.load) {
+            reject(new Error('Google Charts loader not available'));
+            return;
+          }
+          window.google.charts.load('current', { packages: ['corechart', 'bar'] });
+          window.google.charts.setOnLoadCallback(() => resolve(window.google));
+        };
+        script.onerror = () => reject(new Error('Failed to load Google Charts'));
+        document.head.appendChild(script);
+      } catch (error) {
+        reject(error);
       }
-      
-      // Load the Google Charts script if not already loaded
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.async = true;
-      script.onload = () => {
-        window.google.charts.load('current', { packages: ['corechart', 'bar'] });
-        window.google.charts.setOnLoadCallback(() => resolve(window.google));
-      };
-      script.onerror = () => reject(new Error('Failed to load Google Charts'));
-      document.head.appendChild(script);
     });
   };
 
   // Function to render the simulation metrics chart (counts only)
   const renderSimulationMetricsChart = (data: Array<{name: string, value: number | string}>) => {
     loadGoogleCharts().then(() => {
+      const chartContainer = document.getElementById('simulation-metrics-chart');
+      if (!chartContainer || !window.google?.visualization) {
+        return;
+      }
       const totalBits = Number(data[0]?.value || 0);
       const matchingBases = Number(data[1]?.value || 0);
       const keyBits = Number(data[2]?.value || 0);
@@ -877,9 +910,7 @@ export const SimulationSection = () => {
         legend: { position: 'none' },
       };
 
-      const chart = new window.google.visualization.BarChart(
-        document.getElementById('simulation-metrics-chart')
-      );
+      const chart = new window.google.visualization.BarChart(chartContainer);
       chart.draw(dataTable, options);
     }).catch(error => {
       console.error('Error loading Google Charts:', error);
@@ -933,56 +964,71 @@ export const SimulationSection = () => {
     }
   };
 
-  return (
-    <div className="space-y-6">
+    return (
+    <div className="space-y-8 pb-4">
       {/* Alice-Bob Animation Section */}
-      <div className="bg-card rounded-xl p-6 shadow-lg border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-foreground">
-            Quantum Transmission Animation
-          </h2>
-        </div>
-        <div className="flex items-center justify-between min-h-[250px] relative">
-          {/* Alice */}
-          <div className="flex flex-col items-center w-32 z-10">
-            <div className="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl border-4 border-pink-400 bg-gradient-to-r from-pink-200 to-pink-300 shadow-lg">
-              👩‍🦰
+      <Card className="border-none shadow-soft overflow-hidden">
+        <CardHeader className="bg-gray-50/50 dark:bg-slate-900/50 border-b border-gray-100 dark:border-gray-800 pb-4">
+           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Interactive</Badge>
+              <h2 className="text-lg font-bold text-foreground">
+                Quantum Channel Visualization
+              </h2>
             </div>
-            <div className="font-bold text-foreground mb-3">Alice</div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 md:p-10 relative bg-white dark:bg-slate-950/30 min-h-[300px] flex flex-col justify-center">
+        <div className="flex flex-col md:flex-row items-center md:items-stretch justify-between gap-8 md:gap-6 min-h-[250px] relative w-full max-w-none">
+          {/* Alice */}
+          <div className="flex flex-col items-center w-full md:w-32 z-10 group cursor-pointer">
+            <div className="w-24 h-24 rounded-2xl mb-4 flex items-center justify-center text-4xl bg-white dark:bg-slate-900 shadow-soft border border-gray-100 dark:border-gray-800 transition-transform group-hover:scale-105 duration-300 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              👩‍🦰
+              <div className="absolute -bottom-2 px-3 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 text-xs font-bold rounded-full border border-pink-200 dark:border-pink-800">Sender</div>
+            </div>
+            <div className="font-bold text-foreground text-lg">Alice</div>
             {isStepByStep && (
-              <div className="bg-muted p-3 rounded-lg text-sm w-full text-center border border-border">
-                <div className="font-medium">
-                  Bit: <strong>{aliceBit}</strong>
+               <div className="mt-2 bg-white dark:bg-slate-900 p-3 rounded-xl text-sm w-full text-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-gray-500 text-xs">Bit</span>
+                  <span className="font-mono font-bold text-blue-600">{aliceBit}</span>
                 </div>
-                <div className="font-medium">
-                  Basis: <strong>{aliceBasis}</strong>
+                 <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-xs">Basis</span>
+                  <span className="font-mono font-bold text-purple-600">{aliceBasis}</span>
                 </div>
-                
               </div>
             )}
           </div>
 
           {/* Channel Area */}
-          <div className="flex-1 h-16 mx-8 relative flex items-center justify-center">
+          <div className="flex-1 h-24 w-full md:w-auto mx-2 md:mx-12 relative flex items-center justify-center">
+            {/* Fiber Optic Cable */}
+            <div className="absolute w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent w-1/2 animate-[shimmer_2s_infinite]"></div>
+            </div>
+            
             <div
-              className="w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 relative shadow-sm"
-              style={{ boxShadow: "0 0 15px rgba(52, 152, 219, 0.4)" }}
+              className="w-full h-0.5 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 relative z-0"
             >
               <div
-                className={`photon-particle absolute w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full top-[-11px] flex items-center justify-center font-bold text-foreground shadow-lg transition-all duration-300 ${
-                  isPhotonVisible ? "opacity-100" : "opacity-0"
+                className={`photon-particle absolute w-10 h-10 bg-white dark:bg-slate-900 rounded-full top-[-20px] flex items-center justify-center font-bold text-xl shadow-lg border-2 border-yellow-400 transition-all duration-300 z-30 ${
+                  isPhotonVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
                 } ${isPhotonVibrating ? "animate-vibrate" : ""} ${isPhotonFalling ? "animate-fall" : ""}`}
                 style={{
                   left: `${photonPosition}%`,
-                  boxShadow: "0 0 20px rgba(241, 196, 15, 0.7)",
+                  boxShadow: "0 0 20px rgba(250, 204, 21, 0.4)",
                   transform: `translateX(${photonPosition}%)`,
                 }}
               >
+                <div className="absolute inset-0 bg-yellow-400/20 rounded-full animate-ping"></div>
                 →
               </div>
+              
               <div
-                className={`absolute top-[-40px] left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground px-4 py-2 rounded-full text-sm font-medium transition-opacity whitespace-nowrap border border-border ${
-                  isStatusInfoVisible ? "opacity-100" : "opacity-0"
+                className={`absolute top-[-60px] left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-md border border-gray-100 dark:border-gray-700 whitespace-nowrap z-40 ${
+                  isStatusInfoVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
                 }`}
               >
                 {statusInfo}
@@ -992,39 +1038,40 @@ export const SimulationSection = () => {
             {/* Alice Polarizer */}
             <div className="absolute left-[10%] top-1/2 transform -translate-y-1/2 z-20">
               <div
-                className={`w-16 h-16 bg-gradient-to-r from-muted to-muted/80 border-4 border-foreground/50 flex items-center justify-center font-bold text-xl text-foreground shadow-lg ${
+                className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-blue-600 shadow-md rounded-xl transition-all duration-500 ${
                   alicePolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
                 {alicePolarizer}
               </div>
+               <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Filter</div>
             </div>
 
             {/* Eve Polarizer Pairs */}
             {[0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className={`absolute top-1/2 transform -translate-y-1/2 z-20 ${i === 0 ? "left-[25%]" : i === 1 ? "left-[35%]" : i === 2 ? "left-[45%]" : i === 3 ? "left-[55%]" : "left-[65%]"} ${
-                  i < numEves ? "block" : "hidden"
+                className={`absolute top-1/2 transform -translate-y-1/2 z-20 transition-all duration-500 ${i === 0 ? "left-[25%]" : i === 1 ? "left-[35%]" : i === 2 ? "left-[45%]" : i === 3 ? "left-[55%]" : "left-[65%]"} ${
+                  i < numEves ? "opacity-100 scale-100" : "opacity-0 scale-0 pointer-events-none"
                 }`}
               >
                 <div
-                  className={`w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-xs text-white border-2 border-red-600 shadow-lg mb-2 font-bold transition-all ${
-                    activeEve === i ? "scale-110" : ""
+                  className={`w-8 h-8 bg-red-500 mx-auto rounded-full flex items-center justify-center text-[10px] text-white shadow-md mb-2 font-bold transition-transform ${
+                    activeEve === i ? "scale-125 ring-4 ring-red-500/20" : ""
                   }`}
                 >
                   E{i + 1}
                 </div>
-                <div className="flex gap-4">
+                <div className="flex gap-2 p-1 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20 backdrop-blur-sm">
                   <div
-                    className={`w-12 h-12 bg-gradient-to-r from-red-100 to-red-200 border-3 border-red-600 flex items-center justify-center font-bold text-lg text-red-600 shadow ${
+                    className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${
                       evePolarizers[i]?.measure === "×" ? "rotate-[45deg]" : ""
                     }`}
                   >
                     {evePolarizers[i]?.measure || "+"}
                   </div>
                   <div
-                    className={`w-12 h-12 bg-gradient-to-r from-green-100 to-green-200 border-3 border-green-600 flex items-center justify-center font-bold text-lg text-green-600 shadow ${
+                    className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${
                       evePolarizers[i]?.send === "×" ? "rotate-[45deg]" : ""
                     }`}
                   >
@@ -1037,68 +1084,85 @@ export const SimulationSection = () => {
             {/* Bob Polarizer */}
             <div className="absolute right-[10%] top-1/2 transform -translate-y-1/2 z-20">
               <div
-                className={`w-16 h-16 bg-gradient-to-r from-muted to-muted/80 border-4 border-foreground/50 flex items-center justify-center font-bold text-xl text-foreground shadow-lg ${
+                className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-purple-600 shadow-md rounded-xl transition-all duration-500 ${
                   bobPolarizer === "×" ? "rotate-[45deg]" : ""
                 }`}
               >
                 {bobPolarizer}
               </div>
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Detector</div>
             </div>
           </div>
 
           {/* Bob */}
-          <div className="flex flex-col items-center w-32 z-10">
-            <div className="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-3xl border-4 border-indigo-500 bg-gradient-to-r from-indigo-400 to-indigo-600 shadow-lg">
+          <div className="flex flex-col items-center w-full md:w-32 z-10 group cursor-pointer">
+            <div className="w-24 h-24 rounded-2xl mb-4 flex items-center justify-center text-4xl bg-white dark:bg-slate-900 shadow-soft border border-gray-100 dark:border-gray-800 transition-transform group-hover:scale-105 duration-300 relative overflow-hidden">
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               👨‍💼
+               <div className="absolute -bottom-2 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-full border border-indigo-200 dark:border-indigo-800">Receiver</div>
             </div>
-            <div className="font-bold text-foreground mb-3">Bob</div>
+            <div className="font-bold text-foreground text-lg">Bob</div>
             {isStepByStep && (
-              <div className="bg-muted p-3 rounded-lg text-sm w-full text-center border border-border">
-                <div className="font-medium">
-                  Basis: <strong>{bobBasis}</strong>
+              <div className="mt-2 bg-white dark:bg-slate-900 p-3 rounded-xl text-sm w-full text-center border border-gray-100 dark:border-gray-800 shadow-sm">
+                 <div className="flex justify-between items-center mb-1">
+                  <span className="text-gray-500 text-xs">Basis</span>
+                  <span className="font-mono font-bold text-purple-600">{bobBasis}</span>
                 </div>
-                <div className="font-medium">
-                  Measures: <strong>{bobBit}</strong>
+                 <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-xs">Result</span>
+                  <span className="font-mono font-bold text-green-600">{bobBit}</span>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <Card className="border-quantum-blue/30">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-quantum-blue flex items-center gap-2">
-              <Zap className="w-6 h-6" />
+      <Card className="border-none shadow-soft">
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <CardTitle className="text-2xl font-bold text-foreground flex items-center gap-3">
+              <Zap className="w-6 h-6 text-blue-600" />
               BB84 Protocol Simulation
             </CardTitle>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                onClick={() => setIsStepByStep(!isStepByStep)}
-                variant={isStepByStep ? "default" : "outline"}
-                className={`border-quantum-purple/30 ${isStepByStep ? "bg-quantum-purple hover:bg-quantum-purple/90" : ""}`}
-                size="sm"
-              >
-                <StepForward className="w-4 h-4 mr-1" />
-                {isStepByStep ? "Step" : "Auto"}
-              </Button>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex items-center">
+                <Button
+                    onClick={() => setIsStepByStep(!isStepByStep)}
+                    variant="ghost"
+                    size="sm"
+                    className={`rounded-md text-xs font-medium transition-all ${!isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-blue-600'}`}
+                >
+                    Step-by-Step
+                </Button>
+                <div className="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+                 <Button
+                    onClick={() => setIsStepByStep(false)}
+                    variant="ghost"
+                    size="sm"
+                    className={`rounded-md text-xs font-medium transition-all ${isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-blue-600'}`}
+                >
+                    Auto-Run
+                </Button>
+              </div>
+
               {!isStepByStep ? (
                 <Button
                   onClick={runSimulation}
                   disabled={isRunning}
-                  className="bg-quantum-blue hover:bg-quantum-blue/90"
-                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
                 >
                   {isRunning ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                      Running
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running Protocol...
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 mr-1" />
-                      Start
+                      <Play className="w-4 h-4 mr-2 fill-current" />
+                      Run Simulation
                     </>
                   )}
                 </Button>
@@ -1106,632 +1170,473 @@ export const SimulationSection = () => {
                 <Button
                   onClick={startStepByStepMode}
                   disabled={stepByStepBits.length > 0}
-                  className="bg-quantum-blue hover:bg-quantum-blue/90"
-                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
                 >
-                  <Play className="w-4 h-4 mr-1" />
-                  Start
+                  <Play className="w-4 h-4 mr-2 fill-current" />
+                  Start Process
                 </Button>
               )}
+              
               <Button
                 onClick={resetSimulation}
                 variant="outline"
-                className="border-quantum-glow/30"
-                size="sm"
+                className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               >
-                <RotateCw className="w-4 h-4 mr-1" />
+                <RotateCw className="w-4 h-4 mr-2" />
                 Reset
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Two-column layout for simulation controls and results */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <CardContent className="space-y-8 pt-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left column - Controls */}
-
-            <div className="space-y-6">
-              {/* Simulation Parameters */}
+            <div className="lg:col-span-4 xl:col-span-3 space-y-6">
               {!isStepByStep || stepByStepBits.length === 0 ? (
-                <Card className="border-quantum-blue/20">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Settings className="w-5 h-5" />
-                      Simulation Parameters
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium whitespace-nowrap">
-                          Qubits:
-                        </label>
-                        <Slider
-                          value={numQubits}
-                          onValueChange={setNumQubits}
-                          max={50}
-                          min={8}
-                          step={2}
-                          className="flex-1"
-                          disabled={isRunning}
-                        />
-                        <span className="text-sm w-8">{numQubits[0]}</span>
+                <div className="bg-gray-50 dark:bg-slate-900/50 rounded-xl p-6 border border-gray-100 dark:border-gray-800 min-h-[520px]">
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2 mb-6">
+                    <Settings className="w-5 h-5 text-gray-500" />
+                    Parameters
+                  </h3>
+                  
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <label className="font-medium text-foreground">Number of Qubits</label>
+                        <span className="font-mono font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">{numQubits[0]}</span>
                       </div>
+                      <Slider
+                        value={numQubits}
+                        onValueChange={setNumQubits}
+                        max={50}
+                        min={8}
+                        step={2}
+                        className="py-2"
+                        disabled={isRunning}
+                      />
+                    </div>
 
-                      <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium whitespace-nowrap">
-                          Eavesdrop:
-                        </label>
-                        <Slider
-                          value={eavesdroppingRate}
-                          onValueChange={setEavesdroppingRate}
-                          max={5}
-                          min={0}
-                          step={1}
-                          className="flex-1"
-                          disabled={isRunning}
-                        />
-                        <span className="text-sm w-12">
-                          {eavesdroppingRate[0]} Eve{eavesdroppingRate[0] !== 1 ? 's' : ''}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <label className="font-medium text-foreground">Half-Silvered Mirror (Eve)</label>
+                        <span className={`font-mono font-bold px-2 py-0.5 rounded ${eavesdroppingRate[0] > 0 ? 'text-red-600 bg-red-50 dark:bg-red-900/30' : 'text-gray-500 bg-gray-100'}`}>
+                          {eavesdroppingRate[0] > 0 ? `${eavesdroppingRate[0]} Attacker${eavesdroppingRate[0] > 1 ? 's' : ''}` : 'None'}
                         </span>
                       </div>
+                      <Slider
+                        value={eavesdroppingRate}
+                        onValueChange={setEavesdroppingRate}
+                        max={5}
+                        min={0}
+                        step={1}
+                        className="py-2"
+                        disabled={isRunning}
+                      />
+                       <p className="text-xs text-muted-foreground leading-relaxed">
+                        Simulates an eavesdropper intercepting photons. More attackers = higher probability of interception.
+                      </p>
+                    </div>
 
-                      <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium whitespace-nowrap">
-                          Noise:
-                        </label>
-                        <Slider
-                          value={noiseLevel}
-                          onValueChange={setNoiseLevel}
-                          max={20}
-                          min={0}
-                          step={1}
-                          className="flex-1"
-                          disabled={isRunning}
-                        />
-                        <span className="text-sm w-8">{noiseLevel[0]}%</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <label className="font-medium text-foreground">Channel Noise</label>
+                        <span className={`font-mono font-bold px-2 py-0.5 rounded ${noiseLevel[0] > 0 ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/30' : 'text-gray-500 bg-gray-100'}`}>
+                          {noiseLevel[0]}%
+                        </span>
                       </div>
-                      
-                      {/* Simulation Presets based on experimental procedures */}
-                      <div className="pt-4 border-t border-border">
-                        <h3 className="text-sm font-medium mb-3">Experiment Presets</h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([16]);
-                              setEavesdroppingRate([0]);
-                              setNoiseLevel([2]);
-                            }}
-                            className="text-xs"
-                          >
-                            No Eavesdropper
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([16]);
-                              setEavesdroppingRate([3]);
-                              setNoiseLevel([2]);
-                            }}
-                            className="text-xs"
-                          >
-                            With Eavesdropper
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([16]);
-                              setEavesdroppingRate([0]);
-                              setNoiseLevel([10]);
-                            }}
-                            className="text-xs"
-                          >
-                            High Noise
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([50]);
-                              setEavesdroppingRate([0]);
-                              setNoiseLevel([2]);
-                            }}
-                            className="text-xs"
-                          >
-                            More Qubits
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([16]);
-                              setEavesdroppingRate([2]);
-                              setNoiseLevel([5]);
-                            }}
-                            className="text-xs"
-                          >
-                            Mixed Conditions
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setNumQubits([16]);
-                              setEavesdroppingRate([0]);
-                              setNoiseLevel([0]);
-                            }}
-                            className="text-xs"
-                          >
-                            Ideal
-                          </Button>
-                        </div>
+                      <Slider
+                        value={noiseLevel}
+                        onValueChange={setNoiseLevel}
+                        max={20}
+                        min={0}
+                        step={1}
+                        className="py-2"
+                        disabled={isRunning}
+                      />
+                    </div>
+                    
+                    <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-4">Quick Presets</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([16]);
+                            setEavesdroppingRate([0]);
+                            setNoiseLevel([2]);
+                          }}
+                          className="text-xs border-gray-200 hover:border-blue-300 hover:bg-blue-50 dark:border-gray-700"
+                        >
+                          Standard Run
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([16]);
+                            setEavesdroppingRate([3]);
+                            setNoiseLevel([2]);
+                          }}
+                          className="text-xs border-gray-200 hover:border-red-300 hover:bg-red-50 dark:border-gray-700"
+                        >
+                          <Eye className="w-3 h-3 mr-1 text-red-500" />
+                          Hacker Attack
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([50]);
+                            setEavesdroppingRate([0]);
+                            setNoiseLevel([2]);
+                          }}
+                          className="text-xs border-gray-200 dark:border-gray-700"
+                        >
+                          Max Qubits
+                        </Button>
+                         <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setNumQubits([16]);
+                            setEavesdroppingRate([0]);
+                            setNoiseLevel([10]);
+                          }}
+                          className="text-xs border-gray-200 hover:border-amber-300 hover:bg-amber-50 dark:border-gray-700"
+                        >
+                          <Zap className="w-3 h-3 mr-1 text-amber-500" />
+                          Noisy Channel
+                        </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {/* Place the progress visualization here when simulation is running */}
-                  <Card className="border-quantum-glow/30">
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Step-by-Step Visualization - Bit {currentBitIndex + 1}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                                    {/* Step-by-step controls */}
-              {isStepByStep && stepByStepBits.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={previousBitStep}
-                    disabled={currentBitIndex === 0 && bitStep === 0}
-                    variant="outline"
-                    className="border-quantum-purple/30"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-
-                  <Button
-                    onClick={nextBitStep}
-                    disabled={
-                      currentBitIndex === stepByStepBits.length - 1 &&
-                      bitStep === 4 &&
-                      !!finalKey
-                    }
-                    className="bg-quantum-purple hover:bg-quantum-purple/90"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-
-                  <span className="text-sm px-3 py-2 bg-muted rounded border whitespace-nowrap">
-                    Bit {currentBitIndex + 1}/{stepByStepBits.length} - Step{" "}
-                    {bitStep + 1}/5
-                  </span>
+                  </div>
                 </div>
-              )}
-                      {stepByStepBits[currentBitIndex] && (
-                        <>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Card className="border-quantum-blue/30">
-                              <CardHeader>
-                                <CardTitle className="text-quantum-blue flex items-center gap-2 text-sm">
-                                  <span className="text-lg">👩‍🔬</span>
-                                  Alice (Sender)
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm">Bit Value:</span>
-                                  <span
-                                    className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? "bg-quantum-blue/20 text-quantum-blue" : "bg-muted/20 text-muted-foreground"}`}
-                                  >
-                                    {bitStep >= 0
-                                      ? stepByStepBits[currentBitIndex].aliceBit
-                                      : "?"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm">Basis Choice:</span>
-                                  <span
-                                    className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 0 ? "bg-quantum-blue/20 text-quantum-blue" : "bg-muted/20 text-muted-foreground"}`}
-                                  >
-                                    {bitStep >= 0
-                                      ? getBasisSymbol(
-                                          stepByStepBits[currentBitIndex]
-                                            .aliceBasis,
-                                        )
-                                      : "?"}
-                                  </span>
-                                </div>
-                              </CardContent>
-                            </Card>
+              ) : (
+                <div className="space-y-6">
+                  <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 flex justify-between items-center">
+                        Step Control
+                        <span className="text-xs font-semibold bg-gray-100 text-gray-500 px-2 py-1 rounded">Bit {currentBitIndex + 1}</span>
+                    </h3>
+                  
+                  {isStepByStep && stepByStepBits.length > 0 && (
+                    <div className="flex items-center gap-2 mb-6">
+                      <Button
+                        onClick={previousBitStep}
+                        disabled={currentBitIndex === 0 && bitStep === 0}
+                        variant="outline"
+                        className="aspect-square p-0 w-10 h-10 rounded-full"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
 
-                            <Card className="border-quantum-purple/30">
-                              <CardHeader>
-                                <CardTitle className="text-quantum-purple flex items-center gap-2 text-sm">
-                                  <span className="text-lg">👨‍🔬</span>
-                                  Bob (Receiver)
-                                </CardTitle>
-                              </CardHeader>
-                              <CardContent className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm">Basis Choice:</span>
-                                  <span
-                                    className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 1 ? "bg-quantum-purple/20 text-quantum-purple" : "bg-muted/20 text-muted-foreground"}`}
-                                  >
-                                    {bitStep >= 1
-                                      ? getBasisSymbol(
-                                          stepByStepBits[currentBitIndex]
-                                            .bobBasis,
-                                        )
-                                      : "?"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm">Measurement:</span>
-                                  <span
-                                    className={`font-mono text-lg px-2 py-1 rounded ${bitStep >= 3 ? "bg-quantum-purple/20 text-quantum-purple" : "bg-muted/20 text-muted-foreground"}`}
-                                  >
-                                    {bitStep >= 3
-                                      ? stepByStepBits[currentBitIndex]
-                                          .bobMeasurement
-                                      : "?"}
-                                  </span>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </div>
+                       <div className="flex-1 text-center">
+                          <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Progress</div>
+                          <div className="text-sm font-medium">Step {bitStep + 1}/5</div>
+                       </div>
 
+                      <Button
+                        onClick={nextBitStep}
+                        disabled={
+                          currentBitIndex === stepByStepBits.length - 1 &&
+                          bitStep === 4 &&
+                          !!finalKey
+                        }
+                        className="aspect-square p-0 w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                    {stepByStepBits[currentBitIndex] && (
+                      <div className="space-y-4">
+                        <div className="p-4 rounded-lg bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-gray-700 flex items-start gap-4">
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 shrink-0">
+                                <span className="text-xl">👩‍🔬</span>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">Alice's State</h4>
+                                <div className="space-y-1">
+                                    <div className="text-xs text-gray-500">
+                                        Bit: <span className={`font-mono font-bold text-blue-600 ${bitStep >= 0 ? '' : 'blur-sm'}`}>{bitStep >= 0 ? stepByStepBits[currentBitIndex].aliceBit : '0'}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                        Basis: <span className={`font-mono font-bold text-blue-600 ${bitStep >= 0 ? '' : 'blur-sm'}`}>{bitStep >= 0 ? getBasisSymbol(stepByStepBits[currentBitIndex].aliceBasis) : '+'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div className="p-4 rounded-lg bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-gray-700 flex items-start gap-4">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-purple-600 shrink-0">
+                                <span className="text-xl">👨‍🔬</span>
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">Bob's Measurement</h4>
+                                <div className="space-y-1">
+                                    <div className="text-xs text-gray-500">
+                                        Basis: <span className={`font-mono font-bold text-purple-600 ${bitStep >= 1 ? '' : 'blur-sm'}`}>{bitStep >= 1 ? getBasisSymbol(stepByStepBits[currentBitIndex].bobBasis) : '+'}</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                        Result: <span className={`font-mono font-bold text-purple-600 ${bitStep >= 3 ? '' : 'blur-sm text-gray-300'}`}>{bitStep >= 3 ? stepByStepBits[currentBitIndex].bobMeasurement : '?'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-4">
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Current Operation</h4>
                           <div className="space-y-2">
-                            <h4 className="font-semibold text-sm">
-                              Current Step:
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {[
+                             {[
                                 "Alice prepares qubit",
                                 "Photon transmitted",
-                                "Bob selects measurement basis",
+                                "Bob selects basis",
                                 "Bob measures qubit",
                                 "Bases compared",
                               ].map((step, index) => (
                                 <div
                                   key={index}
-                                  className={`p-4 rounded text-sm text-center transition-all ${
+                                  className={`flex items-center gap-3 p-2 rounded-lg text-xs transition-all ${
                                     bitStep === index
-                                      ? "bg-quantum-glow/20 border-2 border-quantum-glow text-quantum-glow font-semibold"
+                                      ? "bg-blue-600 text-white shadow-md font-medium"
                                       : bitStep > index
-                                        ? "bg-green-400/20 border border-green-400/30 text-green-400"
-                                        : "bg-muted/20 border border-muted/30 text-muted-foreground"
+                                        ? "text-gray-400 line-through"
+                                        : "text-gray-400"
                                   }`}
                                 >
+                                  <div className={`w-1.5 h-1.5 rounded-full ${bitStep === index ? 'bg-white' : 'bg-gray-300'}`}></div>
                                   {step}
                                 </div>
                               ))}
-                            </div>
                           </div>
-
-                          {bitStep >= 4 && (
-                            <Card
-                              className={`${stepByStepBits[currentBitIndex].isMatching ? "bg-green-400/10 border-green-400/30" : "bg-red-400/10 border-red-400/30"}`}
-                            >
-                              <CardContent className="p-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-medium">
-                                    Basis Match:
-                                  </span>
-                                  <span
-                                    className={`font-bold ${stepByStepBits[currentBitIndex].isMatching ? "text-green-400" : "text-red-400"}`}
-                                  >
-                                    {stepByStepBits[currentBitIndex].isMatching
-                                      ? "✓ Yes - Key bit!"
-                                      : "X No - Discarded"}
-                                  </span>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          )}
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               <div className="space-y-4">
                 {currentStep > 1 && !isStepByStep && (
-                  <Card className="bg-quantum-blue/5 border-quantum-blue/20">
-                    <CardContent className="p-3">
-                      <p className="font-semibold text-quantum-blue">
-                        Current Step:
+                   <div className="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                      <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-1">
+                        Live Status
                       </p>
-                      <p className="text-sm">{steps[currentStep - 1]}</p>
-                    </CardContent>
-                  </Card>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{steps[currentStep - 1]}</p>
+                   </div>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {false && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-destructive/10 border border-destructive rounded">
-                    
-                    
-                  </div>
-                )}
-
-                {noiseLevel[0] > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 border border-yellow-500 rounded">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <span className="text-sm text-yellow-500">
-                      Noise ({noiseLevel[0]}%)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-
-
-
-              {/* Photon transmission visualization */}
+               {/* Step-by-step Status */}
               {currentStep === 1 && !isStepByStep && (
-                <Card className="border-quantum-glow/30">
-                  <CardHeader>
-                    <CardTitle className="text-sm">
-                      alice sends photon to bob
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    
-                      {eavesdroppingRate[0] > 0 && (
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-destructive font-bold">
-                          <Eye className="w-6 h-6" />
-                        </div>
-                      )}
-                  </CardContent>
-                </Card>
+                 <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 p-4 rounded-xl flex items-center justify-center gap-3 animate-pulse">
+                     <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                     <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Photon In Transit</span>
+                     {eavesdroppingRate[0] > 0 && (
+                         <Badge variant="destructive" className="ml-2 animate-bounce">INTERCEPTION RISK</Badge>
+                     )}
+                 </div>
               )}
             </div>
 
             {/* Right column - Results */}
-            <div className="space-y-6">
+            <div className="lg:col-span-8 xl:col-span-9 space-y-8 min-w-0">
+              {quantumBits.length === 0 && (!isStepByStep || stepByStepBits.length === 0) && (
+                <div className="rounded-lg border border-dashed border-border bg-card/60 p-8 text-center min-h-[520px] flex flex-col items-center justify-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <BarChart3 className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">Results will appear here</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Run the simulation to generate the results log, charts, and key analysis.
+                  </p>
+                </div>
+              )}
               {/* Results Display */}
               {(quantumBits.length > 0 ||
                 (isStepByStep && stepByStepBits.length > 0)) && (
-                <Card className="border-quantum-purple/30">
-                  <CardHeader>
-                    <CardTitle className="text-quantum-purple flex items-center gap-2">
-                      <Shield className="w-6 h-6" />
-                      Simulation Results
-                      {isStepByStep && (
-                        <span className="text-sm font-normal ml-2 px-2 py-1 bg-quantum-glow/20 rounded">
-                          Step-by-Step Mode
-                        </span>
-                      )}
-                      {(quantumBits.length > 0 || (stepByStepBits.length > 0 && currentBitIndex >= 0)) && (
-                        <span className="text-sm font-normal ml-auto">
-                          Showing {isStepByStep && stepByStepBits.length > 0 ? Math.min(currentBitIndex + 1, stepByStepBits.length) : quantumBits.length} of {numQubits[0]} bits
-                        </span>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
-                      <table className="w-full text-sm min-w-[800px]">
-                        <thead className="sticky top-0 bg-background z-10 shadow-sm">
-                          <tr className="border-b border-quantum-blue/30">
-                            <th className="text-left p-2">Bit #</th>
-                            <th className="text-left p-2 bg-quantum-blue/10 border-l border-r border-quantum-blue/30">
-                              <div className="text-center">
-                                <div className="font-bold text-quantum-blue">
-                                  Alice (Transmitter)
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Sending
-                                </div>
-                              </div>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-gray-500" />
+                      Results Log
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs font-normal">
+                          {isStepByStep && stepByStepBits.length > 0 ? Math.min(currentBitIndex + 1, stepByStepBits.length) : quantumBits.length} / {numQubits[0]} Bits Processed
+                      </Badge>
+                    </h3>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+                    <div className="w-full overflow-x-auto max-h-[600px] overflow-y-auto">
+                      <table className="w-full text-sm min-w-[900px]">
+                        <thead className="sticky top-0 bg-gray-50 dark:bg-slate-950 z-10">
+                          <tr className="border-b border-gray-200 dark:border-gray-800">
+                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
+                            
+                            {/* Alice Group */}
+                            <th colSpan={2} className="px-4 py-2 border-l border-r border-gray-200 dark:border-gray-800 bg-blue-50/50 dark:bg-blue-900/10">
+                              <div className="text-center text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Alice (Sender)</div>
                             </th>
-                            <th className="text-left p-2 bg-quantum-blue/10 border-r border-quantum-blue/30">
-                              Basis
-                            </th>
+                            
+                            {/* Eve Group */}
                             {eavesdroppingRate[0] > 0 && (
-                              <>
-                                <th className="text-left p-2 bg-red-500/10 border-l border-red-500/30">
-                                  <div className="text-center">
-                                    <div className="font-bold text-red-500">
-                                      Eve
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Basis
-                                    </div>
-                                  </div>
-                                </th>
-                                <th className="text-left p-2 bg-red-500/10">
-                                  <div className="text-center">
-                                    <div className="font-bold text-red-500">
-                                      Eve
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Measure
-                                    </div>
-                                  </div>
-                                </th>
-                                <th className="text-left p-2 bg-red-500/10 border-r border-red-500/30">
-                                  <div className="text-center">
-                                    <div className="font-bold text-red-500">
-                                      Eve
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      Resend
-                                    </div>
-                                  </div>
-                                </th>
-                              </>
+                              <th colSpan={3} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-red-50/50 dark:bg-red-900/10">
+                                <div className="text-center text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                                    <Eye className="w-3 h-3" /> Eve
+                                </div>
+                              </th>
                             )}
-                            <th className="text-left p-2 bg-quantum-purple/10 border-l border-r border-quantum-purple/30">
-                              <div className="text-center">
-                                <div className="font-bold text-quantum-purple">
-                                  Bob (Receiver)
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Receiving
-                                </div>
-                              </div>
+                            
+                            {/* Bob Group */}
+                            <th colSpan={3} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-purple-50/50 dark:bg-purple-900/10">
+                               <div className="text-center text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">Bob (Receiver)</div>
                             </th>
-                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">
-                              Basis
+                            
+                            <th colSpan={2} className="px-4 py-2">
+                                <div className="text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Analysis</div>
                             </th>
-                            <th className="text-left p-2 bg-quantum-purple/10 border-r border-quantum-purple/30">
-                              Result
-                            </th>
-                            <th className="text-left p-2">Match</th>
-                            <th className="text-left p-2">In Key</th>
                           </tr>
-                          <tr className="border-b border-quantum-blue/20 text-xs">
-                            <th className="p-1"></th>
-                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
-                              Transmitted Bit
-                            </th>
-                            <th className="p-1 bg-quantum-blue/5 text-center text-quantum-blue">
-                              Polarization
-                            </th>
+                          <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50">
+                            <th className="p-2"></th>
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-l border-gray-200 dark:border-gray-800">Bit</th>
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Basis</th>
+                            
                             {eavesdroppingRate[0] > 0 && (
                               <>
-                                <th className="p-1 bg-red-500/5 text-center text-red-500 border-l border-red-500/20">
-                                  Measure Basis
-                                </th>
-                                <th className="p-1 bg-red-500/5 text-center text-red-500">
-                                  Measured Bit
-                                </th>
-                                <th className="p-1 bg-red-500/5 text-center text-red-500 border-r border-red-500/20">
-                                  Resend Basis
-                                </th>
+                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Bas.</th>
+                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Bit</th>
+                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Snd</th>
                               </>
                             )}
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple border-l border-quantum-purple/20">
-                              Received Bit
-                            </th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple">
-                              Measurement
-                            </th>
-                            <th className="p-1 bg-quantum-purple/5 text-center text-quantum-purple border-r border-quantum-purple/20">
-                              Outcome
-                            </th>
-                            <th className="p-1 text-center">Basis</th>
-                            <th className="p-1 text-center">Secure</th>
+                            
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Bit</th>
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Meas.</th>
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Res</th>
+                            
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Match?</th>
+                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Key?</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-gray-800">
                           {(isStepByStep 
-                            ? stepByStepBits.slice(0, currentBitIndex + 1) // Show only processed bits in step-by-step mode
+                            ? stepByStepBits.slice(0, currentBitIndex + 1)
                             : quantumBits
                           ).map(
                             (bit, index) => (
                               <tr
                                 key={bit.id}
-                                data-bit-id={bit.id}
-                                className={`border-b transition-all duration-300 ${bit.inKey ? "bg-quantum-glow/10" : ""} ${isStepByStep && index === currentBitIndex ? "ring-2 ring-quantum-glow/50" : ""}`}
+                                className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${bit.inKey ? "bg-green-50/30 dark:bg-green-900/10" : ""} ${isStepByStep && index === currentBitIndex ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
                               >
-                                <td className="p-2">{bit.id + 1}</td>
-                                <td className="p-2 font-mono text-center bg-quantum-blue/5 border-l border-r border-quantum-blue/20">
-                                  <span className="inline-block w-6 h-6 bg-quantum-blue/20 rounded-full text-center leading-6 text-quantum-blue font-bold">
+                                <td className="p-3 text-center text-xs font-medium text-gray-500">{bit.id + 1}</td>
+                                
+                                {/* ALICE DATA */}
+                                <td className="p-2 text-center border-l border-gray-100 dark:border-gray-800">
+                                  <span className="inline-flex w-6 h-6 items-center justify-center rounded-md bg-blue-50 text-blue-700 font-mono text-sm font-bold border border-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-900/30">
                                     {bit.aliceBit}
                                   </span>
                                 </td>
-                                <td className="p-2 font-mono text-quantum-blue bg-quantum-blue/5 border-r border-quantum-blue/20 text-center">
-                                  <span className="text-lg font-bold">
+                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                  <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
                                     {getBasisSymbol(bit.aliceBasis)}
                                   </span>
                                 </td>
-                                {/* Eve's columns - only show when eavesdropping is enabled */}
+                                
+                                {/* EVE DATA */}
                                 {eavesdroppingRate[0] > 0 && (
                                   <>
-                                    <td className="p-2 font-mono text-center bg-red-500/5 border-l border-red-500/20">
+                                    <td className="p-2 text-center">
                                       {bit.intercepted ? (
-                                        <span className="text-lg font-bold text-red-500">
+                                        <span className="font-mono font-bold text-red-500">
                                           {getBasisSymbol(bit.eveMeasureBasis!)}
                                         </span>
                                       ) : (
-                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-gray-300">-</span>
                                       )}
                                     </td>
-                                    <td className="p-2 font-mono text-center bg-red-500/5">
+                                    <td className="p-2 text-center">
                                       {bit.intercepted ? (
-                                        <span className="inline-block w-6 h-6 bg-red-500/20 rounded-full text-center leading-6 text-red-500 font-bold">
+                                        <span className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-bold">
                                           {bit.eveMeasurement}
                                         </span>
                                       ) : (
-                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-gray-300">-</span>
                                       )}
                                     </td>
-                                    <td className="p-2 font-mono text-center bg-red-500/5 border-r border-red-500/20">
+                                    <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
                                       {bit.intercepted ? (
-                                        <span className="text-lg font-bold text-red-500">
+                                        <span className="font-mono font-bold text-red-500">
                                           {getBasisSymbol(bit.eveResendBasis!)}
                                         </span>
                                       ) : (
-                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-gray-300">-</span>
                                       )}
                                     </td>
                                   </>
                                 )}
-                                <td className="p-2 font-mono text-center bg-quantum-purple/5 border-l border-r border-quantum-purple/20">
+                                
+                                {/* BOB DATA */}
+                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
                                   {bit.bobMeasurement !== null ? (
-                                    <span className="inline-block w-6 h-6 bg-quantum-purple/20 rounded-full text-center leading-6 text-quantum-purple font-bold">
+                                    <span className="inline-flex w-6 h-6 items-center justify-center rounded-md bg-purple-50 text-purple-700 font-mono text-sm font-bold border border-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-900/30">
                                       {bit.bobMeasurement}
                                     </span>
                                   ) : (
-                                    <span className="text-muted-foreground">Lost</span>
+                                    <span className="text-xs text-gray-400">Lost</span>
                                   )}
                                 </td>
-                                <td className="p-2 font-mono text-quantum-purple bg-quantum-purple/5 text-center">
-                                  <span className="text-lg font-bold">
+                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                  <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
                                     {getBasisSymbol(bit.bobBasis)}
                                   </span>
                                 </td>
-                                <td className="p-2 bg-quantum-purple/5 border-r border-quantum-purple/20 text-center">
-                                  {bit.bobMeasurement !== null ? (
+                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                   {bit.bobMeasurement !== null ? (
                                     <span
-                                      className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
+                                      className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
                                         bit.aliceBit === bit.bobMeasurement
-                                          ? "bg-green-400/20 text-green-400"
-                                          : "bg-red-400/20 text-red-400"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-red-100 text-red-700"
                                       }`}
                                     >
                                       {bit.bobMeasurement}
                                     </span>
                                   ) : (
-                                    <span className="text-orange-500 font-semibold">
-                                      Lost
+                                    <span className="text-orange-400 font-semibold text-xs">
+                                      -
                                     </span>
                                   )}
                                 </td>
+                                
+                                {/* MATCH */}
                                 <td className="p-2 text-center">
                                   {bit.isMatching === null ? (
-                                    <span className="text-muted-foreground">
+                                    <span className="text-gray-300">
                                       -
                                     </span>
                                   ) : (
                                     <span
-                                      className={`inline-block w-6 h-6 rounded-full text-center leading-6 font-bold ${
+                                      className={`inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
                                         bit.isMatching
-                                          ? "bg-green-400/20 text-green-400"
-                                          : "bg-red-400/20 text-red-400"
+                                          ? "bg-green-50 text-green-600 border border-green-100"
+                                          : "bg-gray-100 text-gray-500"
                                       }`}
                                     >
-                                      {bit.isMatching ? "✓" : "X"}
+                                      {bit.isMatching ? "Match" : "Diff"}
                                     </span>
                                   )}
                                 </td>
                                 <td className="p-2 text-center">
                                   {bit.inKey ? (
-                                    <span className="inline-block w-6 h-6 bg-quantum-glow/20 rounded-full text-center leading-6 text-quantum-glow font-bold">
-                                      ✓
-                                    </span>
+                                    <div className="flex justify-center">
+                                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm shadow-green-200">
+                                            <Shield className="w-3 h-3" />
+                                        </div>
+                                    </div>
                                   ) : (
-                                    <span className="text-muted-foreground">
+                                    <span className="text-gray-300">
                                       -
                                     </span>
                                   )}
@@ -1741,154 +1646,140 @@ export const SimulationSection = () => {
                           )}
                         </tbody>
                       </table>
-                      {isStepByStep && currentBitIndex === 0 && bitStep === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <p>Press the Next button to start processing bits...</p>
-                        </div>
-                      )}
                     </div>
 
+                    {isStepByStep && currentBitIndex === 0 && bitStep === 0 && (
+                        <div className="text-center py-12 bg-gray-50/50">
+                          <p className="text-gray-500 font-medium">Ready to start visualization...</p>
+                          <Button variant="link" onClick={nextBitStep} className="text-blue-600">Click to begin</Button>
+                        </div>
+                   )}
+                  </div>
+                    
+                    {/* Final Key Display */}
                     {finalKey && (
-                      <Card className="bg-quantum-glow/10 border-quantum-glow/30">
-                        <CardContent className="p-4">
-                          <div className="text-center">
-                            <h3 className="font-bold text-quantum-glow mb-2">
-                              Final Shared Key
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-100 dark:border-green-900/30">
+                        <div className="flex flex-col items-center justify-center text-center">
+                           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 shadow-sm">
+                               <ShieldCheck className="w-6 h-6" />
+                           </div>
+                           <h3 className="font-bold text-green-800 dark:text-green-300 mb-2 text-lg">
+                              Secure Shared Key Generated
                             </h3>
-                            <div className="font-mono text-lg bg-background/50 p-3 rounded border">
+                            <div className="font-mono text-xl bg-white dark:bg-black/20 px-6 py-3 rounded-lg border border-green-200 dark:border-green-800/50 text-green-700 dark:text-green-400 tracking-widest shadow-inner mb-3">
                               {finalKey}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              Length: {finalKey.length} bits
-                              {eavesdroppingRate[0] > 0 && (
-                                <span className="block text-destructive">
-                                  ⚠️ Eavesdropping detected! Key may be
-                                  compromised.
-                                </span>
-                              )}
-                              {noiseLevel[0] > 0 && (
-                                <span className="block text-yellow-500">
-                                  ⚠️ Channel noise present! Some errors
-                                  expected.
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
+                            <div className="flex gap-4 text-xs font-medium text-green-700/70">
+                                <span>Length: {finalKey.length} bits</span>
+                                <span>Status: Verified</span>
+                            </div>
+                            
+                            {(eavesdroppingRate[0] > 0 || noiseLevel[0] > 0) && (
+                                <div className="mt-4 flex gap-2">
+                                    {eavesdroppingRate[0] > 0 && (
+                                        <Badge variant="destructive" className="flex gap-1 items-center">
+                                            <AlertCircle className="w-3 h-3" /> Eavesdropping Detected
+                                        </Badge>
+                                    )}
+                                    {noiseLevel[0] > 0 && (
+                                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 flex gap-1 items-center">
+                                            <Zap className="w-3 h-3" /> Noise Present
+                                        </Badge>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                      </div>
                     )}
-                  </CardContent>
-                </Card>
+                </div>
               )}
 
               {/* Analysis Graphs */}
               {showGraphs && simulationData.length > 0 && (
-                <Card className="border-quantum-glow/30">
-                  <CardHeader>
-                    <CardTitle className="text-quantum-glow flex items-center gap-2">
-                      <BarChart3 className="w-6 h-6" />
-                      Simulation Analysis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <Card className="bg-secondary/20">
-                        <CardHeader>
-                          <CardTitle className="text-sm">
-                          Simulation Metrics
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-gray-500" />
+                      Post-Processing Analysis
+                    </h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                      <Card className="border-none shadow-soft overflow-hidden">
+                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
+                          <CardTitle className="text-sm font-bold text-gray-700">
+                          Transfer Metrics
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                          <div className="w-full" style={{ height: '300px' }} id="simulation-metrics-chart">
+                        <CardContent className="p-4">
+                          <div className="w-full min-h-[300px] flex items-center justify-center" id="simulation-metrics-chart">
                             {/* Google Chart will be rendered here */}
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-secondary/20">
-                        <CardHeader>
-                          <CardTitle className="text-sm">
-                          Error Rate (QBER)
+                      <Card className="border-none shadow-soft overflow-hidden">
+                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
+                          <CardTitle className="text-sm font-bold text-gray-700">
+                          Security Assessment (QBER)
                           </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                        <div className="space-y-4">
-                          {simulationData.slice(3).map((item, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-3 bg-background/50 rounded"
-                            >
-                              <span className="text-sm font-medium">
-                                {item.name}
-                              </span>
-                              <span
-                                className={`text-lg font-bold ${
-                                  item.name.includes("Error") || item.name.includes("QBER")
-                                    ? "text-red-400"
-                                    : "text-green-400"
-                                }`}
-                              >
-                                {item.value}%
-                              </span>
+                        <CardContent className="p-6">
+                        <div className="space-y-6">
+                            
+                            <div className="flex items-center justify-center py-6">
+                                <div className="relative w-40 h-40 flex items-center justify-center">
+                                    <svg className="w-full h-full transform -rotate-90">
+                                        <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-gray-100" />
+                                        <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" 
+                                            strokeDasharray={440}
+                                            strokeDashoffset={440 - (440 * parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"))) / 100}
+                                            className={`${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className={`text-3xl font-bold ${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}>
+                                            {simulationData.find(d => d.name === "QBER (%)")?.value}%
+                                        </span>
+                                        <span className="text-xs text-gray-400 font-medium uppercase mt-1">Error Rate</span>
+                                    </div>
+                                </div>
                             </div>
-                          ))}
+                            
+                          <div className="grid grid-cols-2 gap-4">
+                              {simulationData.slice(0, 3).map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex flex-col p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-100 dark:border-gray-800"
+                                >
+                                  <span className="text-xs font-medium text-gray-500 mb-1">
+                                    {item.name}
+                                  </span>
+                                  <span className="text-lg font-bold text-foreground">
+                                    {item.value}
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
 
-                          <div className="mt-4 p-3 bg-quantum-glow/10 border border-quantum-glow/30 rounded">
-                            <h4 className="font-semibold text-quantum-glow text-sm mb-2">
-                              Security Assessment
+                          <div className={`p-4 rounded-xl border ${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 11 ? 'bg-red-50 border-red-100 text-red-800' : 'bg-green-50 border-green-100 text-green-800'}`}>
+                            <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
+                              {parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 11 ? <AlertCircle className="w-4 h-4"/> : <ShieldCheck className="w-4 h-4"/>}
+                              System Analysis
                             </h4>
-                            <p className="text-xs">
+                            <p className="text-xs leading-relaxed">
                               {(() => {
                                 const totalQBER = parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"));
                                 const eavesdropperRate = eavesdroppingRate[0];
                                 const noise = noiseLevel[0];
                                 
-                                // Generate unique descriptions based on exact parameters
                                 if (eavesdropperRate === 0 && noise === 0) {
-                                  if (totalQBER < 0.1) {
-                                    return "✅ Perfect quantum channel! Zero errors detected. The key exchange is cryptographically secure with no eavesdropping or noise interference.";
-                                  }
-                                  return "✅ Ideal conditions: No eavesdropping or noise detected. Any minimal errors are due to quantum measurement uncertainties.";
+                                  if (totalQBER < 0.1) return "System secure. No interference detected.";
+                                  return "Ideal conditions. Minimal quantum variation.";
                                 }
                                 
-                                if (eavesdropperRate > 0 && noise === 0) {
-                                  if (eavesdropperRate < 10) {
-                                    return `⚠️ Eavesdropper detected! Eve is intercepting ${eavesdropperRate}% of photons. QBER shows ${totalQBER.toFixed(1)}% error rate. Key security is compromised - abort protocol.`;
-                                  } else if (eavesdropperRate < 50) {
-                                    return `🚨 Major security breach! Heavy eavesdropping activity (${eavesdropperRate}% interception rate) causing ${totalQBER.toFixed(1)}% QBER. Communication channel is severely compromised.`;
-                                  } else {
-                                    return `❌ Critical security failure! Massive eavesdropping detected (${eavesdropperRate}% interception). QBER at ${totalQBER.toFixed(1)}%. Abort immediately and switch channels.`;
-                                  }
+                                if (totalQBER > 11) {
+                                  return `CRITICAL: QBER is ${totalQBER}%, exceeding the 11% safety threshold. This indicates strong evidence of eavesdropping or severe channel noise. This key is unsafe to use.`;
                                 }
                                 
-                                if (eavesdropperRate === 0 && noise > 0) {
-                                  if (noise < 5) {
-                                    return `⚠️ Channel noise detected: ${noise}% noise level causing ${totalQBER.toFixed(1)}% QBER. Key is secure but error correction needed for reliability.`;
-                                  } else if (noise < 10) {
-                                    return `⚠️ Moderate channel degradation: ${noise}% environmental noise resulting in ${totalQBER.toFixed(1)}% error rate. Consider channel optimization.`;
-                                  } else {
-                                    return `❌ Poor channel quality: High noise (${noise}%) causing ${totalQBER.toFixed(1)}% QBER. Channel may be unsuitable for secure QKD.`;
-                                  }
-                                }
-                                
-                                if (eavesdropperRate > 0 && noise > 0) {
-                                  const totalInterference = eavesdropperRate + noise;
-                                  if (totalInterference < 15) {
-                                    return `⚠️ Dual threat detected: ${eavesdropperRate}% eavesdropping + ${noise}% noise = ${totalQBER.toFixed(1)}% QBER. Both Eve and channel quality affecting security.`;
-                                  } else if (totalInterference < 30) {
-                                    return `🚨 Multiple security issues: Active eavesdropping (${eavesdropperRate}%) combined with channel noise (${noise}%) producing ${totalQBER.toFixed(1)}% errors. Protocol severely compromised.`;
-                                  } else {
-                                    return `❌ Complete security failure: Extreme eavesdropping (${eavesdropperRate}%) and noise (${noise}%) causing ${totalQBER.toFixed(1)}% QBER. Channel unusable for secure communication.`;
-                                  }
-                                }
-                                
-                                // Threshold-based assessment
-                                const securityThreshold = 11; // BB84 theoretical limit
-                                if (totalQBER > securityThreshold) {
-                                  return `❌ QBER (${totalQBER.toFixed(1)}%) exceeds security threshold (${securityThreshold}%). Key exchange is compromised and cannot guarantee security.`;
-                                }
-                                
-                                return `✅ Secure key exchange: QBER at ${totalQBER.toFixed(1)}% is below security threshold. Key distribution successful.`;
+                                return `SECURE: QBER is ${totalQBER}%, which is within acceptable safety limits. Error correction can handle this noise level.`;
                               })()}
                             </p>
                           </div>
@@ -1897,8 +1788,7 @@ export const SimulationSection = () => {
                       </Card>
                       
                     </div>
-                  </CardContent>
-                </Card>
+                </div>
               )}
             </div>
           </div>

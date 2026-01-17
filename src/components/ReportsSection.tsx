@@ -305,21 +305,23 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperim
   };
 
   return (
-    <Card className="border-quantum-glow">
-      <CardHeader>
-        <CardTitle className="text-quantum-blue flex items-center gap-2">
-          <FileText className="w-6 h-6" />
+    <Card className="border-none shadow-soft bg-white dark:bg-slate-950">
+      <CardHeader className="pl-6 border-b border-gray-100 dark:border-gray-800 pb-4">
+        <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+            <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                <FileText className="w-5 h-5" />
+            </span>
           Experiment Reports
         </CardTitle>
-        <p className="text-muted-foreground">
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
           Generate comprehensive reports for your experiments with customizable results and conclusions
         </p>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 p-6">
         <div>
-          <Label htmlFor="experiment-select">Select Experiment</Label>
+          <Label htmlFor="experiment-select" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">Select Experiment</Label>
           <Select value={selectedExperiment} onValueChange={setSelectedExperiment}>
-            <SelectTrigger id="experiment-select" className="w-full">
+            <SelectTrigger id="experiment-select" className="w-full h-11 border-gray-200 dark:border-gray-800 focus:ring-blue-500">
               <SelectValue placeholder="Choose an experiment to generate report" />
             </SelectTrigger>
             <SelectContent>
@@ -337,69 +339,73 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperim
           const expData = getExperimentData(selectedExperiment);
           return (
             <>
-              <Card className="bg-secondary/20">
-                <CardHeader>
-                  <CardTitle className="text-sm">Report Preview</CardTitle>
+              <Card className="shadow-none border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-slate-900/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Report Preview</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
+                <CardContent className="space-y-6 text-sm">
                   <div>
-                    <h3 className="font-semibold mb-1">Aim:</h3>
-                    <p className="text-muted-foreground text-justify">
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Aim</h3>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed text-justify">
                 {expData.aim}
               </p>
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold mb-1">Objective:</h3>
-                    <p className="text-muted-foreground">{expData.objective}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Objective</h3>
+                    <p className="text-gray-600 dark:text-gray-400">{expData.objective}</p>
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold mb-1">Apparatus:</h3>
-                    <p className="text-muted-foreground">{expData.apparatus}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Apparatus</h3>
+                    <p className="text-gray-600 dark:text-gray-400">{expData.apparatus}</p>
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold mb-1">Theory:</h3>
-                    <p className="text-muted-foreground text-xs max-h-32 overflow-y-auto whitespace-pre-line">
-                      {expData.theory}
-                    </p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Theory</h3>
+                    <div className="bg-white dark:bg-slate-950 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+                        <p className="text-gray-600 dark:text-gray-400 text-xs max-h-48 overflow-y-auto whitespace-pre-line leading-relaxed scrollbar-thin scrollbar-thumb-gray-200">
+                        {expData.theory}
+                        </p>
+                    </div>
                   </div>
                   
                   <div>
-                    <h3 className="font-semibold mb-1">Procedure:</h3>
-                    <ol className="text-muted-foreground text-xs list-decimal list-inside space-y-1">
-                      {expData.procedure.map((step, idx) => (
-                        <li key={idx}>{step}</li>
-                      ))}
-                    </ol>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 mb-2">Procedure</h3>
+                    <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50">
+                        <ol className="text-blue-800 dark:text-blue-300 text-xs list-decimal list-inside space-y-2">
+                        {expData.procedure.map((step, idx) => (
+                            <li key={idx} className="leading-relaxed">{step}</li>
+                        ))}
+                        </ol>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="space-y-4">
                 {experimentResultData && experimentResultData.data && experimentResultData.data.length > 0 && (
-                <Card className="bg-secondary/10">
-                  <CardHeader>
-                    <CardTitle className="text-sm">Experimental Data Table (from simulation)</CardTitle>
+                <Card className="bg-white dark:bg-slate-950 border border-gray-100 dark:border-gray-800 shadow-sm">
+                  <CardHeader className="py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-slate-900/50">
+                    <CardTitle className="text-xs font-bold uppercase tracking-wider text-gray-500">Experimental Data Table (Result)</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
-                        <thead>
-                          <tr className="border-b">
+                        <thead className="bg-gray-50 dark:bg-slate-900">
+                          <tr>
                             {Object.keys(experimentResultData.data[0]).map((key) => (
-                              <th key={key} className="px-2 py-1 text-left">
+                              <th key={key} className="px-4 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800 first:pl-6">
                                 {key.charAt(0).toUpperCase() + key.slice(1)}
                               </th>
                             ))}
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                           {experimentResultData.data.slice(0, 5).map((row, idx) => (
-                            <tr key={idx} className="border-b">
+                            <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-slate-900/50">
                               {Object.values(row).map((value, vIdx) => (
-                                <td key={vIdx} className="px-2 py-1">
+                                <td key={vIdx} className="px-4 py-3 text-gray-600 dark:text-gray-300 first:pl-6">
                                   {typeof value === 'number' ? value.toFixed(2) : String(value)}
                                 </td>
                               ))}
@@ -407,7 +413,7 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperim
                           ))}
                           {experimentResultData.data.length > 5 && (
                             <tr>
-                              <td colSpan={Object.keys(experimentResultData.data[0]).length} className="text-center py-2 text-muted-foreground">
+                              <td colSpan={Object.keys(experimentResultData.data[0]).length} className="text-center py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-slate-900/50">
                                 ... and {experimentResultData.data.length - 5} more rows
                               </td>
                             </tr>
@@ -420,23 +426,23 @@ export const ReportsSection: React.FC<ReportsSectionProps> = ({ availableExperim
               )}
 
               <div>
-                <Label htmlFor="user-conclusion">Conclusion</Label>
+                <Label htmlFor="user-conclusion" className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">Conclusion</Label>
                 <Textarea
                   id="user-conclusion"
                   placeholder="Enter your conclusion based on the experimental results..."
                   value={userConclusion}
                   onChange={(e) => setUserConclusion(e.target.value)}
-                  className="min-h-[100px]"
+                  className="min-h-[120px] resize-y border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-blue-500"
                 />
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-4">
                 <Button
                   onClick={generateDocx}
-                  className="bg-quantum-blue hover:bg-quantum-blue/90 flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:shadow-blue-600/40 flex items-center gap-2 h-11 px-6"
                 >
-                  <FileDown className="w-4 h-4" />
+                  <FileDown className="w-5 h-5" />
                   Download Report (.docx)
                 </Button>
               </div>

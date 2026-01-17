@@ -104,35 +104,68 @@ export const TheorySection = () => {
           </div>
           
           <div className="space-y-4 mt-6">
-            <h3 className="text-xl font-semibold text-quantum-glow">Why is this a Revolution?</h3>
+            <h3 className="text-xl font-semibold text-primary">Why is this a Revolution?</h3>
             
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300 mt-4">
+            <div className="w-full overflow-hidden rounded-md border border-border bg-card">
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[720px] border-collapse text-sm">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="border border-gray-300 px-4 py-2 font-medium">Aspect</th>
-                    <th className="border border-gray-300 px-4 py-2 font-medium text-left">Classical Key Exchange</th>
-                    <th className="border border-gray-300 px-4 py-2 font-medium text-left">Quantum Key Distribution (QKD)</th>
+                  <tr className="bg-muted text-muted-foreground">
+                    <th className="border-b border-border px-4 py-3 text-left font-medium">Aspect</th>
+                    <th className="border-b border-border px-4 py-3 text-left font-medium">Classical Key Exchange</th>
+                    <th className="border-b border-border px-4 py-3 text-left font-medium">Quantum Key Distribution (QKD)</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border">
                   <tr>
-                    <td className="border border-gray-300 px-4 py-2 font-medium">Security Foundation</td>
-                    <td className="border border-gray-300 px-4 py-2">Computational difficulty (hard math)</td>
-                    <td className="border border-gray-300 px-4 py-2">Laws of Physics (quantum mechanics)</td>
+                    <td className="px-4 py-3 font-medium text-foreground">Security Foundation</td>
+                    <td className="px-4 py-3 text-muted-foreground">Computational difficulty (hard math)</td>
+                    <td className="px-4 py-3 text-muted-foreground">Laws of Physics (quantum mechanics)</td>
                   </tr>
-                  <tr className="bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-2 font-medium">Eavesdropping</td>
-                    <td className="border border-gray-300 px-4 py-2">Undetectable copying is possible</td>
-                    <td className="border border-gray-300 px-4 py-2">Measurement causes disturbance, leaving proof</td>
+                  <tr className="bg-muted/40">
+                    <td className="px-4 py-3 font-medium text-foreground">Eavesdropping</td>
+                    <td className="px-4 py-3 text-muted-foreground">Undetectable copying is possible</td>
+                    <td className="px-4 py-3 text-muted-foreground">Measurement causes disturbance, leaving proof</td>
                   </tr>
                   <tr>
-                    <td className="border border-gray-300 px-4 py-2 font-medium">Future-Proof</td>
-                    <td className="border border-gray-300 px-4 py-2">Broken by quantum algorithms (Shor's)</td>
-                    <td className="border border-gray-300 px-4 py-2">Secure against any computer, even quantum</td>
+                    <td className="px-4 py-3 font-medium text-foreground">Future-Proof</td>
+                    <td className="px-4 py-3 text-muted-foreground">Broken by quantum algorithms (Shor's)</td>
+                    <td className="px-4 py-3 text-muted-foreground">Secure against any computer, even quantum</td>
                   </tr>
                 </tbody>
-              </table>
+                </table>
+              </div>
+              <div className="md:hidden divide-y divide-border bg-card">
+                {[
+                  {
+                    label: "Security Foundation",
+                    classical: "Computational difficulty (hard math)",
+                    quantum: "Laws of Physics (quantum mechanics)",
+                  },
+                  {
+                    label: "Eavesdropping",
+                    classical: "Undetectable copying is possible",
+                    quantum: "Measurement causes disturbance, leaving proof",
+                  },
+                  {
+                    label: "Future-Proof",
+                    classical: "Broken by quantum algorithms (Shor's)",
+                    quantum: "Secure against any computer, even quantum",
+                  },
+                ].map((row) => (
+                  <div key={row.label} className="p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{row.label}</p>
+                    <div className="rounded-md border border-border bg-muted/50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Classical</p>
+                      <p className="text-sm text-muted-foreground mt-1">{row.classical}</p>
+                    </div>
+                    <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">Quantum (QKD)</p>
+                      <p className="text-sm font-medium text-foreground mt-1">{row.quantum}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             
             <div className="space-y-4 mt-6">
@@ -297,7 +330,7 @@ export const TheorySection = () => {
                 key={state.name}
                 className={`p-4 text-center transition-all duration-500 ${
                   currentStep === index && isAnimating
-                    ? 'border-quantum-glow bg-quantum-glow/10 quantum-glow'
+                    ? 'border-primary bg-primary/10 shadow-[0_0_15px_rgba(79,70,229,0.3)]'
                     : 'border-muted-foreground/20'
                 }`}
               >

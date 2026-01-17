@@ -5,6 +5,11 @@
   margin: 0 auto;
 }
 
+/* Dark mode support (app shell) */
+.dark .certificate-page {
+  color: #e5e7eb;
+}
+
 .certificate-message {
   text-align: center;
   padding: 60px 20px;
@@ -14,9 +19,18 @@
   max-width: 600px;
 }
 
+.dark .certificate-message {
+  background: #111827;
+  border: 1px solid #1f2937;
+}
+
 .certificate-message h2 {
   color: #dc3545;
   margin-bottom: 20px;
+}
+
+.dark .certificate-message h2 {
+  color: #f87171;
 }
 
 .certificate-controls {
@@ -27,15 +41,29 @@
   margin-bottom: 30px;
 }
 
+.dark .certificate-controls {
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  box-shadow: none;
+}
+
 .certificate-controls h2 {
   color: #333;
   margin-bottom: 20px;
+}
+
+.dark .certificate-controls h2 {
+  color: #f3f4f6;
 }
 
 .score-display {
   font-size: 18px;
   color: #28a745;
   margin-bottom: 20px;
+}
+
+.dark .score-display {
+  color: #34d399;
 }
 
 .input-group {
@@ -49,6 +77,10 @@
   color: #333;
 }
 
+.dark .input-group label {
+  color: #e5e7eb;
+}
+
 .name-input {
   width: 100%;
   max-width: 400px;
@@ -59,9 +91,19 @@
   transition: border-color 0.3s;
 }
 
+.dark .name-input {
+  background: #0b1220;
+  border-color: #1f2937;
+  color: #e5e7eb;
+}
+
 .name-input:focus {
   outline: none;
   border-color: #007bff;
+}
+
+.dark .name-input:focus {
+  border-color: #60a5fa;
 }
 
 .download-btn {
@@ -75,6 +117,10 @@
   transition: background 0.3s;
 }
 
+.dark .download-btn {
+  background: #2563eb;
+}
+
 .download-btn:hover:not(:disabled) {
   background: #0056b3;
 }
@@ -82,6 +128,10 @@
 .download-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.dark .download-btn:disabled {
+  background: #374151;
 }
 
 /* Certificate Template Styles (for PDF) */
@@ -173,6 +223,10 @@
   margin-bottom: 20px;
 }
 
+.dark .certificate-preview h3 {
+  color: #f3f4f6;
+}
+
 .preview-container {
   border: 15px solid tan;
   width: 100%;
@@ -188,6 +242,12 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+/* Keep preview and printable certificate white even in dark mode */
+.dark .preview-container {
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .preview-logo {

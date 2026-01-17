@@ -17,7 +17,7 @@ export const ProtocolSteps = () => {
         "Prepare photons according to bit value and basis",
         "Each combination creates a specific polarization state"
       ],
-      animation: "polarization-animation"
+      animation: "animate-pulse"
     },
     {
       title: "Step 2: Quantum Transmission",
@@ -29,7 +29,7 @@ export const ProtocolSteps = () => {
         "No classical information is transmitted",
         "Quantum states cannot be cloned (No-cloning theorem)"
       ],
-      animation: "photon-animation"
+      animation: "animate-bounce"
     },
     {
       title: "Step 3: Bob's Measurement",
@@ -41,7 +41,7 @@ export const ProtocolSteps = () => {
         "Measures photon polarization",
         "Records measurement results"
       ],
-      animation: "measurement-pulse"
+      animation: "animate-pulse"
     },
     {
       title: "Step 4: Basis Comparison",
@@ -53,7 +53,7 @@ export const ProtocolSteps = () => {
         "Identify positions where bases match",
         "Discard measurements from mismatched bases"
       ],
-      animation: "quantum-glow"
+      animation: "animate-pulse"
     },
     {
       title: "Step 5: Key Sifting",
@@ -65,7 +65,7 @@ export const ProtocolSteps = () => {
         "Remaining bits form the 'raw key'",
         "Typically ~50% of original bits remain"
       ],
-      animation: "quantum-glow"
+      animation: "animate-pulse"
     },
     {
       title: "Step 6: Error Detection & Privacy Amplification",
@@ -77,7 +77,7 @@ export const ProtocolSteps = () => {
         "If error rate is low, proceed with error correction",
         "Apply privacy amplification to remove Eve's information"
       ],
-      animation: "quantum-glow"
+      animation: "animate-pulse"
     }
   ];
 
@@ -91,107 +91,111 @@ export const ProtocolSteps = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-blue/30">
-        <CardHeader>
-          <CardTitle className="text-quantum-blue flex items-center gap-2">
-            {steps[currentStep].icon}
+      <Card className="border-none shadow-soft bg-white dark:bg-slate-950">
+        <CardHeader className="pl-6 border-b border-gray-100 dark:border-gray-800 pb-4">
+          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+            <span className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                {steps[currentStep].icon}
+            </span>
             BB84 Protocol Steps
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between mb-6">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-8">
             <Button
               onClick={prevStep}
               variant="outline"
-              className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+              className="border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-slate-800"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               Previous
             </Button>
             
             <div className="text-center">
-              <span className="text-sm text-muted-foreground">
-                {currentStep + 1} of {steps.length}
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Step {currentStep + 1} of {steps.length}
               </span>
             </div>
             
             <Button
               onClick={nextStep}
               variant="outline"
-              className="border-quantum-purple/50 hover:bg-quantum-purple/10"
+              className="border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-slate-800"
             >
               Next
               <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-6 gap-2 mb-10">
             {steps.map((_, index) => (
               <div
                 key={index}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index <= currentStep 
-                    ? 'bg-gradient-to-r from-quantum-blue to-quantum-purple' 
-                    : 'bg-muted'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-500/40 dark:to-purple-500/40' 
+                    : 'bg-gray-200 dark:bg-gray-800'
                 }`}
               />
             ))}
           </div>
-        </CardContent>
-      </Card>
 
-      <Card className="border-quantum-purple/30">
-        <CardContent className="p-8">
           <div className="text-center mb-8">
-            <div className={`w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-quantum-blue to-quantum-purple flex items-center justify-center text-white ${steps[currentStep].animation}`}>
+            <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-500/60 dark:to-purple-500/60 shadow-lg shadow-blue-500/20 dark:shadow-none flex items-center justify-center text-white ${steps[currentStep].animation}`}>
               {steps[currentStep].icon}
             </div>
-            <h2 className="text-2xl font-bold text-quantum-purple mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               {steps[currentStep].title}
             </h2>
-            <p className="text-foreground/80">
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {steps[currentStep].description}
             </p>
           </div>
 
-          <Card className="bg-secondary/30 border-quantum-glow/20">
-            <CardHeader>
-              <CardTitle className="text-lg text-quantum-glow">Step Details</CardTitle>
+          <Card className="bg-slate-50 dark:bg-slate-900/50 border border-gray-100 dark:border-gray-800 shadow-sm mb-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">Step Details</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
                 {steps[currentStep].details.map((detail, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-quantum-blue rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="text-foreground/90">{detail}</span>
+                  <li key={index} className="flex items-start gap-3 text-sm">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-gray-700 dark:text-gray-300 leading-relaxed">{detail}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
 
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-quantum-blue/10 border-quantum-blue/30">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-blue-50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/20 shadow-none">
               <CardContent className="p-4 text-center">
-                <div className="w-8 h-8 bg-quantum-blue rounded-full mx-auto mb-2"></div>
-                <h3 className="font-semibold text-quantum-blue">Alice (Sender)</h3>
-                <p className="text-xs text-muted-foreground">Prepares and sends qubits</p>
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full mx-auto mb-3 flex items-center justify-center">
+                    <Users className="w-5 h-5"/>
+                </div>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-1">Alice (Sender)</h3>
+                <p className="text-xs text-blue-700/70 dark:text-blue-400/70">Prepares and sends qubits</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-quantum-glow/10 border-quantum-glow/30">
+            <Card className="bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/20 shadow-none">
               <CardContent className="p-4 text-center">
-                <div className="w-8 h-8 bg-quantum-glow rounded-full mx-auto mb-2 quantum-glow"></div>
-                <h3 className="font-semibold text-quantum-glow">Quantum Channel</h3>
-                <p className="text-xs text-muted-foreground">Transmits quantum states</p>
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-full mx-auto mb-3 flex items-center justify-center">
+                    <Send className="w-5 h-5"/>
+                </div>
+                <h3 className="font-semibold text-amber-900 dark:text-amber-300 mb-1">Quantum Channel</h3>
+                <p className="text-xs text-amber-700/70 dark:text-amber-400/70">Transmits quantum states</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-quantum-purple/10 border-quantum-purple/30">
+            <Card className="bg-purple-50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800/20 shadow-none">
               <CardContent className="p-4 text-center">
-                <div className="w-8 h-8 bg-quantum-purple rounded-full mx-auto mb-2"></div>
-                <h3 className="font-semibold text-quantum-purple">Bob (Receiver)</h3>
-                <p className="text-xs text-muted-foreground">Measures received qubits</p>
+                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full mx-auto mb-3 flex items-center justify-center">
+                    <Shuffle className="w-5 h-5"/>
+                </div>
+                <h3 className="font-semibold text-purple-900 dark:text-purple-300 mb-1">Bob (Receiver)</h3>
+                <p className="text-xs text-purple-700/70 dark:text-purple-400/70">Measures received qubits</p>
               </CardContent>
             </Card>
           </div>

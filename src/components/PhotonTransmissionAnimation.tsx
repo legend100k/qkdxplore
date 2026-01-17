@@ -20,7 +20,7 @@ export const PhotonTransmissionAnimation = ({
         Bob
       </div>
       <div 
-        className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-quantum-glow rounded-full transition-all duration-100"
+        className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-yellow-400 rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
         style={{ left: `${photonPosition}%` }}
       >
       </div>

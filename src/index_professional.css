@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  PROFESSIONAL DASHBOARD THEME
+  Inspired by "Dark Future" aesthetic: Deep Zinc, Electric Purple, and Emerald Green.
+*/
+
+@layer base {
+  :root {
+    /* 
+     * LIGHT MODE
+     * A clean, high-contrast professional workspace. 
+     * Maintains the structure but inverts for readability in bright environments.
+     */
+    --background: 0 0% 100%;       /* Pure White */
+    --foreground: 240 10% 3.9%;    /* Zinc 950 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 262 83% 58%;        /* Vivid Purple #8b5cf6 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 240 4.8% 95.9%;   /* Zinc 100 */
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 262 83% 58%;
+
+    --radius: 1rem;                /* 16px - Modern, friendly, rounded feel */
+
+    /* Semantic Colors */
+    --quantum-blue: 221 83% 53%;   /* Blue 600 */
+    --quantum-purple: 262 83% 58%; /* Purple 600 */
+
+    /* Sidebar - Light */
+    --sidebar-background: 240 5% 98%; /* Slightly gray sidebar */
+    --sidebar-foreground: 240 5.9% 10%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 262 83% 58%;
+  }
+
+  .dark {
+    /* 
+     * DARK MODE (Target Look)
+     * "Parlay Banditz" Inspired
+     * Base: Deepest warm black/zinc.
+     * Panels: Distinct dark gray cards.
+     * Accent: Electric Purple.
+     */
+    --background: 240 10% 3.9%;    /* #09090b - Almost black */
+    --foreground: 0 0% 98%;        /* #fafafa */
+
+    --card: 240 10% 7%;            /* #121214 - Slightly lighter for surface depth */
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 263 70% 50%;        /* #7c3aed - Deep Violet/Purple */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 240 3.7% 15.9%;   /* Zinc 800 - Subtle surfaces */
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%; /* Zinc 400 - Muted text */
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;      /* Subtle dark borders */
+    --input: 240 3.7% 15.9%;
+    --ring: 263 70% 50%;
+
+    /* Semantic Colors */
+    --quantum-blue: 217 91% 60%;
+    --quantum-purple: 263 70% 50%;
+    
+    /* Sidebar - Dark */
+    --sidebar-background: 240 10% 3.9%; /* Match main background or go slightly darker */
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 263 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 263 70% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    /* Smoother, diffused shadow for dark mode depth */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .dark .shadow-soft {
+    /* Slight glow/depth for dark cards */
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.5);
+  }
+  
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}

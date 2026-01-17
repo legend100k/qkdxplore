@@ -47,7 +47,7 @@ export const AnalysisSection = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="border-quantum-blue/30">
+      <Card className="border-none shadow-soft">
         <CardHeader>
           <CardTitle className="text-quantum-blue flex items-center gap-2">
             <Calculator className="w-6 h-6" />
@@ -111,7 +111,7 @@ export const AnalysisSection = () => {
                   <div className="text-sm text-muted-foreground">Transmitted Bits</div>
                 </div>
                 <div className="text-center p-4 bg-secondary/30 rounded-lg">
-                  <div className="text-2xl font-bold text-quantum-glow">{metrics.finalKeyBits}</div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{metrics.finalKeyBits}</div>
                   <div className="text-sm text-muted-foreground">Final Key Bits</div>
                 </div>
               </div>
@@ -158,9 +158,9 @@ export const AnalysisSection = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-quantum-glow/30">
-          <CardHeader>
-            <CardTitle className="text-quantum-glow flex items-center gap-2">
+      <Card className="border-none shadow-soft">
+        <CardHeader>
+            <CardTitle className="text-primary flex items-center gap-2">
               <Shield className="w-5 h-5" />
               Bit Distribution Analysis
             </CardTitle>

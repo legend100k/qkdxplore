@@ -96,27 +96,40 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
 
   // Parameter controls JSX
   const parameterControls = (
-    <Card className="border-quantum-glow/30 p-4">
-      <CardContent className="space-y-4 p-4">
-        <div className="space-y-2">
-          <Label htmlFor="noise">Noise Level: {noise}%</Label>
-          <Slider
-            id="noise"
-            min={0}
-            max={20}
-            value={[noise]}
-            onValueChange={(value) => setNoise(value[0])}
-            disabled={isRunning}
-          />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+            <Label htmlFor="noise" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Channel Noise Level
+            </Label>
+            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                {noise}%
+            </span>
         </div>
-        
-        <div className="bg-quantum-glow/10 p-3 rounded-lg border border-quantum-glow/30">
-          <p className="text-sm text-quantum-glow">
-            <strong>Note:</strong> Number of Qubits is fixed at 80 for this experiment.
-          </p>
+        <Slider
+          id="noise"
+          min={0}
+          max={20}
+          value={[noise]}
+          onValueChange={(value) => setNoise(value[0])}
+          disabled={isRunning}
+          className="py-2"
+        />
+        <div className="flex justify-between text-xs text-gray-400">
+            <span>Low (0%)</span>
+            <span>High (20%)</span>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      
+      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50 flex gap-3 items-start">
+        <div className="mt-0.5 text-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        </div>
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          <strong>Note:</strong> Number of Qubits is fixed at 80 for this comparison experiment.
+        </p>
+      </div>
+    </div>
   );
 
   return (
@@ -131,13 +144,13 @@ const WithEavesdropperExperiment: React.FC<ExperimentComponentProps> = ({ onSave
         selectedExpId="with-eavesdropper"
         runExperiment={runExperiment}
         resetExperiment={resetExperiment}
-        color="quantum-glow"
+        color="red"
         experimentName="With Eavesdropper"
         experimentData={experimentResult?.data}
         analysis={experimentResult?.analysis}
         usedBits={experimentResult?.usedBits}
         xAxisDataKey="eavesdroppers"
-        colorScheme="quantum-glow"
+        colorScheme="red"
         experimentControls={parameterControls}
       />
     </div>

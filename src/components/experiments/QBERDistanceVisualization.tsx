@@ -20,7 +20,7 @@ const QBERDistanceVisualization: React.FC<QBERDistanceVisualizationProps> = ({
 
   return (
     <div className="w-full h-80">
-      <h3 className="text-lg font-semibold text-center mb-4 text-quantum-blue">{title}</h3>
+      <h3 className="text-sm font-bold text-center mb-4 text-gray-700 dark:text-gray-200 uppercase tracking-wide">{title}</h3>
       <ResponsiveContainer width="100%" height="90%">
         <LineChart
           data={data}

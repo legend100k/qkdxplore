@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  PREMIUM SAAS DESIGN SYSTEM
+  Refined Palette: Deep Indigo, Slate, and Clean White
+*/
+
+@layer base {
+  :root {
+    /* 
+     * LIGHT MODE
+     * Concept: Clean, airy, professional scientific dashboard.
+     * Base: Slate 50
+     * Surface: White
+     * Primary: Indigo 600
+     */
+    --background: 210 40% 98%;    /* Slate 50 #F8FAFC */
+    --foreground: 222 47% 11%;    /* Slate 900 #0F172A */
+
+    --card: 0 0% 100%;            /* White */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 243 75% 59%;       /* Indigo 600 #4F46E5 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;   /* Slate 100 */
+    --secondary-foreground: 222 47% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Borders are very subtle in this theme */
+    --border: 214 32% 91%;        /* Slate 200 */
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%;
+
+    --radius: 0.5rem;             /* 8px - Cleaner, sharper look */
+    
+    /* Custom Semantic Colors */
+    --quantum-blue: 221 83% 53%;  /* Blue 600 */
+    --quantum-purple: 262 83% 58%; /* Violet 600 */
+    
+    /* Sidebar specific */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222 47% 11.2%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 243 75% 59%;
+  }
+
+  .dark {
+    /* 
+     * DARK MODE
+     * Concept: "Deep Space" - High contrast but soft on the eyes.
+     * Base: Slate 950
+     * Surface: Slate 900
+     * Primary: Indigo 400
+     */
+    --background: 222 47% 6%;     /* Slate 950 #020617 - Very Dark */
+    --foreground: 210 40% 98%;    /* Slate 50 */
+
+    --card: 222 47% 11%;          /* Slate 900 #111827 */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 243 100% 75%;      /* Indigo 400 #818CF8 - Brighter for dark mode */
+    --primary-foreground: 222 47% 11.2%;
+
+    --secondary: 217 33% 17%;     /* Slate 800 */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;        /* Slate 800 - Subtle borders */
+    --input: 217 33% 17%;
+    --ring: 243 100% 75%;
+
+    /* Semantic Colors adjusted for dark mode */
+    --quantum-blue: 217 91% 60%;  /* Blue 400 */
+    --quantum-purple: 263 70% 50%; /* Violet 500 */
+    
+    /* Sidebar specific */
+    --sidebar-background: 222 47% 8%; /* Slightly lighter than main bg */
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 243 100% 75%;
+    --sidebar-primary-foreground: 222 47% 11.2%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 243 100% 75%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1; /* Optimize font rendering */
+  }
+}
+
+/* Custom premium utilities */
+@layer utilities {
+  .shadow-soft {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0, 0, 0, 0.02);
+  }
+  .glass-panel {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-white/5;
+  }
+}

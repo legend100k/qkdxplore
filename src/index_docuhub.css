@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+  DOCUHUB INSPIRED THEME
+  A modern, clean documentation theme with soft dark grays and blue accents.
+*/
+
+@layer base {
+  :root {
+    /* 
+     * LIGHT MODE (Inferred counterpart)
+     * keeping it clean and readable
+     */
+    --background: 0 0% 98%;       /* #fafafa */
+    --foreground: 220 15% 15%;    /* #202428 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 15%;
+
+    --primary: 217 91% 60%;       /* Blue accent like the logo/active state */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 94%;     /* Light gray for secondary elements */
+    --secondary-foreground: 220 15% 15%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 8% 46%;
+
+    --accent: 220 14% 94%;
+    --accent-foreground: 220 15% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.25rem;            /* 4px - sharper, more documentation-like */
+
+    /* Custom Semantic Colors */
+    --quantum-blue: 217 91% 60%;
+    --quantum-purple: 262 83% 58%;
+
+    /* Sidebar - Light */
+    --sidebar-background: 220 20% 97%; 
+    --sidebar-foreground: 220 15% 15%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 93%;
+    --sidebar-accent-foreground: 220 15% 15%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .dark {
+    /* 
+     * DARK MODE (DocuHub Target)
+     * Background: ~#1A1B1E (Deep Gunmetal)
+     * Sidebar: ~#141517 (Slightly darker)
+     * Cards: ~#25262B (Lighter surface)
+     * Text: White/Grey
+     * Accent: Blue
+     */
+    --background: 220 10% 12%;    /* ~#1C1E21 - Main background */
+    --foreground: 220 10% 90%;    /* Soft white text */
+
+    --card: 220 10% 16%;          /* ~#25282C - Card background (lighter than bg) */
+    --card-foreground: 220 10% 90%;
+
+    --popover: 220 10% 16%;
+    --popover-foreground: 220 10% 90%;
+
+    --primary: 212 96% 55%;       /* Professional Documentation Blue */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 10% 18%;     /* Slightly lighter than bg */
+    --secondary-foreground: 220 10% 90%;
+
+    --muted: 220 10% 18%;
+    --muted-foreground: 220 10% 60%; /* Muted text */
+
+    --accent: 220 10% 18%;
+    --accent-foreground: 220 10% 90%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 10% 20%;        /* Subtle borders */
+    --input: 220 10% 20%;
+    --ring: 212 96% 55%;
+
+    /* Semantic Colors */
+    --quantum-blue: 212 96% 55%;
+    --quantum-purple: 260 60% 65%;
+    
+    /* Sidebar - Dark */
+    --sidebar-background: 220 10% 10%; /* ~#17191C - Darker sidebar */
+    --sidebar-foreground: 220 10% 80%;
+    --sidebar-primary: 212 96% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 10% 16%;
+    --sidebar-accent-foreground: 220 10% 95%;
+    --sidebar-border: 220 10% 14%; /* Very subtle border */
+    --sidebar-ring: 212 96% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .dark .shadow-soft {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.3);
+  }
+  
+  /* Typrography adjustments for documentation feel */
+  .doc-heading {
+    @apply scroll-m-20 tracking-tight;
+  }
+}
