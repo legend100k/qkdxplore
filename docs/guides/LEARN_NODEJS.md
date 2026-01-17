@@ -43,9 +43,9 @@ Fast lookup for:
 
 I've created 4 executable Node.js scripts you can run and modify:
 
-### 1️⃣ **learn-nodejs.mjs** - Core Concepts
+### 1️⃣ **scripts/learn-nodejs.mjs** - Core Concepts
 ```bash
-node learn-nodejs.mjs
+node scripts/learn-nodejs.mjs
 ```
 **Teaches:**
 - Path operations with `path` module
@@ -59,9 +59,9 @@ node learn-nodejs.mjs
 
 ---
 
-### 2️⃣ **simple-server.mjs** - HTTP Server
+### 2️⃣ **scripts/simple-server.mjs** - HTTP Server
 ```bash
-node simple-server.mjs
+node scripts/simple-server.mjs
 # Then visit: http://localhost:3000
 ```
 **Teaches:**
@@ -82,9 +82,9 @@ node simple-server.mjs
 
 ---
 
-### 3️⃣ **analyze-project.mjs** - Real-World Tool
+### 3️⃣ **scripts/analyze-project.mjs** - Real-World Tool
 ```bash
-node analyze-project.mjs
+node scripts/analyze-project.mjs
 ```
 **Teaches:**
 - Recursive directory traversal
@@ -101,7 +101,7 @@ node analyze-project.mjs
 
 ---
 
-### 4️⃣ **package-info.mjs** - CLI Tool
+### 4️⃣ **scripts/package-info.mjs** - CLI Tool
 ```bash
 # Show project summary
 node package-info.mjs

@@ -196,9 +196,9 @@ Node.js uses an **event loop** to handle async operations:
 
 I've created 3 learning scripts for you:
 
-### 1. `learn-nodejs.mjs` - Core Concepts
+### 1. `scripts/learn-nodejs.mjs` - Core Concepts
 ```bash
-node learn-nodejs.mjs
+node scripts/learn-nodejs.mjs
 ```
 **Teaches:**
 - Path operations
@@ -207,9 +207,9 @@ node learn-nodejs.mjs
 - Module resolution
 - Async operations
 
-### 2. `simple-server.mjs` - HTTP Server
+### 2. `scripts/simple-server.mjs` - HTTP Server
 ```bash
-node simple-server.mjs
+node scripts/simple-server.mjs
 # Then visit: http://localhost:3000
 ```
 **Teaches:**
@@ -219,9 +219,9 @@ node simple-server.mjs
 - JSON APIs
 - Graceful shutdown
 
-### 3. `analyze-project.mjs` - Real-World Tool
+### 3. `scripts/analyze-project.mjs` - Real-World Tool
 ```bash
-node analyze-project.mjs
+node scripts/analyze-project.mjs
 ```
 **Teaches:**
 - File traversal
@@ -293,7 +293,7 @@ export default {
 
 ---
 
-## Project Statistics (via analyze-project.mjs)
+## Project Statistics (via scripts/analyze-project.mjs)
 
 ```
 📊 PROJECT STATISTICS
@@ -374,9 +374,9 @@ npm run preview     # Preview production build
 
 ### Learning Scripts in This Project
 ```bash
-node learn-nodejs.mjs     # Core concepts
-node simple-server.mjs    # HTTP server demo
-node analyze-project.mjs  # Project analysis tool
+node scripts/learn-nodejs.mjs     # Core concepts
+node scripts/simple-server.mjs    # HTTP server demo
+node scripts/analyze-project.mjs  # Project analysis tool
 ```
 
 ---

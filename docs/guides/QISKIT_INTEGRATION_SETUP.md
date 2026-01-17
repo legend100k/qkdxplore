@@ -8,7 +8,7 @@ This guide explains how to set up and use the Qiskit backend integration for run
 
 ```bash
 # Option 1: Use the startup script (recommended)
-python start_backend.py
+python scripts/start_backend.py
 
 # Option 2: Manual setup
 cd backend

@@ -298,9 +298,9 @@ npm run preview          # Preview production build
 npm run lint             # Run ESLint
 
 # Learning Scripts
-node learn-nodejs.mjs         # Core Node.js concepts
-node simple-server.mjs        # HTTP server demo
-node analyze-project.mjs      # Analyze project files
+node scripts/learn-nodejs.mjs         # Core Node.js concepts
+node scripts/simple-server.mjs        # HTTP server demo
+node scripts/analyze-project.mjs      # Analyze project files
 ```
 
 ## 🐛 Debugging
