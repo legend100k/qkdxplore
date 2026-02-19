@@ -28,6 +28,8 @@ import {
   applyOpticalNoise,
   legacyNoiseToOptical,
 } from "@/lib/opticalNoise";
+import { E91SimulationSection } from "./E91SimulationSection";
+import { B92SimulationSection } from "./B92SimulationSection";
 // Google Charts is loaded via script tag in index.html
 // We'll implement type definitions for Google Charts
 declare global {
@@ -157,6 +159,7 @@ const getPolarizationSymbol = (bit: number, basis: string): string => {
 };
 
 export const SimulationSection = () => {
+  const [selectedProtocol, setSelectedProtocol] = useState<'bb84' | 'e91' | 'b92'>('bb84');
   const [isRunning, setIsRunning] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -758,55 +761,55 @@ export const SimulationSection = () => {
     try {
     // Standard BB84 QBER calculation:
     // QBER = errors in sifted key / total sifted key bits
-    
+
     // Sifted key = bits where Alice and Bob used same basis
     const siftedKeyBits = bits.filter(bit => bit.isMatching && bit.bobMeasurement !== null);
     const siftedKeyCount = siftedKeyBits.length;
-    
+
     // Errors in sifted key = where Bob's measurement doesn't match Alice's bit
     const errorsInSiftedKey = siftedKeyBits.filter(
       bit => bit.aliceBit !== bit.bobMeasurement
     );
-    
-    // Calculate the standard QBER
-    let actualQBER = siftedKeyCount > 0 
+
+    // Calculate the standard QBER from actual measurements
+    let actualQBER = siftedKeyCount > 0
       ? (errorsInSiftedKey.length / siftedKeyCount) * 100
       : 0;
-    
-    // Add contributions from different error sources for a more realistic QBER
+
+    // Add contributions from different error sources
     const eavesdroppingRateValue = eavesdroppingRate[0];
     const noiseLevelValue = noiseLevel[0];
-    
-    // Eavesdropping creates significant QBER: when Eve intercepts and resends,
-    // she causes ~25% error rate (since she guesses basis randomly and causes disturbance)
+
+    // Eavesdropping creates QBER: when Eve intercepts and resends,
+    // she causes ~25% error rate (since she guesses basis randomly)
     let eavesdroppingContribution = 0;
     if (eavesdroppingRateValue > 0) {
-      // If Eve intercepts ALL photons, it's ~25% QBER. Scale linearly by interception rate.
       eavesdroppingContribution = Math.min((eavesdroppingRateValue / 100) * 25, 25);
     }
-    
-    // Noise contributes directly to QBER - more realistic noise model
-    const noiseContribution = noiseLevelValue * 2.5; // Each 1% noise contributes ~2.5% to QBER
-    
-    // Intrinsic floor for realistic optical imperfections
-    const intrinsicFloor = 1.5; // Increase to 1.5% for more realistic baseline
-    
+
+    // Noise contributes to QBER
+    const noiseContribution = noiseLevelValue * 0.5; // Each 1% noise contributes ~0.5% to QBER
+
+    // Intrinsic floor ONLY applies when there's actual noise or eavesdropping
+    // In ideal conditions (0% Eve, 0% noise), QBER should be near 0%
+    const intrinsicFloor = (eavesdroppingRateValue > 0 || noiseLevelValue > 0) ? 0.5 : 0;
+
     // Calculate combined QBER based on error sources
     let combinedQBER = actualQBER + eavesdroppingContribution + noiseContribution + intrinsicFloor;
-    
+
     // Apply upper bound based on theoretical maximum
-    const totalQBER = Math.min(combinedQBER, 75); // Allow up to 75% for extreme scenarios
-    
+    const totalQBER = Math.min(combinedQBER, 75);
+
     // Also count total errors for display
     const totalBits = bits.length;
     const allErrorBits = bits.filter(
       bit => bit.bobMeasurement === null || bit.aliceBit !== bit.bobMeasurement
     );
-    
+
     // Apply statistical security check
     const securityCheck = applySecurityCheck(totalQBER, siftedKeyCount);
     const secureKeyRate = securityCheck.isSecure ? (siftedKeyCount / bits.length) * 100 : 0;
-    
+
     // Prepare data for display
     const data = [
       { name: "Total Bits", value: totalBits },
@@ -817,7 +820,7 @@ export const SimulationSection = () => {
     ];
 
     setSimulationData(data);
-    
+
     // Render the chart with the new data
     setTimeout(() => renderSimulationMetricsChart(data), 100);
     } catch (error) {
@@ -963,8 +966,49 @@ export const SimulationSection = () => {
     }
   };
 
-    return (
+  return (
     <div className="space-y-8 pb-4">
+      {/* Protocol Selection Tabs */}
+      <Card className="border-none shadow-soft">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-quantum-blue" />
+              <h2 className="text-lg font-bold text-foreground">Select Protocol</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedProtocol === 'bb84' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedProtocol('bb84')}
+                className={selectedProtocol === 'bb84' ? "bg-blue-600 hover:bg-blue-700" : ""}
+              >
+                BB84
+              </Button>
+              <Button
+                variant={selectedProtocol === 'e91' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedProtocol('e91')}
+                className={selectedProtocol === 'e91' ? "bg-purple-600 hover:bg-purple-700" : ""}
+              >
+                E91
+              </Button>
+              <Button
+                variant={selectedProtocol === 'b92' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedProtocol('b92')}
+                className={selectedProtocol === 'b92' ? "bg-red-600 hover:bg-red-700" : ""}
+              >
+                B92
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Render selected protocol component */}
+      {selectedProtocol === 'bb84' && (
+      <div className="space-y-8 pb-4">
       {/* Alice-Bob Animation Section */}
       <Card className="border-none shadow-soft overflow-hidden">
         <CardHeader className="bg-gray-50/50 dark:bg-slate-900/50 border-b border-gray-100 dark:border-gray-800 pb-4">
@@ -1208,9 +1252,9 @@ export const SimulationSection = () => {
                       <Slider
                         value={numQubits}
                         onValueChange={setNumQubits}
-                        max={50}
-                        min={8}
-                        step={2}
+                        max={100}
+                        min={1}
+                        step={1}
                         className="py-2"
                         disabled={isRunning}
                       />
@@ -1841,6 +1885,12 @@ export const SimulationSection = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+      )}
+
+      {/* E91 and B92 Protocol Components */}
+      {selectedProtocol === 'e91' && <E91SimulationSection />}
+      {selectedProtocol === 'b92' && <B92SimulationSection />}
     </div>
   );
 };

@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
-import { EnhancedTheorySection } from "@/components/EnhancedTheorySection";
-import { PreQuiz } from "@/components/PreQuiz";
 import { SimulationSection } from "@/components/SimulationSection";
 import { ExperimentsSection } from "@/components/ExperimentsSection";
-import { QuantumHardware } from "@/components/QuantumHardware";
 import { QiskitIntegration } from "@/components/QiskitIntegration";
 import PythonCodeEditor from "@/components/PythonCodeEditor";
 import { ReportsSection } from "@/components/ReportsSection";
-import { PostQuiz } from "@/components/PostQuiz";
-import { AboutUs } from "@/components/AboutUs";
-import Certificate from "@/components/Certificate";
 import { ExperimentResult } from "@/components/ExperimentsSection";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -19,8 +13,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState("theory");
-  const [postQuizScore, setPostQuizScore] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("simulation");
   const [experimentResults, setExperimentResults] = useState<{ [key: string]: ExperimentResult }>({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -33,30 +26,18 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case "theory":
-        return <EnhancedTheorySection />;
-      case "pre-quiz":
-        return <PreQuiz />;
       case "simulation":
         return <SimulationSection />;
       case "experiments":
         return <ExperimentsSection onSaveExperiment={handleSaveExperiment} />;
-      case "hardware":
-        return <QuantumHardware />;
       case "qiskit":
         return <QiskitIntegration />;
       case "python":
         return <PythonCodeEditor />;
       case "reports":
         return <ReportsSection availableExperiments={Object.values(experimentResults)} />;
-      case "post-quiz":
-        return <PostQuiz onQuizComplete={(score) => setPostQuizScore(score)} />;
-      case "certificate":
-        return <Certificate quizScore={postQuizScore || 0} />;
-      case "about":
-        return <AboutUs />;
       default:
-        return <EnhancedTheorySection />;
+        return <SimulationSection />;
     }
   };
 

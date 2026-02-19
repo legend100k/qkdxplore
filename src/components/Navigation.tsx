@@ -1,29 +1,23 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { BookOpen, FileText, Cpu, FlaskConical, Cable, Code, FilePieChart, FileQuestion, GraduationCap, Info, Newspaper } from "lucide-react";
+import { Cpu, FlaskConical, Code, FilePieChart } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 
 interface NavigationProps {
   activeTab: string;
-  onTabChange: (tab: string) => void; // Changed from 'id' to 'tab' to match original, but original had (tab: string)
+  onTabChange: (tab: string) => void;
   className?: string;
   onClose?: () => void;
 }
 
 const navigationItems = [
-  { id: "theory", label: "Concepts", icon: BookOpen },
-  { id: "pre-quiz", label: "Knowledge Check", icon: FileQuestion },
-  { id: "simulation", label: "BB84 Simulation", icon: Cpu },
-  { id: "experiments", label: "Virtual Lab", icon: FlaskConical },
-  { id: "hardware", label: "Lab Equipment", icon: Info },
-  //{ id: "qiskit", label: "Qiskit"},
+  { id: "simulation", label: "Protocol Simulations", icon: Cpu },
+  { id: "experiments", label: "Research Lab", icon: FlaskConical },
+  { id: "qiskit", label: "Qiskit Integration", icon: Cpu },
   { id: "python", label: "Code Explorer", icon: Code },
-  { id: "reports", label: "Experiment Reports", icon: FilePieChart },
-  { id: "post-quiz", label: "Assesment", icon: FileText },    
-  { id: "certificate", label: "Certification", icon : Newspaper},
-  { id: "about", label: "Credits", icon: GraduationCap }
+  { id: "reports", label: "Research Reports", icon: FilePieChart },
 ];
 
 const getIcon = (id: string) => {
