@@ -452,6 +452,45 @@ export const E91SimulationSection = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="border-none shadow-soft md:col-span-2 lg:col-span-4">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xs font-bold text-gray-500 uppercase">QBER Calculation Formula</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                      <mrow>
+                        <mi>Q</mi>
+                        <mi>B</mi>
+                        <mi>E</mi>
+                        <mi>R</mi>
+                        <mo>=</mo>
+                        <mfrac>
+                          <msub>
+                            <mi>N</mi>
+                            <mi>wrong</mi>
+                          </msub>
+                          <mrow>
+                            <msub>
+                              <mi>N</mi>
+                              <mi>wrong</mi>
+                            </msub>
+                            <mo>+</mo>
+                            <msub>
+                              <mi>N</mi>
+                              <mi>right</mi>
+                            </msub>
+                          </mrow>
+                        </mfrac>
+                      </mrow>
+                    </math>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    For E91: N represents matching-basis measurements where outcomes should be perfectly (anti-)correlated
+                  </p>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
@@ -554,6 +593,48 @@ export const E91SimulationSection = () => {
                 <span>Privacy amplified</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* QBER Formula for B92 */}
+      {showAnalysis && selectedProtocol === 'B92' && (
+        <Card className="border-none shadow-soft">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold text-gray-500 uppercase">QBER Calculation Formula (B92 USD)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+              <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                <mrow>
+                  <mi>Q</mi>
+                  <mi>B</mi>
+                  <mi>E</mi>
+                  <mi>R</mi>
+                  <mo>=</mo>
+                  <mfrac>
+                    <msub>
+                      <mi>N</mi>
+                      <mi>wrong</mi>
+                    </msub>
+                    <mrow>
+                      <msub>
+                        <mi>N</mi>
+                        <mi>wrong</mi>
+                      </msub>
+                      <mo>+</mo>
+                      <msub>
+                        <mi>N</mi>
+                        <mi>right</mi>
+                      </msub>
+                    </mrow>
+                  </mfrac>
+                </mrow>
+              </math>
+            </div>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              For B92: N represents conclusive USD measurements where Alice&apos;s bit should match Bob&apos;s detection
+            </p>
           </CardContent>
         </Card>
       )}

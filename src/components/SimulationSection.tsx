@@ -1792,6 +1792,47 @@ export const SimulationSection = () => {
                       <BarChart3 className="w-5 h-5 text-gray-500" />
                       Post-Processing Analysis
                     </h3>
+
+                  {/* QBER Formula Card */}
+                  <Card className="border-none shadow-soft">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-xs font-bold text-gray-500 uppercase">QBER Calculation Formula (BB84)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
+                        <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+                          <mrow>
+                            <mi>Q</mi>
+                            <mi>B</mi>
+                            <mi>E</mi>
+                            <mi>R</mi>
+                            <mo>=</mo>
+                            <mfrac>
+                              <msub>
+                                <mi>N</mi>
+                                <mi>wrong</mi>
+                              </msub>
+                              <mrow>
+                                <msub>
+                                  <mi>N</mi>
+                                  <mi>wrong</mi>
+                                </msub>
+                                <mo>+</mo>
+                                <msub>
+                                  <mi>N</mi>
+                                  <mi>right</mi>
+                                </msub>
+                              </mrow>
+                            </mfrac>
+                          </mrow>
+                        </math>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-3 text-center">
+                        For BB84: N represents sifted key bits where Alice and Bob used matching bases
+                      </p>
+                    </CardContent>
+                  </Card>
+
                   <div className="grid md:grid-cols-2 gap-6">
                       <Card className="border-none shadow-soft overflow-hidden">
                         <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
