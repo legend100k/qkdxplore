@@ -38,6 +38,20 @@ declare global {
   }
 }
 
+// MathML type definitions for TypeScript
+declare namespace JSX {
+  interface IntrinsicElements {
+    math: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mrow: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mi: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mo: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mfrac: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    msub: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    semantics: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    annotation: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+  }
+}
+
 // Add CSS animations
 const animationStyles = `
   @keyframes photon-vibrate {

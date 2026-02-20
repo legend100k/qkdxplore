@@ -23,6 +23,18 @@ declare global {
   }
 }
 
+// MathML type definitions for TypeScript
+declare namespace JSX {
+  interface IntrinsicElements {
+    math: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mrow: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mi: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mo: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    mfrac: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    msub: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+  }
+}
+
 type Protocol = "B92" | "E91";
 
 export const E91SimulationSection = () => {
