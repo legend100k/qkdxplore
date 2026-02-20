@@ -790,9 +790,13 @@ export const SimulationSection = () => {
     // Noise contributes to QBER
     const noiseContribution = noiseLevelValue * 0.5; // Each 1% noise contributes ~0.5% to QBER
 
-    // Intrinsic floor ONLY applies when there's actual noise or eavesdropping
-    // In ideal conditions (0% Eve, 0% noise), QBER should be near 0%
-    const intrinsicFloor = (eavesdroppingRateValue > 0 || noiseLevelValue > 0) ? 0.5 : 0;
+    // Intrinsic QBER floor - ALWAYS present in real quantum systems due to:
+    // - Detector dark counts and timing jitter
+    // - Polarization alignment imperfections
+    // - State preparation fidelity limits
+    // - Environmental factors (temperature, vibrations)
+    // Typical values: 0.5-2% for well-aligned lab systems
+    const intrinsicFloor = 0.5 + Math.random() * 0.3; // 0.5-0.8% with quantum variation
 
     // Calculate combined QBER based on error sources
     let combinedQBER = actualQBER + eavesdroppingContribution + noiseContribution + intrinsicFloor;
@@ -1901,16 +1905,16 @@ export const SimulationSection = () => {
                                 const totalQBER = parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"));
                                 const eavesdropperRate = eavesdroppingRate[0];
                                 const noise = noiseLevel[0];
-                                
+
                                 if (eavesdropperRate === 0 && noise === 0) {
-                                  if (totalQBER < 0.1) return "System secure. No interference detected.";
-                                  return "Ideal conditions. Minimal quantum variation.";
+                                  if (totalQBER < 1.5) return `✓ System secure. QBER ${totalQBER.toFixed(2)}% is within normal hardware limits (intrinsic errors from detectors and alignment).`;
+                                  return `⚠ Unexpected QBER ${totalQBER.toFixed(2)}% in ideal conditions. Check for hardware issues or environmental factors.`;
                                 }
-                                
+
                                 if (totalQBER > 11) {
                                   return `CRITICAL: QBER is ${totalQBER}%, exceeding the 11% safety threshold. This indicates strong evidence of eavesdropping or severe channel noise. This key is unsafe to use.`;
                                 }
-                                
+
                                 return `SECURE: QBER is ${totalQBER}%, which is within acceptable safety limits. Error correction can handle this noise level.`;
                               })()}
                             </p>
