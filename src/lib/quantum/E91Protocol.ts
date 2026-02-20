@@ -348,11 +348,22 @@ export function runE91Protocol(params: E91Parameters): E91SimulationResult {
   }
 
   // Calculate QBER from key bits
-  let qber = 0;
+  let measuredQBER = 0;
   if (aliceSiftedKey.length > 0) {
     const errors = aliceSiftedKey.filter((bit, i) => bit !== bobSiftedKey[i]).length;
-    qber = errors / aliceSiftedKey.length;
+    measuredQBER = errors / aliceSiftedKey.length;
   }
+
+  // Add intrinsic QBER floor - ALWAYS present in real quantum systems due to:
+  // - Detector dark counts and timing jitter
+  // - Polarization alignment imperfections
+  // - State preparation fidelity limits
+  // - Environmental factors (temperature, vibrations)
+  // Typical values: 0.5-2% for well-aligned lab systems
+  const intrinsicFloor = 0.005 + Math.random() * 0.003; // 0.5-0.8% with quantum variation
+  
+  // Total QBER = measured errors + intrinsic hardware errors
+  const qber = measuredQBER + intrinsicFloor;
 
   // Calculate CHSH value
   const chshResult = calculateCHSHValue(results);

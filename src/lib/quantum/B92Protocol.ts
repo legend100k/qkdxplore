@@ -269,12 +269,22 @@ export function runB92Protocol(params: B92Parameters): B92SimulationResult {
     if (intercepted) totalIntercepted++;
   }
   
-  // Calculate QBER
-  let qber = 0;
+  // Calculate QBER from conclusive measurements
+  let measuredQBER = 0;
   if (siftedKeyAlice.length > 0) {
     const errors = siftedKeyAlice.filter((bit, i) => bit !== siftedKeyBob[i]).length;
-    qber = errors / siftedKeyAlice.length;
+    measuredQBER = errors / siftedKeyAlice.length;
   }
+
+  // Add intrinsic QBER floor - ALWAYS present in real quantum systems due to:
+  // - Detector dark counts and timing jitter
+  // - State preparation fidelity limits
+  // - Environmental factors
+  // Typical values: 0.5-2% for well-aligned lab systems
+  const intrinsicFloor = 0.005 + Math.random() * 0.003; // 0.5-0.8% with quantum variation
+  
+  // Total QBER = measured errors + intrinsic hardware errors
+  const qber = measuredQBER + intrinsicFloor;
   
   // Calculate rates
   const inconclusiveRate = totalInconclusive / params.numBits;
