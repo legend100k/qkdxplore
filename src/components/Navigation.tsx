@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Cpu, FlaskConical, Code, FilePieChart } from "lucide-react";
+import { Cpu, FlaskConical, Code, FilePieChart, BookOpen } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 
@@ -14,10 +14,8 @@ interface NavigationProps {
 
 const navigationItems = [
   { id: "simulation", label: "Protocol Simulations", icon: Cpu },
-  { id: "experiments", label: "Research Lab", icon: FlaskConical },
   { id: "qiskit", label: "Qiskit Integration", icon: Cpu },
   { id: "python", label: "Code Explorer", icon: Code },
-  { id: "reports", label: "Research Reports", icon: FilePieChart },
 ];
 
 const getIcon = (id: string) => {
@@ -45,13 +43,13 @@ export const Navigation = ({ activeTab, onTabChange, className, onClose }: Navig
             </p>
           </div>
         </div>
-        
+
         <div className="space-y-1">
           <p className="px-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contents</p>
           {navigationItems.map((item) => {
             const IconComponent = getIcon(item.id);
             const isActive = activeTab === item.id;
-            
+
             return (
               <Button
                 key={item.id}
@@ -76,11 +74,11 @@ export const Navigation = ({ activeTab, onTabChange, className, onClose }: Navig
             );
           })}
         </div>
-        
+
         <div className="mt-auto pt-4 border-t border-border/60">
           <div className="flex items-center justify-between mb-3">
-             <span className="text-xs font-medium text-muted-foreground">Theme</span>
-             <ThemeToggle />
+            <span className="text-xs font-medium text-muted-foreground">Theme</span>
+            <ThemeToggle />
           </div>
           <div className="text-[11px] text-muted-foreground">
             v1.0.0 • {new Date().getFullYear()}

@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Play, RotateCw, Loader2, Shield, ShieldCheck, AlertCircle, Zap, Eye, TrendingUp, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import {
   runQKDSimulation,
   runB92Protocol,
@@ -37,17 +38,21 @@ declare namespace JSX {
 
 type Protocol = "B92" | "E91";
 
-export const E91SimulationSection = () => {
-  const [selectedProtocol, setSelectedProtocol] = useState<Protocol>("E91");
+interface E91SimulationSectionProps {
+  initialProtocol?: Protocol;
+}
+
+export const E91SimulationSection = ({ initialProtocol = "E91" }: E91SimulationSectionProps) => {
+  const [selectedProtocol, setSelectedProtocol] = useState<Protocol>(initialProtocol);
   const [isRunning, setIsRunning] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
-  
+
   // Simulation parameters
   const [numSignals, setNumSignals] = useState([1000]);
   const [fiberLength, setFiberLength] = useState([10]);
   const [eavesdroppingRate, setEavesdroppingRate] = useState([0]);
   const [noiseLevel, setNoiseLevel] = useState([2]);
-  
+
   // Results
   const [simulationResult, setSimulationResult] = useState<QKDSimulationResult | null>(null);
   const [b92Result, setB92Result] = useState<B92SimulationResult | null>(null);
@@ -110,10 +115,11 @@ export const E91SimulationSection = () => {
   // Run distance analysis
   const runDistanceAnalysis = () => {
     setIsRunning(true);
-    
+
     setTimeout(() => {
       const distances = [0, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100];
       const analysis = analyzeKeyRateVsDistance(selectedProtocol, distances, {
+        protocol: selectedProtocol,
         numSignals: numSignals[0],
         eveConfig: eavesdroppingRate[0] > 0 ? {
           attackType: 'intercept-resend',
@@ -173,11 +179,10 @@ export const E91SimulationSection = () => {
                 </td>
                 <td className="p-2 text-center font-mono text-lg">{bit.bobBasis === 0 ? '↕' : '↘'}</td>
                 <td className="p-2 text-center">
-                  <span className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
-                    bit.bobResult !== null 
-                      ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300" 
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-500"
-                  }`}>
+                  <span className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${bit.bobResult !== null
+                    ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-500"
+                    }`}>
                     {bit.bobResult ?? '-'}
                   </span>
                 </td>
@@ -237,7 +242,7 @@ export const E91SimulationSection = () => {
               const angleDiff = pair.aliceAngle - pair.bobAngle;
               const expectedCorrelation = Math.cos(2 * angleDiff);
               const actualCorrelation = pair.aliceOutcome === pair.bobOutcome ? 1 : -1;
-              
+
               return (
                 <tr key={pair.id} className={`border-b hover:bg-gray-50 dark:hover:bg-gray-800 ${pair.inKey ? "bg-green-50/30 dark:bg-green-900/10" : ""}`}>
                   <td className="p-3 text-center text-xs">{pair.id + 1}</td>
@@ -284,37 +289,7 @@ export const E91SimulationSection = () => {
     );
   };
 
-  // Chart rendering
-  const loadGoogleCharts = (): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      if (window.google?.visualization) {
-        resolve(window.google);
-        return;
-      }
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.async = true;
-      script.onload = () => {
-        window.google.charts.load('current', { packages: ['corechart', 'line'] });
-        window.google.charts.setOnLoadCallback(() => resolve(window.google));
-      };
-      script.onerror = () => reject(new Error('Failed to load Google Charts'));
-      document.head.appendChild(script);
-    });
-  };
-
-  const renderChart = (chartId: string, data: any[], options: any) => {
-    loadGoogleCharts().then(() => {
-      const chartContainer = document.getElementById(chartId);
-      if (!chartContainer || !window.google?.visualization) return;
-
-      const dataTable = window.google.visualization.arrayToDataTable(data);
-      const chart = new window.google.visualization.LineChart(chartContainer);
-      chart.draw(dataTable, options);
-    }).catch(error => {
-      console.error('Error loading Google Charts:', error);
-    });
-  };
+  // Removed Google Charts load and render functions
 
   return (
     <div className="space-y-6">
@@ -393,6 +368,65 @@ export const E91SimulationSection = () => {
         </CardContent>
       </Card>
 
+      {/* Distance Analysis Chart */}
+      {(simulationResult?.analysis as any)?.distanceAnalysis && (
+        <Card className="border-none shadow-soft">
+          <CardHeader className="pb-2 text-center bg-gray-50/50 dark:bg-slate-900/50 border-b">
+            <CardTitle className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase">
+              Distance Analysis (Key Rate & QBER vs Distance)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="w-full h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={(simulationResult?.analysis as any).distanceAnalysis}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
+                  <XAxis
+                    dataKey="name"
+                    label={{ value: "Distance", position: "insideBottom", offset: -10 }}
+                  />
+                  <YAxis
+                    yAxisId="left"
+                    label={{ value: "Key Rate (%)", angle: -90, position: "insideLeft" }}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    label={{ value: "QBER (%)", angle: 90, position: "insideRight" }}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend verticalAlign="top" height={36} />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="keyRate"
+                    name="Key Rate"
+                    stroke="#8b5cf6"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 8 }}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="qber"
+                    name="QBER"
+                    stroke="#ef4444"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Results Summary */}
       {showAnalysis && simulationResult && (
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -470,34 +504,6 @@ export const E91SimulationSection = () => {
                   <CardTitle className="text-xs font-bold text-gray-500 uppercase">QBER Calculation Formula</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
-                    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-                      <mrow>
-                        <mi>Q</mi>
-                        <mi>B</mi>
-                        <mi>E</mi>
-                        <mi>R</mi>
-                        <mo>=</mo>
-                        <mfrac>
-                          <msub>
-                            <mi>N</mi>
-                            <mi>wrong</mi>
-                          </msub>
-                          <mrow>
-                            <msub>
-                              <mi>N</mi>
-                              <mi>wrong</mi>
-                            </msub>
-                            <mo>+</mo>
-                            <msub>
-                              <mi>N</mi>
-                              <mi>right</mi>
-                            </msub>
-                          </mrow>
-                        </mfrac>
-                      </mrow>
-                    </math>
-                  </div>
                   <p className="text-xs text-gray-500 mt-3 text-center">
                     For E91: N represents matching-basis measurements where outcomes should be perfectly (anti-)correlated
                   </p>
@@ -548,21 +554,21 @@ export const E91SimulationSection = () => {
                     {selectedProtocol === 'E91' ? (
                       <>
                         {simulationResult.analysis.bellViolated ? (
-                          <>✓ Bell inequality <strong>violated</strong> (S = {simulationResult.analysis.chshSValue?.toFixed(3)}). 
-                          Entanglement verified. Security guaranteed by quantum mechanics.</>
+                          <>✓ Bell inequality <strong>violated</strong> (S = {simulationResult.analysis.chshSValue?.toFixed(3)}).
+                            Entanglement verified. Security guaranteed by quantum mechanics.</>
                         ) : (
-                          <>✗ Bell inequality <strong>not violated</strong>. 
-                          Security not guaranteed. Possible eavesdropping or excessive noise.</>
+                          <>✗ Bell inequality <strong>not violated</strong>.
+                            Security not guaranteed. Possible eavesdropping or excessive noise.</>
                         )}
                       </>
                     ) : (
                       <>
                         {simulationResult.analysis.qber < 0.15 ? (
-                          <>✓ QBER below threshold. Secure key distillation possible. 
-                          Privacy amplification can reduce Eve's information to negligible levels.</>
+                          <>✓ QBER below threshold. Secure key distillation possible.
+                            Privacy amplification can reduce Eve's information to negligible levels.</>
                         ) : (
-                          <>✗ QBER too high ({simulationResult.analysis.qberPercentage}). 
-                          Key may be compromised. Consider reducing distance or improving equipment.</>
+                          <>✗ QBER too high ({simulationResult.analysis.qberPercentage}).
+                            Key may be compromised. Consider reducing distance or improving equipment.</>
                         )}
                       </>
                     )}
@@ -616,34 +622,6 @@ export const E91SimulationSection = () => {
             <CardTitle className="text-xs font-bold text-gray-500 uppercase">QBER Calculation Formula (B92 USD)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center py-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg">
-              <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-                <mrow>
-                  <mi>Q</mi>
-                  <mi>B</mi>
-                  <mi>E</mi>
-                  <mi>R</mi>
-                  <mo>=</mo>
-                  <mfrac>
-                    <msub>
-                      <mi>N</mi>
-                      <mi>wrong</mi>
-                    </msub>
-                    <mrow>
-                      <msub>
-                        <mi>N</mi>
-                        <mi>wrong</mi>
-                      </msub>
-                      <mo>+</mo>
-                      <msub>
-                        <mi>N</mi>
-                        <mi>right</mi>
-                      </msub>
-                    </mrow>
-                  </mfrac>
-                </mrow>
-              </math>
-            </div>
             <p className="text-xs text-gray-500 mt-3 text-center">
               For B92: N represents conclusive USD measurements where Alice&apos;s bit should match Bob&apos;s detection
             </p>

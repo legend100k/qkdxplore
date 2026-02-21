@@ -23,19 +23,14 @@ import {
   Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
+import { BarChart as RechartsBarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import {
   PolarizationState,
   applyOpticalNoise,
   legacyNoiseToOptical,
 } from "@/lib/opticalNoise";
 
-// Google Charts is loaded via script tag in index.html
-// We'll implement type definitions for Google Charts
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+// Google Charts removed in favor of Recharts
 
 interface B92QuantumBit {
   id: number;
@@ -99,7 +94,7 @@ export const B92SimulationSection = () => {
   const [numBits, setNumBits] = useState([16]);
   const [eavesdroppingRate, setEavesdroppingRate] = useState([0]);
   const [noiseLevel, setNoiseLevel] = useState([0]);
-  const [simulationData, setSimulationData] = useState<Array<{name: string, value: number | string}>>([]);
+  const [simulationData, setSimulationData] = useState<Array<{ name: string, value: number | string }>>([]);
   const [showGraphs, setShowGraphs] = useState(false);
   const [isStepByStep, setIsStepByStep] = useState(false);
   const [currentBitIndex, setCurrentBitIndex] = useState(0);
@@ -180,10 +175,7 @@ export const B92SimulationSection = () => {
     };
   }, []);
 
-  // Load Google Charts when component mounts
-  useEffect(() => {
-    loadGoogleCharts();
-  }, []);
+  // Removed Google Charts load
 
   const generateRandomBits = () => {
     const bits: B92QuantumBit[] = [];
@@ -260,13 +252,13 @@ export const B92SimulationSection = () => {
         // Bob measures in his chosen basis
         // In B92, Bob only keeps results when he gets a detection event
         // Probabilities depend on overlap between Alice's state and Bob's measurement basis
-        
+
         // Simplified detection model: Bob gets result based on quantum probabilities
         if (Math.random() > 0.3) { // Detection efficiency ~70%
           // Bob's result depends on overlap between Alice's state and his measurement
           const prob = aliceState === bobBasis ? 0.8 : 0.2; // High correlation when bases match conceptually
           bobResult = Math.random() < prob ? aliceState : 1 - aliceState;
-          
+
           // In B92, only detected events are kept for the key
           inKey = true;
         }
@@ -437,7 +429,7 @@ export const B92SimulationSection = () => {
           // Bob's result depends on overlap between Alice's state and his measurement
           const prob = bit.aliceState === bit.bobBasis ? 0.8 : 0.2;
           const bobResult = Math.random() < prob ? bit.aliceState : 1 - bit.aliceState;
-          
+
           // In B92, only detected events are kept for the key
           bit.bobResult = bobResult;
           bit.inKey = true;
@@ -526,17 +518,9 @@ export const B92SimulationSection = () => {
       setCurrentStep(0);
       setFinalKey("");
 
-      for (let step = 0; step <= 5; step++) {
-        setCurrentStep(step);
-
-        if (step === 1) {
-          // Animate photon transmission with improved animation
-          await animatePhotonTransmission();
-          hidePhoton();
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      }
+      // Instantly go to the final step
+      setCurrentStep(6);
+      hidePhoton();
 
       const bits = generateRandomBits();
       setQuantumBits(bits);
@@ -661,106 +645,10 @@ export const B92SimulationSection = () => {
 
       setSimulationData(data);
 
-      // Render the chart with the new data
-      setTimeout(() => renderSimulationMetricsChart(data), 100);
+      // Chart is rendered reactively via state
     } catch (error) {
       console.error("Analysis generation failed:", error);
     }
-  };
-
-  // Function to load Google Charts
-  const loadGoogleCharts = () => {
-    return new Promise((resolve, reject) => {
-      try {
-        if (window.google?.visualization) {
-          resolve(window.google);
-          return;
-        }
-        if (window.google?.charts?.load) {
-          window.google.charts.load('current', { packages: ['corechart', 'bar'] });
-          window.google.charts.setOnLoadCallback(() => resolve(window.google));
-          return;
-        }
-        if (window.google?.load) {
-          window.google.load('visualization', '1', { packages: ['corechart', 'bar'] });
-          window.google.setOnLoadCallback(() => resolve(window.google));
-          return;
-        }
-
-        // Load the Google Charts script if not already loaded
-        const script = document.createElement('script');
-        script.src = 'https://www.gstatic.com/charts/loader.js';
-        script.async = true;
-        script.onload = () => {
-          if (!window.google?.charts?.load) {
-            reject(new Error('Google Charts loader not available'));
-            return;
-          }
-          window.google.charts.load('current', { packages: ['corechart', 'bar'] });
-          window.google.charts.setOnLoadCallback(() => resolve(window.google));
-        };
-        script.onerror = () => reject(new Error('Failed to load Google Charts'));
-        document.head.appendChild(script);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  };
-
-  // Function to render the simulation metrics chart (counts only)
-  const renderSimulationMetricsChart = (data: Array<{name: string, value: number | string}>) => {
-    loadGoogleCharts().then(() => {
-      const chartContainer = document.getElementById('b92-simulation-metrics-chart');
-      if (!chartContainer || !window.google?.visualization) {
-        return;
-      }
-      const totalBits = Number(data[0]?.value || 0);
-      const detectedBits = Number(data[1]?.value || 0);
-      const siftedKeyCount = Number(data[2]?.value || 0);
-
-      const chartData = [
-        ['Metric', 'Value'],
-        [data[0]?.name || 'Total Bits', totalBits],
-        [data[1]?.name || 'Detected Bits', detectedBits],
-        [data[2]?.name || 'Sifted Key', siftedKeyCount],
-      ];
-
-      const dataTable = window.google.visualization.arrayToDataTable(chartData);
-
-      const options = {
-        title: 'B92 Simulation Metrics',
-        width: '100%',
-        height: 300,
-        chartArea: {
-          width: '85%',
-          height: '70%',
-          left: 100,
-          right: 30
-        },
-        bar: { groupWidth: '60%' },
-        hAxis: {
-          title: 'Count',
-          minValue: 0,
-          textStyle: { fontSize: 11 }
-        },
-        vAxis: {
-          title: 'Metrics',
-          textStyle: { fontSize: 11 }
-        },
-        titleTextStyle: { fontSize: 14 },
-        colors: ['#ef4444'], // Red color for B92
-        legend: { position: 'none' },
-      };
-
-      const chart = new window.google.visualization.BarChart(chartContainer);
-      chart.draw(dataTable, options);
-    }).catch(error => {
-      console.error('Error loading Google Charts:', error);
-      const chartDiv = document.getElementById('b92-simulation-metrics-chart');
-      if (chartDiv) {
-        chartDiv.innerHTML = '<p>Chart failed to load. Metrics: ' + JSON.stringify(data) + '</p>';
-      }
-    });
   };
 
   const resetSimulation = () => {
@@ -846,9 +734,8 @@ export const B92SimulationSection = () => {
                 className="w-full h-0.5 bg-gradient-to-r from-red-400 via-orange-500 to-red-500 relative z-0"
               >
                 <div
-                  className={`photon-particle absolute w-10 h-10 bg-white dark:bg-slate-900 rounded-full top-[-20px] flex items-center justify-center font-bold text-xl shadow-lg border-2 border-red-400 transition-all duration-300 z-30 ${
-                    isPhotonVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
-                  }`}
+                  className={`photon-particle absolute w-10 h-10 bg-white dark:bg-slate-900 rounded-full top-[-20px] flex items-center justify-center font-bold text-xl shadow-lg border-2 border-red-400 transition-all duration-300 z-30 ${isPhotonVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                    }`}
                   style={{
                     left: `${photonPosition}%`,
                     boxShadow: "0 0 20px rgba(239, 68, 68, 0.4)",
@@ -860,9 +747,8 @@ export const B92SimulationSection = () => {
                 </div>
 
                 <div
-                  className={`absolute top-[-60px] left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-md border border-gray-100 dark:border-gray-700 whitespace-nowrap z-40 ${
-                    isStatusInfoVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-                  }`}
+                  className={`absolute top-[-60px] left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 text-foreground px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-md border border-gray-100 dark:border-gray-700 whitespace-nowrap z-40 ${isStatusInfoVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
                 >
                   {statusInfo}
                 </div>
@@ -871,9 +757,8 @@ export const B92SimulationSection = () => {
               {/* Alice Polarizer */}
               <div className="absolute left-[10%] top-1/2 transform -translate-y-1/2 z-20">
                 <div
-                  className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-red-600 shadow-md rounded-xl transition-all duration-500 ${
-                    alicePolarizer === "↗" ? "rotate-[45deg]" : alicePolarizer === "↕" ? "rotate-[90deg]" : ""
-                  }`}
+                  className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-red-600 shadow-md rounded-xl transition-all duration-500 ${alicePolarizer === "↗" ? "rotate-[45deg]" : alicePolarizer === "↕" ? "rotate-[90deg]" : ""
+                    }`}
                 >
                   {alicePolarizer}
                 </div>
@@ -884,29 +769,25 @@ export const B92SimulationSection = () => {
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className={`absolute top-1/2 transform -translate-y-1/2 z-20 transition-all duration-500 ${i === 0 ? "left-[25%]" : i === 1 ? "left-[35%]" : i === 2 ? "left-[45%]" : i === 3 ? "left-[55%]" : "left-[65%]"} ${
-                    i < numEves ? "opacity-100 scale-100" : "opacity-0 scale-0 pointer-events-none"
-                  }`}
+                  className={`absolute top-1/2 transform -translate-y-1/2 z-20 transition-all duration-500 ${i === 0 ? "left-[25%]" : i === 1 ? "left-[35%]" : i === 2 ? "left-[45%]" : i === 3 ? "left-[55%]" : "left-[65%]"} ${i < numEves ? "opacity-100 scale-100" : "opacity-0 scale-0 pointer-events-none"
+                    }`}
                 >
                   <div
-                    className={`w-8 h-8 bg-red-500 mx-auto rounded-full flex items-center justify-center text-[10px] text-white shadow-md mb-2 font-bold transition-transform ${
-                      activeEve === i ? "scale-125 ring-4 ring-red-500/20" : ""
-                    }`}
+                    className={`w-8 h-8 bg-red-500 mx-auto rounded-full flex items-center justify-center text-[10px] text-white shadow-md mb-2 font-bold transition-transform ${activeEve === i ? "scale-125 ring-4 ring-red-500/20" : ""
+                      }`}
                   >
                     E{i + 1}
                   </div>
                   <div className="flex gap-2 p-1 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/20 backdrop-blur-sm">
                     <div
-                      className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${
-                        evePolarizers[i]?.measure === "↗" ? "rotate-[45deg]" : evePolarizers[i]?.measure === "↕" ? "rotate-[90deg]" : ""
-                      }`}
+                      className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${evePolarizers[i]?.measure === "↗" ? "rotate-[45deg]" : evePolarizers[i]?.measure === "↕" ? "rotate-[90deg]" : ""
+                        }`}
                     >
                       {evePolarizers[i]?.measure || "→"}
                     </div>
                     <div
-                      className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${
-                        evePolarizers[i]?.send === "↗" ? "rotate-[45deg]" : evePolarizers[i]?.send === "↕" ? "rotate-[90deg]" : ""
-                      }`}
+                      className={`w-10 h-10 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-800 rounded-lg flex items-center justify-center font-bold text-lg text-red-500 shadow-sm ${evePolarizers[i]?.send === "↗" ? "rotate-[45deg]" : evePolarizers[i]?.send === "↕" ? "rotate-[90deg]" : ""
+                        }`}
                     >
                       {evePolarizers[i]?.send || "→"}
                     </div>
@@ -917,9 +798,8 @@ export const B92SimulationSection = () => {
               {/* Bob Polarizer */}
               <div className="absolute right-[10%] top-1/2 transform -translate-y-1/2 z-20">
                 <div
-                  className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-blue-600 shadow-md rounded-xl transition-all duration-500 ${
-                    bobPolarizer === "↗" ? "rotate-[45deg]" : bobPolarizer === "↘" ? "rotate-[135deg]" : bobPolarizer === "↕" ? "rotate-[90deg]" : ""
-                  }`}
+                  className={`w-16 h-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center font-bold text-2xl text-blue-600 shadow-md rounded-xl transition-all duration-500 ${bobPolarizer === "↗" ? "rotate-[45deg]" : bobPolarizer === "↘" ? "rotate-[135deg]" : bobPolarizer === "↕" ? "rotate-[90deg]" : ""
+                    }`}
                 >
                   {bobPolarizer}
                 </div>
@@ -963,21 +843,21 @@ export const B92SimulationSection = () => {
             <div className="flex flex-wrap items-center gap-3">
               <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-lg flex items-center">
                 <Button
-                    onClick={() => setIsStepByStep(!isStepByStep)}
-                    variant="ghost"
-                    size="sm"
-                    className={`rounded-md text-xs font-medium transition-all ${!isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-red-600'}`}
+                  onClick={() => setIsStepByStep(!isStepByStep)}
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-md text-xs font-medium transition-all ${!isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-red-600'}`}
                 >
-                    Step-by-Step
+                  Step-by-Step
                 </Button>
                 <div className="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
-                 <Button
-                    onClick={() => setIsStepByStep(false)}
-                    variant="ghost"
-                    size="sm"
-                    className={`rounded-md text-xs font-medium transition-all ${isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-red-600'}`}
+                <Button
+                  onClick={() => setIsStepByStep(false)}
+                  variant="ghost"
+                  size="sm"
+                  className={`rounded-md text-xs font-medium transition-all ${isStepByStep ? 'text-gray-500' : 'bg-white dark:bg-slate-700 shadow-sm text-red-600'}`}
                 >
-                    Auto-Run
+                  Auto-Run
                 </Button>
               </div>
 
@@ -1185,24 +1065,24 @@ export const B92SimulationSection = () => {
 
               <div className="space-y-4">
                 {currentStep > 1 && !isStepByStep && (
-                   <div className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-4 rounded-r-lg">
-                      <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">
-                        Live Status
-                      </p>
-                      <p className="text-sm font-medium text-red-900 dark:text-red-100">{steps[currentStep - 1]}</p>
-                   </div>
+                  <div className="bg-red-50 dark:bg-red-900/10 border-l-4 border-red-500 p-4 rounded-r-lg">
+                    <p className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">
+                      Live Status
+                    </p>
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100">{steps[currentStep - 1]}</p>
+                  </div>
                 )}
               </div>
 
-               {/* Step-by-step Status */}
+              {/* Step-by-step Status */}
               {currentStep === 1 && !isStepByStep && (
-                 <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 p-4 rounded-xl flex items-center justify-center gap-3 animate-pulse">
-                     <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                     <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Qubit In Transit</span>
-                     {eavesdroppingRate[0] > 0 && (
-                         <Badge variant="destructive" className="ml-2 animate-bounce">INTERCEPTION RISK</Badge>
-                     )}
-                 </div>
+                <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800/30 p-4 rounded-xl flex items-center justify-center gap-3 animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                  <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Qubit In Transit</span>
+                  {eavesdroppingRate[0] > 0 && (
+                    <Badge variant="destructive" className="ml-2 animate-bounce">INTERCEPTION RISK</Badge>
+                  )}
+                </div>
               )}
             </div>
 
@@ -1222,272 +1102,284 @@ export const B92SimulationSection = () => {
               {/* Results Display */}
               {(quantumBits.length > 0 ||
                 (isStepByStep && stepByStepBits.length > 0)) && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                     <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-gray-500" />
-                      Results Log
-                      <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs font-normal">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-gray-500" />
+                        Results Log
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-600 text-xs font-normal">
                           {isStepByStep && stepByStepBits.length > 0 ? Math.min(currentBitIndex + 1, stepByStepBits.length) : quantumBits.length} / {numBits[0]} Bits Processed
-                      </Badge>
-                    </h3>
-                  </div>
-
-                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-                    <div className="w-full overflow-x-auto max-h-[600px] overflow-y-auto">
-                      <table className="w-full text-sm min-w-[900px]">
-                        <thead className="sticky top-0 bg-gray-50 dark:bg-slate-950 z-10">
-                          <tr className="border-b border-gray-200 dark:border-gray-800">
-                            <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
-
-                            {/* Alice Group */}
-                            <th colSpan={1} className="px-4 py-2 border-l border-r border-gray-200 dark:border-gray-800 bg-red-50/50 dark:bg-red-900/10">
-                              <div className="text-center text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Alice (Source)</div>
-                            </th>
-
-                            {/* Eve Group */}
-                            {eavesdroppingRate[0] > 0 && (
-                              <th colSpan={3} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-red-50/50 dark:bg-red-900/10">
-                                <div className="text-center text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center justify-center gap-1">
-                                    <Eye className="w-3 h-3" /> Eve
-                                </div>
-                              </th>
-                            )}
-
-                            {/* Bob Group */}
-                            <th colSpan={2} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-blue-50/50 dark:bg-blue-900/10">
-                               <div className="text-center text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Bob (Detector)</div>
-                            </th>
-
-                            <th colSpan={1} className="px-4 py-2">
-                                <div className="text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Analysis</div>
-                            </th>
-                          </tr>
-                          <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50">
-                            <th className="p-2"></th>
-                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-l border-gray-200 dark:border-gray-800">State</th>
-
-                            {eavesdroppingRate[0] > 0 && (
-                              <>
-                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Basis</th>
-                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Res.</th>
-                                <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Send</th>
-                              </>
-                            )}
-
-                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Basis</th>
-                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Result</th>
-
-                            <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Key?</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-gray-800">
-                          {(isStepByStep
-                            ? stepByStepBits.slice(0, currentBitIndex + 1)
-                            : quantumBits
-                          ).map(
-                            (bit, index) => (
-                              <tr
-                                key={bit.id}
-                                className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${bit.inKey ? "bg-green-50/30 dark:bg-green-900/10" : ""} ${isStepByStep && index === currentBitIndex ? "bg-red-50 dark:bg-red-900/20" : ""}`}
-                              >
-                                <td className="p-3 text-center text-xs font-medium text-gray-500">{bit.id + 1}</td>
-
-                                {/* ALICE DATA */}
-                                <td className="p-2 text-center border-l border-gray-100 dark:border-gray-800">
-                                  <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
-                                    {getStateSymbol(bit.aliceState)}
-                                  </span>
-                                </td>
-
-                                {/* EVE DATA */}
-                                {eavesdroppingRate[0] > 0 && (
-                                  <>
-                                    <td className="p-2 text-center">
-                                      {bit.intercepted ? (
-                                        <span className="font-mono font-bold text-red-500">
-                                          {getBasisSymbol(bit.eveBasis!)}
-                                        </span>
-                                      ) : (
-                                        <span className="text-gray-300">-</span>
-                                      )}
-                                    </td>
-                                    <td className="p-2 text-center">
-                                      {bit.intercepted ? (
-                                        <span className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-bold">
-                                          {bit.eveResult}
-                                        </span>
-                                      ) : (
-                                        <span className="text-gray-300">-</span>
-                                      )}
-                                    </td>
-                                    <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
-                                      {bit.intercepted ? (
-                                        <span className="font-mono font-bold text-red-500">
-                                          {getStateSymbol(bit.eveResendState!)}
-                                        </span>
-                                      ) : (
-                                        <span className="text-gray-300">-</span>
-                                      )}
-                                    </td>
-                                  </>
-                                )}
-
-                                {/* BOB DATA */}
-                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
-                                  <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
-                                    {getBasisSymbol(bit.bobBasis)}
-                                  </span>
-                                </td>
-                                <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
-                                   <span
-                                     className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
-                                       bit.bobResult !== null
-                                         ? bit.aliceState === bit.bobResult
-                                           ? "bg-green-100 text-green-700"  // Correct result
-                                           : "bg-red-100 text-red-700"    // Error
-                                         : "bg-gray-100 text-gray-500"  // No detection
-                                     }`}
-                                   >
-                                     {bit.bobResult !== null ? bit.bobResult : 'N'}
-                                   </span>
-                                 </td>
-
-                                {/* KEY */}
-                                <td className="p-2 text-center">
-                                  {bit.inKey ? (
-                                    <div className="flex justify-center">
-                                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm shadow-green-200">
-                                            <Shield className="w-3 h-3" />
-                                        </div>
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-300">
-                                      -
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            ),
-                          )}
-                        </tbody>
-                      </table>
+                        </Badge>
+                      </h3>
                     </div>
 
-                    {isStepByStep && currentBitIndex === 0 && bitStep === 0 && (
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+                      <div className="w-full overflow-x-auto max-h-[600px] overflow-y-auto">
+                        <table className="w-full text-sm min-w-[900px]">
+                          <thead className="sticky top-0 bg-gray-50 dark:bg-slate-950 z-10">
+                            <tr className="border-b border-gray-200 dark:border-gray-800">
+                              <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-12">#</th>
+
+                              {/* Alice Group */}
+                              <th colSpan={1} className="px-4 py-2 border-l border-r border-gray-200 dark:border-gray-800 bg-red-50/50 dark:bg-red-900/10">
+                                <div className="text-center text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Alice (Source)</div>
+                              </th>
+
+                              {/* Eve Group */}
+                              {eavesdroppingRate[0] > 0 && (
+                                <th colSpan={3} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-red-50/50 dark:bg-red-900/10">
+                                  <div className="text-center text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center justify-center gap-1">
+                                    <Eye className="w-3 h-3" /> Eve
+                                  </div>
+                                </th>
+                              )}
+
+                              {/* Bob Group */}
+                              <th colSpan={2} className="px-4 py-2 border-r border-gray-200 dark:border-gray-800 bg-blue-50/50 dark:bg-blue-900/10">
+                                <div className="text-center text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Bob (Detector)</div>
+                              </th>
+
+                              <th colSpan={1} className="px-4 py-2">
+                                <div className="text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Analysis</div>
+                              </th>
+                            </tr>
+                            <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50">
+                              <th className="p-2"></th>
+                              <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-l border-gray-200 dark:border-gray-800">State</th>
+
+                              {eavesdroppingRate[0] > 0 && (
+                                <>
+                                  <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Basis</th>
+                                  <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase">Res.</th>
+                                  <th className="px-2 py-2 text-center text-[10px] text-red-400 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Send</th>
+                                </>
+                              )}
+
+                              <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Basis</th>
+                              <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase border-r border-gray-200 dark:border-gray-800">Result</th>
+
+                              <th className="px-2 py-2 text-center text-[10px] text-gray-500 font-medium uppercase">Key?</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-gray-800">
+                            {(isStepByStep
+                              ? stepByStepBits.slice(0, currentBitIndex + 1)
+                              : quantumBits
+                            ).map(
+                              (bit, index) => (
+                                <tr
+                                  key={bit.id}
+                                  className={`transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${bit.inKey ? "bg-green-50/30 dark:bg-green-900/10" : ""} ${isStepByStep && index === currentBitIndex ? "bg-red-50 dark:bg-red-900/20" : ""}`}
+                                >
+                                  <td className="p-3 text-center text-xs font-medium text-gray-500">{bit.id + 1}</td>
+
+                                  {/* ALICE DATA */}
+                                  <td className="p-2 text-center border-l border-gray-100 dark:border-gray-800">
+                                    <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
+                                      {getStateSymbol(bit.aliceState)}
+                                    </span>
+                                  </td>
+
+                                  {/* EVE DATA */}
+                                  {eavesdroppingRate[0] > 0 && (
+                                    <>
+                                      <td className="p-2 text-center">
+                                        {bit.intercepted ? (
+                                          <span className="font-mono font-bold text-red-500">
+                                            {getBasisSymbol(bit.eveBasis!)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-300">-</span>
+                                        )}
+                                      </td>
+                                      <td className="p-2 text-center">
+                                        {bit.intercepted ? (
+                                          <span className="inline-flex w-6 h-6 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                                            {bit.eveResult}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-300">-</span>
+                                        )}
+                                      </td>
+                                      <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                        {bit.intercepted ? (
+                                          <span className="font-mono font-bold text-red-500">
+                                            {getStateSymbol(bit.eveResendState!)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-300">-</span>
+                                        )}
+                                      </td>
+                                    </>
+                                  )}
+
+                                  {/* BOB DATA */}
+                                  <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                    <span className="font-mono text-lg font-bold text-gray-700 dark:text-gray-300">
+                                      {getBasisSymbol(bit.bobBasis)}
+                                    </span>
+                                  </td>
+                                  <td className="p-2 text-center border-r border-gray-100 dark:border-gray-800">
+                                    <span
+                                      className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${bit.bobResult !== null
+                                        ? bit.aliceState === bit.bobResult
+                                          ? "bg-green-100 text-green-700"  // Correct result
+                                          : "bg-red-100 text-red-700"    // Error
+                                        : "bg-gray-100 text-gray-500"  // No detection
+                                        }`}
+                                    >
+                                      {bit.bobResult !== null ? bit.bobResult : 'N'}
+                                    </span>
+                                  </td>
+
+                                  {/* KEY */}
+                                  <td className="p-2 text-center">
+                                    {bit.inKey ? (
+                                      <div className="flex justify-center">
+                                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm shadow-green-200">
+                                          <Shield className="w-3 h-3" />
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-300">
+                                        -
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ),
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {isStepByStep && currentBitIndex === 0 && bitStep === 0 && (
                         <div className="text-center py-12 bg-gray-50/50">
                           <p className="text-gray-500 font-medium">Ready to start visualization...</p>
                           <Button variant="link" onClick={nextBitStep} className="text-red-600">Click to begin</Button>
                         </div>
-                   )}
-                  </div>
+                      )}
+                    </div>
 
                     {/* Final Key Display */}
                     {finalKey && (
                       <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-xl p-6 border border-red-100 dark:border-red-900/30">
                         <div className="flex flex-col items-center justify-center text-center">
-                           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-4 shadow-sm">
-                               <ShieldCheck className="w-6 h-6" />
-                           </div>
-                           <h3 className="font-bold text-red-800 dark:text-red-300 mb-2 text-lg">
-                              Secure Shared Key Generated (B92)
-                            </h3>
-                            <div className="font-mono text-xl bg-white dark:bg-black/20 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 tracking-widest shadow-inner mb-3">
-                              {finalKey}
-                            </div>
-                            <div className="flex gap-4 text-xs font-medium text-red-700/70">
-                                <span>Length: {finalKey.length} bits</span>
-                                <span>Status: Verified</span>
-                            </div>
+                          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-4 shadow-sm">
+                            <ShieldCheck className="w-6 h-6" />
+                          </div>
+                          <h3 className="font-bold text-red-800 dark:text-red-300 mb-2 text-lg">
+                            Secure Shared Key Generated (B92)
+                          </h3>
+                          <div className="font-mono text-xl bg-white dark:bg-black/20 px-6 py-3 rounded-lg border border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400 tracking-widest shadow-inner mb-3">
+                            {finalKey}
+                          </div>
+                          <div className="flex gap-4 text-xs font-medium text-red-700/70">
+                            <span>Length: {finalKey.length} bits</span>
+                            <span>Status: Verified</span>
+                          </div>
 
-                            {(eavesdroppingRate[0] > 0 || noiseLevel[0] > 0) && (
-                                <div className="mt-4 flex gap-2">
-                                    {eavesdroppingRate[0] > 0 && (
-                                        <Badge variant="destructive" className="flex gap-1 items-center">
-                                            <AlertCircle className="w-3 h-3" /> Eavesdropping Detected
-                                        </Badge>
-                                    )}
-                                    {noiseLevel[0] > 0 && (
-                                        <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 flex gap-1 items-center">
-                                            <Zap className="w-3 h-3" /> Noise Present
-                                        </Badge>
-                                    )}
-                                </div>
-                            )}
+                          {(eavesdroppingRate[0] > 0 || noiseLevel[0] > 0) && (
+                            <div className="mt-4 flex gap-2">
+                              {eavesdroppingRate[0] > 0 && (
+                                <Badge variant="destructive" className="flex gap-1 items-center">
+                                  <AlertCircle className="w-3 h-3" /> Eavesdropping Detected
+                                </Badge>
+                              )}
+                              {noiseLevel[0] > 0 && (
+                                <Badge variant="outline" className="border-amber-400 text-amber-600 bg-amber-50 flex gap-1 items-center">
+                                  <Zap className="w-3 h-3" /> Noise Present
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
-                </div>
-              )}
+                  </div>
+                )}
 
               {/* Analysis Graphs */}
               {showGraphs && simulationData.length > 0 && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-gray-500" />
-                      Post-Processing Analysis
-                    </h3>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-gray-500" />
+                    Post-Processing Analysis
+                  </h3>
                   <div className="grid md:grid-cols-2 gap-6">
-                      <Card className="border-none shadow-soft overflow-hidden">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
-                          <CardTitle className="text-sm font-bold text-gray-700">
+                    <Card className="border-none shadow-soft overflow-hidden">
+                      <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
+                        <CardTitle className="text-sm font-bold text-gray-700">
                           Transfer Metrics
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                          <div className="w-full min-h-[300px] flex items-center justify-center" id="b92-simulation-metrics-chart">
-                            {/* Google Chart will be rendered here */}
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <div className="w-full min-h-[300px] flex items-center justify-center">
+                          {simulationData.length > 0 && (
+                            <ResponsiveContainer width="100%" height={300}>
+                              <LineChart
+                                data={simulationData.slice(0, 4)}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Line type="monotone" dataKey="value" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                      <Card className="border-none shadow-soft overflow-hidden">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
-                          <CardTitle className="text-sm font-bold text-gray-700">
+                    <Card className="border-none shadow-soft overflow-hidden">
+                      <CardHeader className="bg-gray-50/50 border-b border-gray-100 pb-3">
+                        <CardTitle className="text-sm font-bold text-gray-700">
                           Security Assessment (B92)
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6">
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-6">
                         <div className="space-y-6">
 
-                            <div className="flex items-center justify-center py-6">
-                                <div className="relative w-40 h-40 flex items-center justify-center">
-                                    <svg className="w-full h-full transform -rotate-90">
-                                        <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-gray-100" />
-                                        <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent"
-                                            strokeDasharray={440}
-                                            strokeDashoffset={440 - (440 * parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"))) / 100}
-                                            className={`${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className={`text-3xl font-bold ${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}>
-                                            {simulationData.find(d => d.name === "QBER (%)")?.value}%
-                                        </span>
-                                        <span className="text-xs text-gray-400 font-medium uppercase mt-1">Error Rate</span>
-                                    </div>
-                                </div>
+                          <div className="flex items-center justify-center py-6">
+                            <div className="relative w-40 h-40 flex items-center justify-center">
+                              <svg className="w-full h-full transform -rotate-90">
+                                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent" className="text-gray-100" />
+                                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="10" fill="transparent"
+                                  strokeDasharray={440}
+                                  strokeDashoffset={440 - (440 * parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0"))) / 100}
+                                  className={`${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className={`text-3xl font-bold ${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 15 ? 'text-red-500' : 'text-green-500'}`}>
+                                  {simulationData.find(d => d.name === "QBER (%)")?.value}%
+                                </span>
+                                <span className="text-xs text-gray-400 font-medium uppercase mt-1">Error Rate</span>
+                              </div>
                             </div>
+                          </div>
 
                           <div className="grid grid-cols-2 gap-4">
-                              {simulationData.slice(0, 4).map((item, index) => (
-                                <div
-                                  key={index}
-                                  className="flex flex-col p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-100 dark:border-gray-800"
-                                >
-                                  <span className="text-xs font-medium text-gray-500 mb-1">
-                                    {item.name}
-                                  </span>
-                                  <span className="text-lg font-bold text-foreground">
-                                    {item.value}
-                                  </span>
-                                </div>
-                              ))}
+                            {simulationData.slice(0, 4).map((item, index) => (
+                              <div
+                                key={index}
+                                className="flex flex-col p-3 bg-gray-50 dark:bg-slate-800/50 rounded-lg border border-gray-100 dark:border-gray-800"
+                              >
+                                <span className="text-xs font-medium text-gray-500 mb-1">
+                                  {item.name}
+                                </span>
+                                <span className="text-lg font-bold text-foreground">
+                                  {item.value}
+                                </span>
+                              </div>
+                            ))}
                           </div>
 
                           <div className={`p-4 rounded-xl border ${parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 11 ? 'bg-red-50 border-red-100 text-red-800' : 'bg-green-50 border-green-100 text-green-800'}`}>
                             <h4 className="font-bold text-sm mb-2 flex items-center gap-2">
-                              {parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 11 ? <AlertCircle className="w-4 h-4"/> : <ShieldCheck className="w-4 h-4"/>}
+                              {parseFloat(String(simulationData.find(d => d.name === "QBER (%)")?.value || "0")) > 11 ? <AlertCircle className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                               Security Status
                             </h4>
                             <p className="text-xs leading-relaxed">
@@ -1510,10 +1402,10 @@ export const B92SimulationSection = () => {
                             </p>
                           </div>
                         </div>
-                        </CardContent>
-                      </Card>
+                      </CardContent>
+                    </Card>
 
-                    </div>
+                  </div>
                 </div>
               )}
             </div>
